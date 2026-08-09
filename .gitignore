@@ -1,0 +1,25 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+.next/
+
+target/
+*.log
+
+# Local proof artifacts and private player data
+*.zkey
+*.wtns
+*.ptau
+map-vault*
+private-coordinates*
+
+# Editors
+.idea/
+.vscode/
