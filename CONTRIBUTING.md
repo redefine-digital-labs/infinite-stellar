@@ -4,7 +4,7 @@ This repository is currently a pre-production specification. Contributions shoul
 
 ## Before proposing implementation
 
-Read the [product vision](docs/01-product-vision.md), [Soul role](docs/02-soul-role.md), [technical architecture](docs/04-technical-architecture.md), and [decision log](docs/08-decisions.md). A proposal that changes a non-negotiable principle should update the decision log and explain the evidence for the change.
+Read the [World Bible](docs/00-world-bible.md), [product vision](docs/01-product-vision.md), [Soul role](docs/02-soul-role.md), [product requirements](docs/10-product-requirements.md), [technical architecture](docs/04-technical-architecture.md), and [decision log](docs/08-decisions.md). A proposal that changes a non-negotiable principle should update the decision log and explain the evidence for the change.
 
 ## Documentation changes
 
@@ -23,4 +23,6 @@ Never include private keys, seed phrases, production capability objects, ceremon
 
 ## Licensing
 
-No repository license has been selected yet. Do not copy code, circuits, art, or prose from Dark Forest or another project merely because its source is visible. Any dependency or derived work must be reviewed against its license before inclusion.
+This repository is licensed under the [MIT License](LICENSE). Contributions are submitted under the same license.
+
+Do not copy code, circuits, art, or prose from Dark Forest or another project merely because its source is visible. Every dependency and derived work must be reviewed against its license before inclusion. Third-party assets retain their own licenses and must be documented explicitly.

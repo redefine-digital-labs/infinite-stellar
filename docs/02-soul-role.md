@@ -2,7 +2,7 @@
 
 ## Canonical definition
 
-In Veilworld, a Soul is the persistent digital life that repeatedly enters temporary worlds and takes on roles inside them.
+In Infinite Stellar, a Soul is the persistent digital life that repeatedly enters temporary worlds and takes on roles inside them.
 
 It has three simultaneous product functions:
 
@@ -29,9 +29,9 @@ flowchart LR
     W -->|binds for one term| CP["Commander Projection"]
     S["Soul + Soul State"] -->|is projected through| CP
     CP -->|represents, narrates, remembers| C
-    C -->|settled facts| R["External Veilworld receipts"]
+    C -->|settled facts| R["External Infinite Stellar receipts"]
     R -->|aggregated by Soul page| P["Soul career view"]
-    P -->|separate holder-approved PTB| M["Narrative memory"]
+    P -->|separate direct holder-signed PTB| M["Narrative memory"]
 ```
 
 ## Four layers of identity
@@ -42,21 +42,21 @@ The wallet signs transactions and may hold the relevant ownership or control cap
 
 ### Season Seat
 
-`SeasonSeat` is the competitive identity for one season and league. It controls the civilization and is the unit for ranking, rate limits, anti-sybil rules, sponsorship, and sanctions.
+`SeasonSeat` is the durable competitive identity for one season and league. It anchors the controller, public alias, rate limits, anti-sybil rules, sponsorship, and sanctions. Mutable civilization and score state live in their own bounded objects.
 
-Suggested fields:
+Suggested immutable or enrollment-fixed fields:
 
 ```text
 season_id
 seat_id
 controller
 league
-status
 joined_at
-score
 public_season_alias
 season_build_hash
 ```
+
+`CivilizationState` holds mutable play status and `ScoreCard` holds mutable scoring state. This separation keeps the Seat readable without pretending that an immutable identity object also owns every high-contention field.
 
 ### Commander Projection
 
@@ -101,7 +101,7 @@ A formal season entry should:
 2. Read and store the current `ownership_epoch`.
 3. Claim a unique `SoulSeasonSlot` keyed by `(season_id, soul_id)` so the same Soul cannot command multiple ranked seats in one season.
 4. Consume the seat's one ranked commander slot so a Season Seat cannot rotate through multiple Souls.
-5. Freeze approved visual and outcome-policy hashes in the Commander Projection.
+5. Freeze the approved visual, validated `ProjectionDisplayLicense`, fallback, and outcome-policy hashes in the Commander Projection.
 6. Freeze the equal-budget seasonal doctrine/build separately in the Season Seat.
 7. Create the Commander Projection and connect it to the fresh Season Seat.
 
@@ -109,7 +109,7 @@ Both slots remain consumed for the entire ranked season, including after retirem
 
 The game must validate the real `SoulState`; it must not trust only a copied owner address or client-supplied Soul metadata.
 
-An account may complete the tutorial with a game-local `StarterCommander`. Before entering a formal ranked season, it either selects an owned Soul or completes an assisted Soul creation flow covering Personal Kiosk setup, Soul minting, initial content, gas sponsorship, and per-person abuse controls. Gas sponsorship alone does not create a Soul, and `StarterCommander` is not presented as a Soul.
+An account may complete the tutorial with a game-local `StarterCommander`. Before entering a formal ranked season, it must select an existing eligible Soul it currently owns. Soul minting, Personal Kiosk creation, initial content, and Animacraft authoring remain external Soulidity/Animacraft journeys for the first public release. Gas sponsorship alone does not create a Soul, and `StarterCommander` is not presented as a Soul.
 
 ## Authorization model
 
@@ -140,7 +140,7 @@ For a future agent action, the same predicate applies, while `ctx.sender()` matc
 
 ## Transfer during a season
 
-The protocol must make this case boring and deterministic.
+The protocol must make this case boring and deterministic. The [PRD transfer matrix](10-product-requirements.md#normative-soul-listing-and-transfer-matrix) is normative for the first public release.
 
 When a bound Soul changes owner:
 
@@ -151,11 +151,11 @@ When a bound Soul changes owner:
 5. In ranked play, the seat operates under a neutral commander presentation for the rest of the season; it cannot bind another Soul.
 6. The buyer receives the Soul and its public history, but receives no planets, fleets, coordinates, score, Season Seat, or empire capability.
 
-The game may lazily materialize `DetachedByTransfer` on the next interaction. Logical invalidation must not depend on an indexer, keeper, or cron job. The independent Veilworld UI must warn that a bound Soul may still be listed under the current core protocol and explain the ranked-season restriction before purchase.
+The game may lazily materialize `DetachedByTransfer` on the next interaction. Logical invalidation must not depend on an indexer, keeper, or cron job. The independent Infinite Stellar UI must warn that a bound Soul may still be listed under the current core protocol and explain the ranked-season restriction before purchase.
 
 The Season Seat's public alias, action history, promises, sanctions, and ranking identity remain unchanged after detachment. Switching to a neutral commander cannot erase accountability.
 
-Unranked social worlds may experiment with rebinding, but their receipts must be clearly separated from ranked career records. A future high-stakes ranked season may use a narrowly scoped `RuntimeLock`, but an external Veilworld object cannot block the existing Soul marketplace. A real lock requires an explicit Soulidity `TransferPolicy<Soul>`/market extension, deterministic expiry, recovery path, and UI consent. Runtime lock support does not exist in the current core protocol. The Alpha therefore uses epoch invalidation.
+Unranked social worlds may experiment with rebinding, but their receipts must be clearly separated from ranked career records. A future high-stakes ranked season may use a narrowly scoped `RuntimeLock`, but an external Infinite Stellar object cannot block the existing Soul marketplace. A real lock requires an explicit Soulidity `TransferPolicy<Soul>`/market extension, deterministic expiry, recovery path, and UI consent. Runtime lock support does not exist in the current core protocol. The Alpha therefore uses epoch invalidation.
 
 ## Persistent progression without permanent power
 
@@ -192,7 +192,7 @@ Long-term progression should increase expressive range, social context, and narr
 
 ## Season records and memory
 
-A completed season produces a compact, deterministic `VeilworldSeatReceipt`. It records the civilization's result regardless of whether the player chooses to display or narrate it. A separate frozen `VeilworldSoulSegmentReceipt` externally associates only facts accumulated while one Soul binding and ownership epoch were valid. These are issued by the Veilworld package and aggregated by a Soul career UI; they are not fields inside the current `SoulState` and are not independently tradable NFTs.
+A completed season produces a compact, deterministic `InfiniteStellarSeatReceipt`. It records the civilization's result regardless of whether the player chooses to display or narrate it. A separate frozen `InfiniteStellarSoulSegmentReceipt` externally associates only facts accumulated while one Soul binding and ownership epoch were valid. These are issued by the Infinite Stellar package and aggregated by a Soul career UI; they are not fields inside the current `SoulState` and are not independently tradable NFTs.
 
 Suggested record fields:
 
@@ -230,13 +230,19 @@ If a Soul changes hands during a season, no later action can enter the old accum
 
 Each valid attributed action increments a projection-local nonce and updates a rolling, domain-separated accumulator over a fixed leaf encoding. The corresponding leaves are emitted in canonical order and remain retrievable from Sui checkpoints. Settlement reads this onchain accumulator; an indexer does not invent the root after the fact.
 
-The current holder may review a derived narrative and then submit a separate Soulidity owner transaction that stores the referenced content through the supported memory path. Veilworld cannot automatically modify `SoulState` or claim that the receipt was written into a core Outcome slot. Approval controls the narrative transaction, not the existence of external factual receipts. The narrative is interpretation; the receipt is evidence. UIs must distinguish them.
+The official Infinite Stellar flow requires the current holder to review a derived narrative and directly sign a separate Soulidity owner transaction that stores the referenced content through the supported memory path. Infinite Stellar does not use a `SoulGrant` to write this Chronicle. The underlying Soulidity protocol may separately allow a live `MEMORY` grantee to append content; such external writes are not Infinite Stellar approval or game evidence.
 
-Veilworld should offer only public-safe prose for transferable Soul memory. Coordinates, salts, map notes, alliance secrets, and live strategic plans stay in `ClientSecretState` and are categorically excluded. Any memory surface must explain what a future Soul owner could read under the active Soulidity memory policy before the holder accepts it.
+Infinite Stellar cannot automatically modify `SoulState` or claim that the receipt was written into a core Outcome slot. Holder approval controls the optional narrative transaction, not the existence of external factual receipts. The narrative is interpretation; the receipt is evidence. UIs must distinguish them.
+
+Infinite Stellar should offer only public-safe prose for transferable Soul memory. Coordinates, salts, map notes, alliance secrets, and live strategic plans stay in `ClientSecretState` and are categorically excluded. Any memory surface must explain what a future Soul owner could read under the active Soulidity memory policy before the holder accepts it.
 
 ## Visual projection and rights
 
-Season 0 uses a public `image_url` or an explicitly licensed immutable projection. The snapshot records the artifact reference, content version, hash, rights/policy version, and a permanent fallback piece. A hash proves identity, not availability or commercial permission. Private Active Sprite access and an `ASSETS` read grant do not by themselves authorize animation, cropping, recoloring, commercial display, or continued use after the ownership epoch changes.
+Animacraft is the intended embodiment layer, but Infinite Stellar accepts only an explicitly supported, versioned projection contract. Season 0 uses a public `image_url`, a validated public Animacraft projection, or a neutral fallback. Enrollment freezes the Maker/root or artifact reference, content/recipe/render commitments where available, content version, rights/policy version, and a permanent fallback piece.
+
+The core loop must not depend on protected-asset decryption. A hash, provenance record, royalty rule, or terms commitment proves neither availability nor display permission. Private Active Sprite access and an `ASSETS` read grant do not by themselves authorize animation, cropping, recoloring, commercial display, or continued use after the ownership epoch changes.
+
+Any non-neutral presentation requires a versioned `ProjectionDisplayLicense` resolved from an accepted authority. It identifies the licensed content commitment, licensor/authority proof, permitted render modes, modification/animation rights, commercial scope, term, historical/post-transfer replay rights, and fallback behavior. If the schema, authority, or required permission cannot be validated, the official client uses the neutral fallback.
 
 Historical replay may show only the material covered by the captured rights policy; otherwise it uses the fallback piece and keeps the factual attribution.
 

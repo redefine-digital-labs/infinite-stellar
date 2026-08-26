@@ -53,13 +53,13 @@ Scope:
 
 - Guest tutorial.
 - Wallet connection and sponsored transactions.
-- Existing Soul selection plus an end-to-end assisted creation spike covering Personal Kiosk, mint, initial content, sponsorship, and abuse limits.
-- Commander Projection and Season Seat binding.
+- Existing Soul selection, canonical eligibility readback, and transfer disclosure.
+- Commander Projection and Season Seat binding with a public Animacraft projection snapshot or neutral fallback.
 - Local mining and encrypted map vault.
 - Planet claim, growth, move, arrival, reinforcement, combat.
 - Basic public map and transaction-state UX.
 - Deterministic end-of-season settlement.
-- Minimal frozen Veilworld Seat and Soul Segment receipts, externally associated with canonical Soul IDs.
+- Minimal frozen `InfiniteStellarSeatReceipt` and `InfiniteStellarSoulSegmentReceipt` objects, externally associated with canonical Soul IDs.
 
 Exit criteria:
 
@@ -67,7 +67,7 @@ Exit criteria:
 - A player can export and restore the private map.
 - Every visible result links to canonical transaction/state evidence.
 - Transfer of a bound Soul invalidates Soul attribution without transferring the civilization.
-- Median time to first valid strategic action is under 5 minutes.
+- Median time from ranked Seat creation to finalized home claim is under 5 minutes.
 
 ## Phase 2 — Closed Alpha
 
@@ -99,6 +99,10 @@ Exit criteria:
 
 **Goal:** Validate acquisition, retention, abuse resistance, and world density with 100–300 active players per universe.
 
+Entry gate:
+
+Beyond this disclosed public planning repository and its repository metadata, no Infinite Stellar domain, internet or social account, app-store listing, external campaign, public event promotion, commercial announcement, or release may proceed until counsel completes name clearance and any required prior written consent is obtained. Phase 3 public onboarding and community activity are contingent on this gate.
+
 Additions:
 
 - Public onboarding and documentation.
@@ -111,7 +115,7 @@ Additions:
 
 Exit criteria:
 
-- Day-1 retention at least 30% and Day-7 at least 15% in the target cohort.
+- Day-1 retention at least 30% and Day-7 at least 15% under the PRD cohort definitions.
 - At least 25% of eligible players return for the next season.
 - North-star interaction/return metric shows a stable or improving trend.
 - No operator-only dependency prevents play or settlement.
@@ -132,7 +136,7 @@ Workstreams:
 - Economic and game-theory review of beacon scoring.
 - Load, queue, sponsor, and sybil abuse exercises.
 - Disaster recovery and incident simulation.
-- Legal review of naming, original implementation, privacy, terms, and license.
+- Reconfirm name clearance and any required written permission; complete remaining legal review of original implementation, privacy, terms, and license.
 
 No balance features are added during audit freeze.
 
@@ -164,7 +168,7 @@ At minimum, assign explicit owners for:
 - Soul protocol integration.
 - Security and release engineering.
 - Community/live operations.
-- Art, narrative, and original brand identity.
+- Art, narrative, and visual system; naming remains governed by the name-clearance gate.
 
 One person may initially hold multiple roles, but each gate still needs an independent reviewer.
 

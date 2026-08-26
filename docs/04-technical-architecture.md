@@ -50,6 +50,18 @@ flowchart TB
     UI -->|"point-read fallback"| Sui
 ```
 
+## Ecosystem integration boundary
+
+The multiplayer engine is a dedicated package, not an orchestration wrapper around the other products:
+
+| Dependency | Read or composition path | Prohibited coupling |
+| --- | --- | --- |
+| Soulidity | Validate pinned interface, canonical `SoulState`, current owner, and ownership epoch; optionally reference directly holder-signed Chronicle memory later | No custody, automatic memory write, general-grant command authority, or gameplay from editable metadata |
+| Animacraft | Snapshot an accepted public projection and provenance commitments at enrollment | Provenance/terms commitments are not display permission; require a separate accepted license resolver or use neutral fallback |
+| Infinite Flow Engine | Optionally host a separate Soul-bound prologue or PvE Scene with independent Run history | No guest tutorial, ranked progression input, or representation of Season, Planet, Arrival, or score authority as a SoloRun |
+
+The official client may present these systems as one journey. Onchain authorization and release evidence still preserve their separate authorities.
+
 ## Onchain object topology
 
 ### Immutable season configuration
@@ -65,11 +77,13 @@ flowchart TB
 - Public-input schema version.
 - Field-encoding version.
 
-`SeasonManifest` references exact engine package, Soulidity dependency/interface, rules, circuit, reference-client core, and metadata hashes. It is the sole authority for base enrollment close, universe opening, start, beacon activation, movement close, season end, settlement window, and record-finalization timestamps. It also freezes the maximum extension, allowed extension causes/windows, cancellation/refund policy, and legal runtime-transition schema.
+`SeasonManifest` references the exact engine package, Soulidity dependency/interface, accepted projection and display-license policy, rules, circuit, reference-client core, and metadata hashes. It is the sole authority for base enrollment close, universe opening, start, recovery close, Last Light activation, movement close, season end, settlement window, and record-finalization timestamps. It also freezes the recovery domain/budget, bounded Beacon candidate-domain construction and commitment, maximum extension, allowed extension causes/windows, cancellation/refund policy, and legal runtime-transition schema.
 
-`SeasonRuntime` is a small shared object containing one-way runtime facts: universe-opened, sampled universe seed, beacon-activated, beacon reference, paused, cumulative extension, cancelled/reason, settlement-started, and final beacon result. Ordinary actions borrow it immutably, so it does not become a mutable global write bottleneck. Effective phase times equal the manifest base times plus the allowed runtime extension.
+`SeasonRuntime` is a small shared object containing one-way runtime facts: universe-opened, sampled universe seed, beacon-activated, beacon reference, paused, total extension used, fixed-size per-phase extension offsets, cancelled/reason, settlement-started, and final beacon result. Ordinary actions borrow it immutably, so it does not become a mutable global write bottleneck. A phase's effective time equals its frozen base time plus its monotonic phase-specific offset.
 
-`PauseCap`, `ExtensionCap`, and `CancelCap` are separate. Their entry points enforce manifest-defined hard limits, time windows, reasons, and irreversible states, and emit events. Permissionless, fixed-cost entropy transitions sample Sui `Random` once at their effective declared times and always commit the result; they have no output-dependent abort path that would permit seed grinding.
+An extension event names one manifest-approved suffix of future phase boundaries and adds the same delta to every boundary in that suffix. It must execute strictly before the earliest affected boundary's current effective time, preserve phase order, and remain under the total extension cap. A boundary whose time has arrived or whose one-way transition has committed is immutable: enrollment, universe opening, recovery, Beacon activation, movement, or another completed phase can never reopen. After movement closes, for example, an allowed operational extension may move a settlement/finalization deadline but cannot resume competitive movement or change the finished season end.
+
+`PauseCap`, `ExtensionCap`, and `CancelCap` are separate. Their entry points enforce manifest-defined hard limits, time windows, reasons, and irreversible states, and emit events. Permissionless, fixed-cost entropy transitions sample Sui `Random` once at their effective declared times and always commit the result; they have no output-dependent abort path that would permit seed grinding. Before Beacon entropy is requested, a permissionless bounded validation transition must attest that every committed candidate meets the manifest's reachability and timing rules. A failed domain takes the predeclared cancellation/no-winner path before sampling and cannot trigger a replacement domain or second draw.
 
 ### Enrollment and identity
 
@@ -77,13 +91,13 @@ For the ranked Alpha, `SeasonSeat` is an immutable/read-only derived identity wi
 
 The fixed-controller choice avoids putting a mutable, owned empire capability into every action. A future delegation design may introduce a separate `EmpireControlCap`, but it must not be a Soul or a general Soul grant.
 
-`CommanderProjection` binds the seat to a canonical Soul for a term. `SoulSeasonSlot`, deterministically keyed by `(season_id, soul_id)`, and a one-time Seat commander slot enforce one Soul per Seat and one Seat per Soul for the full ranked season. Both remain consumed after transfer. The projection stores the Soul's current ownership epoch and becomes logically stale as soon as that epoch changes.
+`CommanderProjection` binds the seat to a canonical Soul for a term. `SoulSeasonSlot`, deterministically keyed by `(season_id, soul_id)`, and a one-time Seat commander slot enforce one Soul per Seat and one Seat per Soul for the full ranked season. Both remain consumed after transfer. The projection stores the Soul's current ownership epoch, accepted visual/provenance commitments, validated `ProjectionDisplayLicense` reference, and fallback reference. It becomes logically stale as soon as the ownership epoch changes.
 
 `SoulSegmentAccumulator` stores a projection-local attribution nonce, bounded counters, achievement bits, last-valid-attribution time, and a rolling commitment. Every update passes canonical `SoulState` and validates projection status, IDs, current owner, and ownership epoch in Move. It never reconstructs facts from indexer events.
 
-`CivilizationState` stores bounded per-seat aggregates such as home status and recovery eligibility. `ScoreCard` stores bounded scoring counters and pending scored-arrival count. Neither contains private coordinates or a growing vector of historical actions.
+`CivilizationState` stores bounded per-seat aggregates: lifecycle status, controlled-planet count, qualifying pending-capture count, home/recovery status, and whether its unique `RecoverySlot` was consumed. These counters are updated atomically with ownership and arrival settlement so recovery and elimination never depend on an indexer scan. `ScoreCard` stores bounded scoring counters and pending scored-arrival count. Neither contains private coordinates or a growing vector of historical actions.
 
-At settlement, the Veilworld engine freezes external `VeilworldSeatReceipt` and `VeilworldSoulSegmentReceipt` objects. A Soul career UI aggregates them by `(soulidity_package_id, soul_state_id, soul_id)`; the current Soulidity core is not mutated. Optional narrative memory is a later, separately approved Soulidity owner transaction.
+At settlement, the Infinite Stellar engine freezes external `InfiniteStellarSeatReceipt` and `InfiniteStellarSoulSegmentReceipt` objects. A Soul career UI aggregates them by `(soulidity_package_id, soul_state_id, soul_id)`; the current Soulidity core is not mutated. Optional narrative memory is a later transaction directly signed by the current holder under the official Infinite Stellar policy; the game does not exercise delegated `SoulGrant` memory authority.
 
 ### Future Open Agent authorization
 
@@ -138,17 +152,17 @@ Movement dispatch is rejected when the computed arrival would fall after `season
 ## Suggested Move modules
 
 ```text
-veilworld::rules           immutable tables and fixed-point math
-veilworld::season          manifest, phases, enrollment, settlement
-veilworld::identity        seats, commander projections, Soul validation
-veilworld::registry        sharded claim namespace and derived planets
-veilworld::planet          lazy production, ownership, upgrades
-veilworld::movement        proof-bound dispatch and arrivals
-veilworld::combat          deterministic reinforcement and combat
-veilworld::score           beacon and season scoring
-veilworld::entropy         one-way universe and beacon randomness transitions
-veilworld::receipts        public events and Soul season records
-veilworld::admin           narrowly scoped operational capabilities
+infinite_stellar::rules           immutable tables and fixed-point math
+infinite_stellar::season          manifest, phases, enrollment, settlement
+infinite_stellar::identity        seats, commander projections, Soul validation
+infinite_stellar::registry        sharded claim namespace and derived planets
+infinite_stellar::planet          lazy production, ownership, upgrades
+infinite_stellar::movement        proof-bound dispatch and arrivals
+infinite_stellar::combat          deterministic reinforcement and combat
+infinite_stellar::score           beacon and season scoring
+infinite_stellar::entropy         one-way universe and beacon randomness transitions
+infinite_stellar::receipts        public events and Soul season records
+infinite_stellar::admin           narrowly scoped operational capabilities
 ```
 
 Module boundaries should make invariants testable. Avoid a generic admin module that can rewrite live player state. Every season pins the exact Soulidity package and interface version whose public getters it validates.

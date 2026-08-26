@@ -34,6 +34,9 @@ Each step should create a meaningful choice:
 - Teaches map privacy, proof generation, claiming, movement, arrival, and settlement.
 - Target completion time: 8–12 minutes.
 - Uses sponsored transactions and a denser, smaller tutorial universe. If it ever uses a simpler circuit, that circuit has a separate domain, verifying key, and non-ranked state.
+- Uses a game-local tutorial authority and creates no Infinite Flow profile or Run history.
+
+A separate, optional Soul-bound prologue or PvE experience may later use a pinned Infinite Flow Engine Scene. Its persistent unranked Run history remains outside Infinite Stellar ranking, progression, and receipts.
 
 ### Testnet Alpha season
 
@@ -42,7 +45,7 @@ Each step should create a meaningful choice:
 - One ruleset and one ranked Human League.
 - Fixed start and end times.
 - No mid-season balance changes.
-- One public beacon objective activated at a manifest-declared time from fresh Sui randomness.
+- One public Last Light Beacon activated at a manifest-declared time from fresh Sui randomness.
 
 ### Mature cadence hypothesis
 
@@ -100,6 +103,20 @@ Energy updates lazily when the planet is touched. The Move package computes curr
 
 Planet upgrades should be shallow in Season 0. Every additional branch expands circuit assumptions, balance risk, UI complexity, and audit surface.
 
+## Seasonal doctrine
+
+At enrollment, every ranked Seat receives the same manifest-defined doctrine budget. The player either accepts the one universal default build or selects a legal combination from the complete published option set. The choice is stored by `season_build_hash`, remains immutable during that season, and resets before the next universe.
+
+Doctrine may create strategic variety only under these rules:
+
+- every eligible Seat can select every option;
+- no option is unlocked by Soul age, rarity, price, memory, history, or Animacraft traits;
+- all costs, effects, conflicts, and limits are fixed in the season manifest;
+- doctrine-dependent math is included in the shared vector suite and balance simulation;
+- no paid or cross-season input expands the budget.
+
+Exact Season 0 doctrine names and constants remain a ruleset decision. If testing shows that variation obscures the core loop, the first season uses one identical default rather than an unreviewed partial system.
+
 ## Movement and arrivals
 
 A move specifies a source commitment, destination commitment, energy amount, source-planet nonce, deadline, and action kind. A zero-knowledge proof establishes the static geometry and binds the action. Move validates live ownership, available energy, range rules, action freshness, and the currently pinned circuit version.
@@ -139,13 +156,13 @@ Season 0 may support social coordination before formal alliance contracts. The p
 
 Formal alliances should be added only when their exit, betrayal, score-sharing, and sybil consequences are specified. A chat message is not an onchain guarantee.
 
-## Endgame: the Beacon
+## Endgame: the Last Light
 
-Pure territorial accumulation often lets an early leader quietly compound. A public beacon creates a visible final conflict and makes cooperation useful.
+Pure territorial accumulation often lets an early leader quietly compound. The Last Light is a public Beacon that creates a visible final conflict and makes cooperation useful. It embodies the central fiction: survival rewards silence, but lasting recognition requires visibility.
 
 Initial protocol:
 
-- One special, public-coordinate beacon planet is created from fresh Sui randomness at the declared final-phase activation time.
+- One special, public-coordinate Beacon planet is selected once from a prevalidated, committed candidate domain using fresh Sui randomness at the declared final-phase activation time.
 - Players interact with it through ordinary proof-bound moves.
 - Its owner and `control_since` timestamp are public.
 - After movement closes and all arrivals due by `season_end` are drained in bounded calls, anyone can call `finalize_beacon`.
@@ -153,6 +170,8 @@ Initial protocol:
 - Finalization writes the winner or no-winner result once and cannot be retried.
 
 This rule is deliberately bounded and avoids iterating every planet or Seat. The hold window reduces last-block sniping without inventing an offchain judge. Its duration remains a balance hypothesis and must be simulated against snowballing, collusion, multi-account sacrifice, griefing, and dominant-alliance capture.
+
+Before Beacon randomness is requested, a permissionless validator must verify every location in the committed bounded candidate domain against reachable source classes, minimum legal travel time, activation, movement close, hold window, extension rules, and season end. Every possible random selector output must leave at least one legal capture-and-hold path. A failing domain follows the manifest's predeclared cancellation/no-winner policy before sampling; the system never observes a result and then rejects, retries, or substitutes it. A no-winner result is valid when players fail to secure a valid objective, not when operators publish an unwinnable timeline.
 
 ## Scoring principles
 
@@ -164,6 +183,29 @@ This rule is deliberately bounded and avoids iterating every planet or Seat. The
 - Use rule-defined score/achievement bands and the beacon-winner flag for permanent records. The UI may sort frozen ScoreCards into an exact leaderboard with a declared `seat_id` tie-break, but exact rank is a derived view and is not used to distribute Season 0 protocol rewards.
 
 Beacon-related pending actions increment a bounded counter on the source Seat's ScoreCard and decrement it when settled. A Seat record cannot finalize while that counter is nonzero or before the beacon result is final. This gives individual finalization without a global loop.
+
+## Elimination and recovery
+
+Losing the final controlled planet must not leave a player in an undefined seven-day state. `CivilizationState` follows a bounded lifecycle:
+
+```text
+Active -> AtRisk
+Active/AtRisk -> RecoveryEligible -> Active
+Active/AtRisk/RecoveryEligible -> Eliminated
+Active/AtRisk/RecoveryEligible/Eliminated -> Settled
+Any non-terminal state -> Cancelled
+```
+
+- **Active:** the Seat controls at least one planet.
+- **AtRisk:** it controls no planet but still has at least one bounded, unsettled arrival that could capture a planet.
+- **RecoveryEligible:** it controls no planet, has no qualifying capture arrival, has not consumed its one recovery, and the effective time is before `recovery_close`.
+- **Eliminated:** it controls no planet, has no qualifying capture arrival, and recovery is unavailable, expired, or already consumed.
+
+`recover_home` consumes the season's unique `RecoverySlot` for that Seat and proves a valid, unclaimed low-level coordinate under a separate recovery domain. The recovered planet starts with the manifest-declared `recovery_energy`, never awards a second home/claim score, and cannot exceed the original starting budget. A Seat cannot recover while it controls a planet or has a qualifying capture arrival.
+
+After `recovery_close`, the transition to `Eliminated` is permissionless and deterministic. An eliminated player may observe public state, use social surfaces, export private data, and receive a participation/settlement record, but cannot create new strategic actions.
+
+The manifest freezes `recovery_close`, proof domain, eligible planet class, starting energy, and the one-recovery limit. Exact-boundary tests cover simultaneous last-planet loss, same-timestamp arrivals, recovery claims, stale objects, and season cancellation.
 
 ## Human and agent play
 
@@ -191,7 +233,7 @@ Acceptable candidates include cosmetic commander projections, commemorative pres
 
 - A failed proof or transaction must explain whether the cause is local proving, stale state, invalid geometry, sponsorship, or chain execution.
 - The client must simulate when possible before asking for a signature.
-- A player who loses the home planet should retain a bounded recovery path until the declared elimination phase.
+- A player who loses every controlled planet receives the single bounded recovery path above until `recovery_close`.
 - Congestion must not silently favor players with faster RPC access.
 - The game must offer encrypted local map export and recovery warnings; losing browser storage should not be a surprise.
 - Settlement and season-end behavior must be visible before a player commits a high-value move.

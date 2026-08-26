@@ -10,7 +10,10 @@ Before enrollment opens, publish and pin:
 
 - Season ID and network.
 - Start, phase-change, end, and settlement times.
+- Recovery-close time, proof domain, one-use limit, eligible planet class, and starting energy.
 - Package ID and package bytecode hash.
+- Pinned Soulidity package/interface and supported ownership predicate.
+- Accepted Animacraft projection policy, `ProjectionDisplayLicense` schema/resolver, authority proof rules, and public fallback.
 - Rules object ID and canonical rules hash.
 - Circuit config ID and all artifact hashes.
 - Reference-client core/prover hash and source revision.
@@ -47,7 +50,7 @@ No mid-season balance patch is allowed. The manifest's reference transaction/pro
 
 ### Extension
 
-`ExtensionCap` may increase `cumulative_extension_ms` only for a manifest-listed objective network or protocol availability failure, before settlement starts, and up to `max_extension_ms`. All game paths derive effective timestamps from the frozen base time plus this runtime value. The transition is announced through signed and onchain channels. Operators cannot extend because a preferred player is losing.
+`ExtensionCap` may add a delta only for a manifest-listed objective network or protocol availability failure, within its call window and up to total `max_extension_ms`. Each allowed cause maps to a declared suffix of phase boundaries that are still in the future; the same delta is added to those phase-specific offsets. The call must precede the earliest affected effective boundary, preserve phase order, and cannot alter any boundary whose time has arrived or whose one-way transition has committed. After movement closes, only a separately allowed settlement/finalization deadline may move—competitive movement and the finished season cannot reopen. The transition is announced through signed and onchain channels. Operators cannot extend because a preferred player is losing.
 
 ### Cancellation
 
@@ -67,13 +70,15 @@ Public-health dashboards should cover:
 - Arrival queue depth and settlement lag.
 - Sponsor spend, rejection rate, and abuse indicators.
 - Indexer checkpoint lag and reconciliation errors.
-- Tutorial funnel and time to first valid action.
+- Tutorial funnel and ranked Seat creation-to-finalized-home-claim latency.
 - Meaningful interaction, retention, and next-season return.
 - Support volume and incident status.
 
 Never attach coordinates, local labels, map-vault content, raw worker messages, or arbitrary transaction context to analytics.
 
 ## Community rollout
+
+Except for this disclosed planning repository and its repository metadata, no domain, internet or social account, app-store listing, external campaign whether paid or unpaid, public event promotion, commercial announcement, or release may use the Infinite Stellar brand until counsel completes clearance and any required prior written consent is obtained. Repository planning under a working name is not evidence of clearance.
 
 ### Before closed Alpha
 
@@ -93,19 +98,20 @@ Never attach coordinates, local labels, map-vault content, raw worker messages, 
 ### Before mainnet
 
 - Publish audit reports, ceremony artifacts, reproducible hashes, and unresolved limitations.
+- Reconfirm product-name clearance and retain evidence of any written permission required for the current brand.
 - Announce exact seat caps and sponsor terms.
 - Rehearse support coverage across the first 24 hours and season end.
 - Prepare chain-status, client-status, and incident communication channels that remain available if the main site fails.
 
-## Soul chronicle operations
+## Soul Echo and Chronicle operations
 
 After settlement:
 
 1. Freeze compact factual receipts from bounded onchain Seat/Soul accumulators; events provide independently retrievable leaves and evidence, not an indexer-invented root.
 2. Segment attribution by Soul ownership epoch.
-3. Aggregate external Veilworld receipts on the Soul career view without claiming to modify `SoulState`.
+3. Aggregate external Infinite Stellar receipts on the Soul career view without claiming to modify `SoulState`.
 4. Generate optional narrative interpretation separately.
-5. Let the current holder review and submit a separate supported Soulidity memory transaction.
+5. Let the current holder review and directly sign a separate supported Soulidity memory transaction; the official flow never substitutes a `SoulGrant` grantee.
 6. Preserve links from claims to onchain evidence.
 7. Mark corrected or disputed interpretations without rewriting the underlying receipt.
 

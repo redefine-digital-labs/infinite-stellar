@@ -10,7 +10,7 @@ Use independent Sui objects and derive natural contention boundaries. Do not rep
 
 ### D-002 — Soul is the persistent actor, not the empire
 
-The Soul supplies persistent identity. `CommanderProjection` is its seasonal role. `CivilizationState` and `SeasonSeat` hold temporary competitive state. Veilworld relationships and career facts are external receipts associated with the Soul, not fields already present in `SoulState`.
+The Soul supplies persistent identity. `CommanderProjection` is its seasonal role. `CivilizationState` and `SeasonSeat` hold temporary competitive state. Infinite Stellar relationships and career facts are external receipts associated with the Soul, not fields already present in `SoulState`.
 
 ### D-003 — Soul progression is non-power progression
 
@@ -48,9 +48,9 @@ Sui checkpoints are authoritative. PostgreSQL state must be reproducible from a 
 
 Every season pins an immutable engine/dependency set, rules, circuit, proving artifacts, reference-client core, and policy hashes. The engine `UpgradeCap` is consumed before the manifest is finalized. No mid-season balance changes.
 
-### D-012 — Original product identity and implementation
+### D-012 — Original creative work and implementation
 
-Veilworld may learn from the design space opened by Dark Forest, but uses original name, art, writing, Move code, and circuits unless a deliberate GPL-compatible strategy is approved.
+Infinite Stellar may learn from the design space opened by Dark Forest, but requires original fiction, art, writing, and—if implementation begins—original Move code and circuits unless a deliberate GPL-compatible strategy is approved.
 
 ### D-013 — One ranked binding per Soul and Seat per season
 
@@ -58,7 +58,7 @@ Both the Soul slot and Seat commander slot remain consumed for the entire season
 
 ### D-014 — Receipts are external and attribution is live-validated
 
-Veilworld issues frozen Seat and Soul Segment receipts from bounded onchain accumulators. Every Soul-attributed update validates the canonical SoulState owner and epoch at execution. Optional narrative memory is a separate holder-approved Soulidity transaction.
+Infinite Stellar issues frozen Seat and Soul Segment receipts from bounded onchain accumulators. Every Soul-attributed update validates the canonical SoulState owner and epoch at execution. The official optional Chronicle flow requires a separate Soulidity transaction directly signed by the current holder and does not use delegated `SoulGrant` memory authority.
 
 ### D-015 — Onchain entropy, not operator-selected seeds
 
@@ -72,6 +72,20 @@ The Season Seat controller is fixed at enrollment and human actions validate `ct
 
 Beacon finalization writes an onchain winner or no-winner result after its bounded arrival queue is drained. Seat ScoreCards are onchain; exact leaderboard order is a checkpoint-reproducible UI view and is not used for Season 0 protocol rewards.
 
+### D-018 — Infinite Stellar is the canonical working brand
+
+The public pre-production working name is **Infinite Stellar** and the repository slug is `infinite-stellar`. “Infinite” describes one Soul crossing an open-ended succession of finite seasonal worlds; it never describes an unbounded Run, queue, or season. “Stellar” is used in its astronomical sense. The product is built on Sui and is not affiliated with, sponsored by, or endorsed by the Stellar Development Foundation or the Stellar network.
+
+This decision records the user's working-name choice; it does not establish a legal right or represent written consent. The repository openly records that consent has not been obtained. Except for this disclosed planning repository and its repository metadata, domains, internet or social accounts, app-store listings, external campaigns whether paid or unpaid, public event promotion, commercial announcements, and releases stay blocked until counsel completes clearance and any required prior written consent is obtained.
+
+### D-019 — Ecosystem layers remain separate
+
+Soulidity supplies canonical identity and ownership epochs. Animacraft is the intended versioned visual embodiment layer. Infinite Flow Engine may support a separate Soul-bound prologue or PvE Scene with its own persistent unranked Run history; it cannot provide the no-Soul guest tutorial. The asynchronous multiplayer universe has its own Infinite Stellar Season, Seat, Civilization, Planet, Arrival, score, and settlement authority. No integration is described as shipped until an exact package/interface version passes end-to-end acceptance.
+
+### D-020 — The repository is open source under MIT
+
+Planning documents and future original implementation in this repository use the MIT License. Dependencies, copied material, generated artifacts, fonts, art, audio, and other third-party assets require separate license provenance.
+
 ## Working hypotheses
 
 These require prototypes or playtests before becoming accepted decisions:
@@ -82,12 +96,12 @@ These require prototypes or playtests before becoming accepted decisions:
 - Browser-local Groth16 proving can meet a 5-second desktop p95.
 - Sharded derived-object claims and per-planet writes meet target throughput.
 - A bounded destination arrival index gives the best correctness/complexity tradeoff.
-- Assisted Soul creation plus sponsored transactions can reduce onboarding without unacceptable abuse.
+- A game-local guest tutorial plus sponsored transactions can reduce onboarding without unacceptable abuse.
 - Score/achievement bands are better permanent Soul receipts than exact ranks.
 
 ## Open decisions
 
-- Final product name and visual direction.
+- Final visual direction and formal written product-name clearance.
 - Exact coordinate hash and Poseidon parameter set.
 - Public-input packing schema.
 - Planet density and generation function.
@@ -97,7 +111,7 @@ These require prototypes or playtests before becoming accepted decisions:
 - Whether formal alliances ship before mainnet.
 - Mobile proving support for Season 0.
 - Production data provider and full-node strategy.
-- Long-term repository and asset licenses.
+- Long-term asset, font, audio, and content licenses.
 - Whether high-stakes seasons justify a Soulidity core/market extension for `RuntimeLock`.
 
 ## Decision criteria

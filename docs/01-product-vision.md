@@ -2,13 +2,15 @@
 
 ## One-sentence concept
 
-Veilworld is a persistent-identity, seasonal strategy universe on Sui where players privately discover a shared map, publicly prove valid actions, build civilizations that eventually disappear, and carry the resulting memories forward through their Souls.
+Infinite Stellar is a persistent-identity, seasonal strategy game on Sui where players privately discover shared universes, publicly prove hidden-geometry actions, build civilizations that eventually disappear, and carry verifiable history forward through their Souls.
 
 ## The player fantasy
 
 The player should feel like an explorer in a universe that exists whether or not the official client is open. The map begins as darkness. Knowledge has value because it is earned locally and is not automatically published. Every move exposes intent while preserving enough uncertainty for scouting, deception, diplomacy, and betrayal to matter.
 
-At the same time, the game should not feel like a one-off wallet leaderboard. A Soul enters each universe with a recognizable identity, adopts a seasonal command role, forms relationships, and leaves with an independently verifiable chronicle. The strategic board resets; the character's history does not.
+At the same time, the game should not feel like a one-off wallet leaderboard. A Soul enters each universe with a recognizable identity, adopts a seasonal command role, forms relationships, and leaves with independently verifiable Echoes plus an optional holder-approved Chronicle. The strategic board resets; the character's history does not.
+
+“Infinite” describes the number of worlds a Soul may experience over time. It does not describe the duration of one season, the size of a mutable collection, or a promise that a single universe never settles.
 
 ## Why Sui
 
@@ -59,7 +61,7 @@ A season has a declared start, end, ruleset, and settlement process. Planetary p
 
 ### 4. Souls create continuity without power creep
 
-Veilworld associates public chronicles, provenance-tagged relationships, records of past doctrine choices, and cosmetic expression with a Soul through external receipts and optional holder-approved memory. Functional doctrine and build state belong to the Season Seat and reset. A Soul does not keep energy, planets, combat modifiers, resource multipliers, faster proving, privileged map data, or ranking bonuses.
+Infinite Stellar associates public Echoes, provenance-tagged relationships, records of past doctrine choices, and cosmetic expression with a Soul through external receipts. An optional Chronicle is separately reviewed and directly signed by the current holder. Animacraft is the intended versioned embodiment layer, but projection provenance never enters ranked math. Functional doctrine and build state belong to the Season Seat and reset. A Soul does not keep energy, planets, combat modifiers, resource multipliers, faster proving, privileged map data, or ranking bonuses.
 
 ### 5. Social strategy is a first-class system
 
@@ -88,14 +90,14 @@ Players should have reasons to cooperate before they have reasons to fight. Shar
 Season 0 proves one complete strategic arc:
 
 1. Enter through a guest tutorial.
-2. Select an existing Soul or complete the separately engineered assisted Soul-creation flow.
+2. Select an existing eligible Soul owned by the connected wallet.
 3. Bind the Soul as commander of a fresh Season Seat.
 4. Discover and claim a home planet.
 5. Grow energy and extend reach.
 6. Move between known planets using a locally generated proof.
 7. Attack, defend, cooperate, and contest a public endgame beacon.
 8. Settle the season deterministically.
-9. Receive a Veilworld-issued factual season receipt and optionally approve a separate narrative-memory transaction.
+9. Receive a factual season receipt issued by Infinite Stellar and optionally approve a separate narrative-memory transaction.
 10. Return with the same Soul to a new universe without carrying power forward.
 
 Out of scope for Season 0:
@@ -108,6 +110,7 @@ Out of scope for Season 0:
 - User-created worlds.
 - Complex crafting or technology trees.
 - Governance token or DAO control of live balance.
+- Soul minting, Personal Kiosk creation, or Animacraft authoring inside the game.
 
 ## Business and ecosystem posture
 
@@ -119,7 +122,7 @@ Any market around Souls must preserve a clean rule: the buyer acquires the Soul 
 
 ### North-star metric
 
-The number of players who complete at least three meaningful strategic interactions in a season and return for the next season.
+The share of source-season eligible controllers who complete at least three meaningful strategic interactions and then create a valid Seat and finalize one ranked action in the next comparable Human League season.
 
 A meaningful interaction is a state-changing action involving another player or a contested objective—for example combat, reinforcement, rescue, a coordinated beacon contribution, or a reciprocal alliance action. Routine self-transfers and spam do not count.
 
@@ -127,7 +130,7 @@ A meaningful interaction is a state-changing action involving another player or 
 
 | Area | Target |
 | --- | --- |
-| Time to first valid action | Under 5 minutes |
+| Ranked Seat to first finalized home claim | Under 5 minutes p50 |
 | Tutorial completion | At least 60% |
 | Day-1 retention | At least 30% |
 | Day-7 retention | At least 15% |
@@ -136,13 +139,17 @@ A meaningful interaction is a state-changing action involving another player or 
 | Social/competitive participation | At least 40% complete one meaningful PvP or cooperation event |
 | Client privacy | Zero coordinate values in logs, analytics, crash reports, or replay tools |
 
-These targets are learning thresholds, not promises. They should be segmented by new/returning player, wallet type, device capability, and proof latency.
+These targets are learning thresholds, not promises. They use the [PRD metric definitions](10-product-requirements.md#metric-event-and-cohort-definitions) and are segmented by new/returning player, wallet type, device capability, and proof latency.
 
 ## Positioning language
 
 Use:
 
-> A hidden universe that dies every season—and Souls that remember it.
+> One Soul. Infinite worlds. Verifiable history.
+
+Supporting line:
+
+> Universes reset. Civilizations disappear. The Soul remembers.
 
 Avoid:
 
@@ -150,3 +157,5 @@ Avoid:
 - “Play-to-earn,” which misstates the product goal.
 - “Your NFT hero levels forever,” which suggests permanent competitive advantage.
 - “Everything happens onchain,” unless the onchain/offchain boundary is explained precisely.
+- “An endless season,” which misstates the bounded seasonal design.
+- “Built on Stellar,” because the product is built on Sui and has no Stellar-network affiliation.

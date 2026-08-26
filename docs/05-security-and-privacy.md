@@ -11,6 +11,7 @@ The game combines smart-contract, zero-knowledge, browser, economic, and live-op
 - Planet ownership, energy, fleets, score, and settlement correctness.
 - Coordinate preimages and the private map graph.
 - Soul ownership and ownership-epoch integrity.
+- Projection provenance, display rights, and fallback availability.
 - Season Seat and command capabilities.
 - Proving and verifying artifact integrity.
 - Sponsor funds and anti-abuse budget.
@@ -31,6 +32,8 @@ The game combines smart-contract, zero-knowledge, browser, economic, and live-op
 | Arrival queue denial of service | Hard queue bounds, action fees/rate limits, permissionless bounded settlement |
 | Sponsor draining | Per-seat/IP/device heuristics, budgets, captchas where appropriate, circuit breaker |
 | Soul transfer authority leak | Canonical owner and `ownership_epoch` validation on every Soul-attributed path |
+| Projection substitution or rights loss | Freeze exact visual/provenance commitments and policy version; retain a neutral permanent fallback |
+| Dependency/package drift | Pin exact Soulidity, Animacraft, optional Infinite Flow Engine, circuit, and client-core identities in the applicable season manifest or separate product release record |
 | Agent overreach | Separate scoped `WorldCommandCap`; never reuse broad Soul grants |
 | Coordinate exfiltration | Local-only witnesses, worker isolation, telemetry schema denylist, no session replay on map |
 | Plugin exfiltration | No executable plugins initially; later capability manifest and isolated worker |
@@ -126,4 +129,4 @@ Mainnet is blocked until all of the following are true:
 
 ## Responsible disclosure
 
-Before public testnet, publish a `SECURITY.md` with an encrypted reporting channel, expected response times, safe-harbor statement, and explicit scope for Move, circuits, client privacy, sponsor, and indexer. Do not direct vulnerability reports into public issues.
+The repository publishes a [security policy](../SECURITY.md) and uses GitHub private vulnerability reporting during pre-production. Before public testnet, expand it with supported versions, response targets, safe harbor, a funded bounty, and explicit scope for Move, circuits, client privacy, sponsor, indexer, and integration boundaries. Do not direct vulnerability details into public issues.

@@ -20,11 +20,22 @@ This document records primary references behind the planning assumptions. It is 
 
 ## Soulidity integration baseline
 
-The current Soulidity protocol already models a canonical `SoulState` with `current_owner` and an incrementing `ownership_epoch`. A supported Market purchase rotates the owner and increments the epoch; listing alone does not. Existing grants snapshot the epoch and become unusable after owner rotation. Veilworld should compose with those invariants rather than create a second owner registry.
+The current Soulidity protocol already models a canonical `SoulState` with `current_owner` and an incrementing `ownership_epoch`. A supported Market purchase rotates the owner and increments the epoch; listing alone does not. Existing grants snapshot the epoch and become unusable after owner rotation. Infinite Stellar should compose with those invariants rather than create a second owner registry.
 
-The current core does **not** provide Scene/Outcome fields, structured relationship or season records, a starter-Soul primitive, or a Runtime Lock. Veilworld receipts therefore remain external objects associated by canonical IDs. A holder-approved narrative memory update is a separate Soulidity transaction. Blocking transfers during a season would require a future Soulidity market/transfer-policy extension; a Veilworld-only lock cannot enforce it.
+The current core does **not** provide Scene/Outcome fields, structured relationship or season records, a starter-Soul primitive, or a Runtime Lock. Infinite Stellar receipts therefore remain external objects associated by canonical IDs. Soulidity permits owner or authorized live `MEMORY`-grantee appends; the stricter official Infinite Stellar Chronicle flow requires a separate transaction directly signed by the current holder and never uses delegated grant authority. Blocking transfers during a season would require a future Soulidity market/transfer-policy extension; an Infinite Stellar-only lock cannot enforce it.
 
 Implementation work must pin the exact Soulidity package and interface version used by each season.
+
+## Product integration references
+
+- The [Soulidity repository](https://github.com/redefine-digital-labs/soulidity) is the source for the canonical identity package and ownership-epoch behavior. A season must pin a reviewed interface rather than track a moving branch.
+- The [Animacraft repository](https://github.com/redefine-digital-labs/animacraft) is the intended source for versioned visual projection and provenance commitments. Those commitments can identify evidence or terms but do not themselves grant animation, modification, commercial-display, duration, or post-transfer rights. Infinite Stellar requires a separate accepted display-license resolver or uses a neutral fallback; planning does not imply that every authoring or protected-asset path is production-ready.
+- [Infinite Flow Engine](https://github.com/redefine-digital-labs/infinite-flow-engine) is a bounded Scene/SoloRun engine that requires a canonical Soul/profile and records persistent Run history. It may frame a separate Soul-bound prologue or PvE experience, but it cannot provide the no-Soul guest tutorial and is not the multiplayer universe authority.
+
+## Name and brand boundary
+
+- The [Stellar Development Foundation brand policy](https://stellar.org/brand-policy) identifies “Stellar” as a word trademark and states that using it in a product or project name requires prior written consent. Infinite Stellar uses the word astronomically, is built on Sui, and is not affiliated with the Stellar network, but written consent has not been obtained. The public planning name is unconfirmed and may require another rename. Except for this disclosed planning repository and its repository metadata, domains, internet or social accounts, app-store listings, external campaigns whether paid or unpaid, public event promotion, commercial announcements, and releases remain blocked until counsel completes clearance and any required prior written consent is obtained.
+- An exact [Infinite-Stellar architectural lighting product](https://assets.zaneen.com/series/Infinite-Stellar/A5INST-MOD-SYS.pdf) also exists. Product-name review must cover software/game classes, target markets, domains, stores, and social accounts before commercial launch.
 
 ## Claims requiring prototype validation
 
