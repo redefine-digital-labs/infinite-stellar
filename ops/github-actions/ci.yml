@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web and SDK
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Validate SDK and player client
+        run: npm run validate:web
+
+      - name: Validate public documentation
+        run: npm run lint:docs
+
+      - name: Verify pinned Sui testnet deployment
+        run: npm run verify:deployment
+
+  move:
+    name: Sui Move
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SUIUP_INSTALL_DIR: ${{ runner.temp }}/sui-bin
+      SUIUP_DEFAULT_BIN_DIR: ${{ runner.temp }}/sui-bin
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pinned official Sui toolchain
+        run: |
+          curl --fail --silent --show-error --location \
+            https://raw.githubusercontent.com/MystenLabs/suiup/02f1ee10ce3cc390771bb7de17c6a27f46d0c2f2/install.sh \
+            | sh
+          echo "${SUIUP_INSTALL_DIR}" >> "${GITHUB_PATH}"
+          "${SUIUP_INSTALL_DIR}/suiup" install sui@testnet-v1.78.1 --yes
+
+      - name: Build, test, and lint Move package
+        working-directory: move/infinite_stellar
+        run: |
+          sui --version
+          sui move build --warnings-are-errors
+          sui move test --threads 1 --warnings-are-errors
+          sui move lint

@@ -17,7 +17,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "eslint apps packages --max-warnings=0",
-    "lint:docs": "markdownlint-cli2 README.md CONTRIBUTING.md SECURITY.md 'docs/**/*.md' 'apps/**/*.md' 'packages/**/*.md' move/infinite_stellar/README.md",
+    "lint:docs": "markdownlint-cli2 README.md CONTRIBUTING.md SECURITY.md 'docs/**/*.md' 'apps/**/*.md' 'packages/**/*.md' 'ops/**/*.md' move/infinite_stellar/README.md",
     "validate:web": "npm run typecheck && npm run lint && npm run test && npm run build",
     "verify:deployment": "node ops/verify-sui-deployment.mjs"
   },
