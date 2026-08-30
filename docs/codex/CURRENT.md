@@ -1,15 +1,15 @@
 # Infinite Stellar Current Phase
 
 - **Status:** Complete
-- **Phase:** Infinite Stellar public rebrand
-- **Goal:** Rebrand the public planning repository and local checkout as Infinite Stellar, keep every public project document in English, publish the World Bible and PRD, preserve truthful pre-production status, and verify the renamed GitHub repository.
-- **Constraints:** No game implementation, Sui transaction, package publication, or product change to Soulidity, Animacraft, or Infinite Flow Engine. No claim that an integration is already shipped. No external brand expansion until name clearance and any required prior written consent.
-- **Acceptance checks:** Canonical naming and English-only public prose; MIT and private vulnerability reporting; Markdown, relative/external link, and diff validation; two independent audits with no P0/P1/P2 findings; public GitHub rename and old-URL redirect; clean synchronized `main`.
+- **Phase:** Soul-to-stellar onboarding specification
+- **Goal:** Publish a complete English onboarding and narrative-flow specification and reconcile the canonical product authorities with the address-to-Soul-to-Founding-Planet model.
+- **Constraints:** No game implementation, Move package, circuit, deployment, or product change to Soulidity, Animacraft, or Infinite Flow Engine. Preserve private-map boundaries, fixed Seat control, truthful pre-production status, and the external-brand gate.
+- **Acceptance checks:** Normative screen/state/narrative specification; deterministic Seat-first routing and ranked controller uniqueness; `AwaitingHome` lifecycle and Seat-owned Founding Planet; dual home-search/claim timing; global availability resolution; no-Soul, multiple-Soul, returning, transfer, buyer, wrong-wallet, recovery, vault-loss, privacy, and accessibility branches; English, Markdown, link, terminology, diff, and independent P0/P1 reviews: PASS.
 - **Repository:** `https://github.com/redefine-digital-labs/infinite-stellar`
-- **Reviewed product commit:** `7ca773d0f327d2ab20ee95a440464b66610ad177`
-- **Durable decision:** Soul is the persistent actor; Animacraft is its licensed versioned embodiment; Commander Projection is the seasonal role; Season Seat controls a disposable Civilization whose ranked state resets.
-- **Risk:** Infinite Stellar is an unconfirmed working name. Stellar Development Foundation prior written consent has not been obtained, and an exact Infinite-Stellar lighting product exists. Another rename may be required.
-- **Exact next action:** Run the three-week technical go/no-go prototype against the frozen P0 requirements without external brand expansion.
-- **Latest handoff:** `docs/codex/handoffs/2026-08-26-infinite-stellar-public-rebrand.md`
+- **Reviewed product commit:** `ae6464e51c8e0db441a8ef8ccbe6b554a5967c81`
+- **Durable decision:** Addresses authorize; Souls cross; Animacraft gives form; Commander Projections bind roles; deterministic fixed-controller Seats control; Civilizations begin `AwaitingHome`; a later proof-bound claim creates the Seat-owned Founding Planet.
+- **Risk:** Infinite Stellar remains an unconfirmed working name, and every implementation/security/performance claim still requires prototype evidence.
+- **Exact next action:** Start a new bounded Phase 0 technical go/no-go task for deterministic Seat derivation, atomic capacity enrollment, seed timing, capped availability accounting, global home-window resolution, and `claim_home`.
+- **Latest handoff:** `docs/codex/handoffs/2026-08-30-soul-to-stellar-onboarding.md`
 
-Read the linked handoff before starting implementation. Start a new bounded phase if the objective changes materially.
+Read the linked handoff before implementation. Start a new bounded phase if the objective changes materially.
