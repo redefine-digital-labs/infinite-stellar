@@ -95,7 +95,8 @@ types, bindings, owners, initial digests, and closed readiness flags.
 - Desktop at 1280 × 720: PASS.
 - Mobile at 390 × 844: PASS; document width equals viewport width.
 - Wallet discovery and the fail-closed live gate: PASS.
-- GitHub `main` and `codex/testnet-release`: PASS at final source commit.
+- GitHub `main` and `codex/testnet-release` contain the final application source
+  commit and this release handoff: PASS.
 - Public repository prose, secret scan, private map-data review, and clean diff
   checks: PASS.
 
@@ -115,7 +116,9 @@ types, bindings, owners, initial digests, and closed readiness flags.
 
 ## Recovery
 
-- GitHub recovery point: `3d2bcf1e3fc17effe9a7df4751e415214a674b0b`.
+- GitHub application recovery point:
+  `3d2bcf1e3fc17effe9a7df4751e415214a674b0b`; later commits only record the
+  release handoff.
 - Vercel rollback candidate: `dpl_2Vx35rcqPrDrCR48Sdp2AK17UGmd`.
 - The Sui package and canary objects are public and cannot be deleted. They are
   isolated from players by their manifest dates, league, capacity, and false
