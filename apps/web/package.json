@@ -24,7 +24,7 @@
     "@types/react-dom": "19.2.5",
     "@vitejs/plugin-react-swc": "4.3.3",
     "jsdom": "27.4.0",
-    "typescript": "5.9.3",
+    "typescript": "7.0.2",
     "vite": "8.2.2",
     "vitest": "4.1.11"
   }
