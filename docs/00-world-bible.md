@@ -29,7 +29,7 @@ The Veil is not supernatural encryption inside the fiction. It is the observable
 
 ## Souls
 
-A Soul is a persistent digital life that enters many seasonal universes.
+A Soul is a persistent digital life that enters many seasonal universes. A connected address authorizes entry by proving current canonical ownership, but the address is the command key rather than the traveler.
 
 It is simultaneously:
 
@@ -46,13 +46,13 @@ A Soul is not:
 - an accumulated bundle of ranked modifiers;
 - an authority to control a Season Seat after ownership changes.
 
-The holder chooses which Soul enters a season. The protocol determines whether that holder is currently authorized. The Soul supplies continuity; the Season Seat supplies control and accountability.
+The holder chooses which Soul enters a season. The protocol determines whether that address is currently authorized and whether its one ranked controller slot remains unused. The Soul supplies continuity; the fixed Season Seat supplies control, Planet custody, and accountability.
 
 ## Embodiment
 
-Souls do not enter a universe as abstract identifiers. They take on a temporary **Commander Projection**.
+Souls do not enter a universe as abstract identifiers. They take visible form through accepted visual material and a temporary seasonal role through a **Commander Projection**.
 
-Animacraft is the intended embodiment layer. It can provide a versioned visual composition and provenance snapshot for the command portrait, map presence, signal language, fleet skin, and post-season presentation. Infinite Stellar freezes the accepted projection reference and fallback at enrollment.
+Animacraft is the intended source of versioned visual composition and provenance for the command portrait, map presence, signal language, fleet skin, and post-season presentation. Infinite Stellar validates the display authority, freezes the accepted visual reference and fallback, and records them inside the Commander Projection's Soul/Seat/role binding at enrollment. The Animacraft artifact is not itself the game role or an authorization object.
 
 The projection expresses identity but never changes ranked math. A rare part, expensive Soul, elaborate recipe, protected asset, or historical costume cannot increase energy, range, defense, proof speed, sponsorship priority, or score.
 
@@ -62,11 +62,14 @@ If the selected presentation later becomes unavailable or its display rights no 
 
 | Concept | Narrative meaning | System meaning | Persistence |
 | --- | --- | --- | --- |
+| **Address/controller** | The command key presented by the holder | Enrollment authorizer and fixed Seat controller | One Seat per league/season |
 | **Soul** | The traveler and witness | Canonical Soulidity identity | Cross-season |
-| **Commander Projection** | The body and role used in one universe | Frozen Soul/visual/Seat binding | Historical |
+| **Animacraft visual/fallback** | The traveler's visible form | Licensed versioned presentation input | Referenced historically under its policy |
+| **Commander Projection** | The role taken in one universe | Frozen Soul/visual/ownership-epoch/Seat binding | Historical |
 | **Season Seat** | The command throne | Controller, league, accountability, limits | One season |
-| **Civilization** | The temporary society built by the player | Competitive world state | Resets |
-| **Planet** | A source of light, reach, and strategic possibility | Independently mutable game object | One universe |
+| **Civilization** | The temporary society built by the player | Competitive lifecycle and bounded aggregates; begins `AwaitingHome` | Resets |
+| **Founding Planet** | The civilization's First Light | First Planet owned through `owner_seat_id` | One universe |
+| **Planet** | A source of light, reach, and strategic possibility | Independently mutable, Seat-owned game object | One universe |
 | **Energy** | A civilization's capacity to act | Regenerating movement and combat resource | Resets |
 | **Arrival** | A commitment traveling through hidden space | Delayed reinforcement, colonization, or attack | Until settled |
 | **Echo** | A fact that survived collapse | External onchain receipt or receipt leaf | Permanent |
@@ -77,11 +80,11 @@ If the selected presentation later becomes unavailable or its display rights no 
 
 ### 1. Embodiment
 
-The holder chooses a Soul, selects a projection, reviews its public exposure, and binds it to a new Season Seat. Every ranked Seat begins with the same strategic budget.
+The holder authorizes entry with the current-owner address, chooses a Soul and visual, reviews public exposure, and atomically binds them to a new fixed-controller Season Seat. The resulting Civilization begins `AwaitingHome`, with no Planet. Every ranked Seat begins with the same strategic budget, and one address may create at most one ranked Seat per league and season.
 
 ### 2. Silent Dawn
 
-The universe opens. Players search locally for a valid home region, claim one starting planet, and build an initial private map. Most civilizations do not yet know whether they are alone.
+The universe opens and its seed makes local search possible. Players may prepare privately while the onchain claim gate is not yet open or is paused. Once claiming is canonically available, a finalized `claim_home` creates the Seat-owned Founding Planet and changes the Civilization from `AwaitingHome` to `Active`. Most civilizations do not yet know whether they are alone.
 
 ### 3. First Contact
 
@@ -168,7 +171,7 @@ Infinite Stellar may learn from the hidden-information and fully onchain design 
 The project owns its central fiction:
 
 - Souls cross an infinite succession of finite stellar worlds.
-- Animacraft projections give those Souls temporary bodies.
+- Accepted Animacraft visuals give those Souls visible form, while Commander Projections bind their temporary roles.
 - civilizations reset to protect competitive equality;
 - factual Echoes survive as verifiable history;
 - the Last Light turns visibility into the final strategic choice.

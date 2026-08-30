@@ -2,7 +2,7 @@
 
 ## Canonical definition
 
-In Infinite Stellar, a Soul is the persistent digital life that repeatedly enters temporary worlds and takes on roles inside them.
+In Infinite Stellar, a Soul is the persistent digital life that repeatedly enters temporary worlds and takes on roles inside them. A wallet address proves current ownership and authorizes entry; it is the command key, not the actor.
 
 It has three simultaneous product functions:
 
@@ -10,11 +10,11 @@ It has three simultaneous product functions:
 2. **Relationship node:** a stable subject that can build trust, rivalry, mentorship, and affiliation across seasons.
 3. **Career archive:** the holder of bounded, verifiable records about what happened in prior worlds.
 
-The avatar is one expression of the Soul, not the Soul's entire role. The seasonal commander is one role performed by the Soul, not a permanent class. The empire belongs to the player's season seat, not to the Soul.
+The Animacraft visual or neutral fallback is one expression of the Soul, not the Soul's entire role. `CommanderProjection` is the frozen seasonal binding around that expression, not a second identity. The empire and every Planet belong to the fixed Season Seat, not to the Soul.
 
 The shortest system definition is:
 
-> Soul is the actor. Commander Projection is the role. Civilization State is the seasonal world state.
+> Address authorizes. Soul enters. Animacraft gives form. Commander Projection binds the role. Season Seat controls. Civilization State resets.
 
 ## Why this separation matters
 
@@ -24,11 +24,14 @@ The proposed model preserves identity while resetting power.
 
 ```mermaid
 flowchart LR
-    W["Wallet / trainer"] -->|owns and authorizes| SS["Season Seat"]
+    W["Wallet / fixed controller"] -->|proves current ownership| S["Soul + Soul State"]
+    W -->|claims one ranked controller key| SS["Season Seat"]
+    A["Licensed Animacraft visual or fallback"] -->|frozen presentation| CP["Commander Projection"]
+    S -->|owner + epoch snapshot| CP
+    CP -->|binds Soul + visual + role| SS
     SS -->|controls| C["Civilization State"]
-    W -->|binds for one term| CP["Commander Projection"]
-    S["Soul + Soul State"] -->|is projected through| CP
-    CP -->|represents, narrates, remembers| C
+    SS -->|owner_seat_id| P0["Founding Planet and later Planets"]
+    C -->|lifecycle and aggregates| P0
     C -->|settled facts| R["External Infinite Stellar receipts"]
     R -->|aggregated by Soul page| P["Soul career view"]
     P -->|separate direct holder-signed PTB| M["Narrative memory"]
@@ -36,13 +39,15 @@ flowchart LR
 
 ## Four layers of identity
 
-### Wallet or trainer
+### Wallet or controller
 
-The wallet signs transactions and may hold the relevant ownership or control capabilities. It is an account boundary, not the fictional protagonist.
+The wallet signs transactions. At ranked enrollment, `ctx.sender()` must equal the canonical current Soul owner and becomes the fixed Seat controller; a sponsor only supplies gas. The address authorizes entry and later Seat actions, but it is an account boundary rather than the fictional protagonist.
 
 ### Season Seat
 
 `SeasonSeat` is the durable competitive identity for one season and league. It anchors the controller, public alias, rate limits, anti-sybil rules, sponsorship, and sanctions. Mutable civilization and score state live in their own bounded objects.
+
+The ranked scope permits one Seat for each `(season_id, league, controller)`. The logical `ControllerLeagueSeasonSlot` is consumed for the full scope. The manifest-pinned registry parents, shard function, domain, and typed key deterministically derive the `SeasonSeat` ID itself as both uniqueness claim and direct lookup; there is no separate transferable slot. This is one-address fairness, not proof that one human controls only one address.
 
 Suggested immutable or enrollment-fixed fields:
 
@@ -60,7 +65,7 @@ season_build_hash
 
 ### Commander Projection
 
-`CommanderProjection` is a term-limited binding between a real Soul and a Season Seat. It freezes the public representation and authorization facts needed by the game without copying or owning the Soul.
+`CommanderProjection` is a term-limited binding among a real Soul, an accepted visual or neutral fallback, its ownership epoch, a seasonal role, and a Season Seat. Animacraft supplies visual material; this binding freezes the presentation and attribution facts needed by the game without copying or owning the Soul.
 
 Suggested fields:
 
@@ -71,6 +76,7 @@ soul_id
 soul_state_id
 owner_at_bind
 ownership_epoch_at_bind
+role_id
 visual_snapshot_hash
 outcome_policy_hash
 started_at
@@ -89,27 +95,28 @@ The projection is not a new tradable identity. It is a historical role record an
 
 ### Civilization State
 
-`CivilizationState` contains only public or committed temporary competitive state: planets, energy, resources, fleets, upgrades, and score. It is reset or frozen at season settlement.
+`CivilizationState` contains only public or committed temporary competitive lifecycle and bounded aggregates. It is created as `AwaitingHome` with zero controlled Planets and becomes `Active` only when `claim_home` creates the Seat-owned Founding Planet. Individual Planets use the Seat ID for ownership; they are not owned by the Soul or stored as an unbounded Civilization collection. Civilization state is reset or frozen at season settlement.
 
-`ClientSecretState` is a separate, encrypted, local-only concept containing coordinate preimages, salts, search caches, private annotations, and any alliance secrets. It is never owned by a Soul or represented as an onchain Civilization field.
+`ClientSecretState` is a separate, encrypted, local-only concept containing coordinate preimages, salts, search caches, private annotations, and any alliance secrets. Its authenticated namespace includes network, engine package, season, Seat, and controller. It is never owned by a Soul, transferred with a Soul, or represented as an onchain Civilization field.
 
 ## Binding a Soul to a season
 
 A formal season entry should:
 
 1. Validate the canonical `SoulState` ID, Soul ID, supported interface version, current owner, current `ownership_epoch`, and `!is_listed`.
-2. Read and store the current `ownership_epoch`.
-3. Claim a unique `SoulSeasonSlot` keyed by `(season_id, soul_id)` so the same Soul cannot command multiple ranked seats in one season.
-4. Consume the seat's one ranked commander slot so a Season Seat cannot rotate through multiple Souls.
-5. Freeze the approved visual, validated `ProjectionDisplayLicense`, fallback, and outcome-policy hashes in the Commander Projection.
-6. Freeze the equal-budget seasonal doctrine/build separately in the Season Seat.
-7. Create the Commander Projection and connect it to the fresh Season Seat.
+2. Require `ctx.sender()` to equal that current owner and derive the fixed controller only from the sender.
+3. Derive and claim the deterministic Season Seat for the logical `ControllerLeagueSeasonSlot(season_id, league, controller)` so one address cannot create multiple Seats in that ranked scope.
+4. Claim a unique `SoulSeasonSlot` keyed by `(season_id, soul_id)` so the same Soul cannot command multiple ranked Seats in one season.
+5. Consume the Seat's one ranked commander slot so a Season Seat cannot rotate through multiple Souls.
+6. Freeze the approved visual, validated `ProjectionDisplayLicense`, fallback, outcome-policy hashes, and current ownership epoch in the Commander Projection.
+7. Freeze the equal-budget seasonal doctrine/build separately in the Season Seat.
+8. Atomically create the Season Seat, Commander Projection, attribution accumulator, ScoreCard, Seat-bound unused home state (embedded or a non-`store` child), and `CivilizationState(status = AwaitingHome)` without creating a Planet.
 
-Both slots remain consumed for the entire ranked season, including after retirement or transfer. A buyer of a mid-season Soul cannot deploy it in another ranked seat until the next season. The marketplace and confirmation UI must disclose this restriction before transfer.
+All three uniqueness claims remain consumed for the entire ranked scope, including after a missed home claim, retirement, transfer, detachment, elimination, cancellation, or settlement. Any enrollment abort leaves all claims and created objects absent. A buyer of a mid-season Soul cannot deploy it in another ranked Seat until the next season. The marketplace and confirmation UI must disclose this restriction before transfer.
 
 The game must validate the real `SoulState`; it must not trust only a copied owner address or client-supplied Soul metadata.
 
-An account may complete the tutorial with a game-local `StarterCommander`. Before entering a formal ranked season, it must select an existing eligible Soul it currently owns. Soul minting, Personal Kiosk creation, initial content, and Animacraft authoring remain external Soulidity/Animacraft journeys for the first public release. Gas sponsorship alone does not create a Soul, and `StarterCommander` is not presented as a Soul.
+An account may complete the tutorial with a game-local `StarterCommander`. Before entering a formal ranked season, the client resolves an existing fixed-controller Seat first; only a controller without one may select an eligible Soul it currently owns. Zero-Soul, ineligible, and multiple-Soul states remain distinct and actionable. Soul minting, Personal Kiosk creation, initial content, and Animacraft authoring remain external Soulidity/Animacraft journeys for the first public release. Gas sponsorship alone does not create a Soul, and `StarterCommander` is not presented as a Soul.
 
 ## Authorization model
 
@@ -136,7 +143,7 @@ ownership_epoch(state) == projection.ownership_epoch_at_bind
 
 Pure strategic actions may update only Seat/Civilization state and need not claim Soul attribution. Every call that updates Soul-linked counters, achievement bits, relationship facts, or Soul-stamped events must pass the canonical `&SoulState` and evaluate this predicate at execution time. `DetachedByTransfer` is only a cached/materialized status; logical invalidation never waits for it.
 
-For a future agent action, the same predicate applies, while `ctx.sender()` matches the `WorldCommandCap.grantee` and the cap records the bound Seat controller, control generation, action mask, expiry, and rate/spend limits. The current holder and ownership epoch must still match the projection.
+For a future agent action, `ctx.sender()` matches the `WorldCommandCap.grantee` and the cap validates the bound Seat controller, control generation, action mask, expiry, and rate/spend limits. The Soul live predicate applies only when that action requests Soul attribution. A permitted pure Seat agent action can continue without a live projection and never updates a Soul accumulator.
 
 ## Transfer during a season
 
@@ -149,7 +156,8 @@ When a bound Soul changes owner:
 3. Soul-attributed actions fail immediately, even if the projection has not yet been physically updated.
 4. The civilization remains controlled by its Season Seat.
 5. In ranked play, the seat operates under a neutral commander presentation for the rest of the season; it cannot bind another Soul.
-6. The buyer receives the Soul and its public history, but receives no planets, fleets, coordinates, score, Season Seat, or empire capability.
+6. The original controller resumes that Seat before any owned-Soul selector; the controller slot and Seat-scoped map vault remain with the controller.
+7. The buyer receives the Soul and its public history, but receives no planets, fleets, coordinates, score, Season Seat, map-vault route, or empire capability.
 
 The game may lazily materialize `DetachedByTransfer` on the next interaction. Logical invalidation must not depend on an indexer, keeper, or cron job. The independent Infinite Stellar UI must warn that a bound Soul may still be listed under the current core protocol and explain the ranked-season restriction before purchase.
 
@@ -238,7 +246,9 @@ Infinite Stellar should offer only public-safe prose for transferable Soul memor
 
 ## Visual projection and rights
 
-Animacraft is the intended embodiment layer, but Infinite Stellar accepts only an explicitly supported, versioned projection contract. Season 0 uses a public `image_url`, a validated public Animacraft projection, or a neutral fallback. Enrollment freezes the Maker/root or artifact reference, content/recipe/render commitments where available, content version, rights/policy version, and a permanent fallback piece.
+Animacraft is the intended source of visual material, but Infinite Stellar accepts only an explicitly supported, versioned projection contract. Season 0 uses a validated public Animacraft projection or a neutral fallback. `CommanderProjection`—not the Animacraft artifact—is the seasonal Soul/visual/role/Seat binding, and its manifest-frozen `role_id` is `Commander` rather than a user-selected power class. Enrollment freezes the Maker/root or artifact reference, content/recipe/render commitments where available, content version, rights/policy version, and a permanent fallback piece.
+
+The official client resolves non-neutral visual bytes through a content-addressed same-origin cache or privacy-preserving proxy with a strict host/CSP policy, stripped referrer, and no wallet/Soul query parameter. Visual loading must not give an asset host a second wallet-to-Soul correlation graph.
 
 The core loop must not depend on protected-asset decryption. A hash, provenance record, royalty rule, or terms commitment proves neither availability nor display permission. Private Active Sprite access and an `ASSETS` read grant do not by themselves authorize animation, cropping, recoloring, commercial display, or continued use after the ownership epoch changes.
 
@@ -250,7 +260,7 @@ Historical replay may show only the material covered by the captured rights poli
 
 The Soul should appear in four places:
 
-- **Entry:** choosing who enters this universe, then choosing an equal-budget seasonal doctrine for the Seat.
+- **Entry:** resolving an existing Seat first or choosing who enters this universe, then choosing a visual and equal-budget seasonal doctrine for the Seat.
 - **Command:** portrait, voice, ritual, relationship context, and decision framing.
 - **Turning points:** signed moments when the Soul's character becomes legible through action.
 - **Aftermath:** a season chronicle showing what the Soul witnessed, chose, and became known for.

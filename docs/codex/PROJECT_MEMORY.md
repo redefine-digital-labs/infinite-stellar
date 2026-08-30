@@ -5,7 +5,13 @@ This file contains stable facts that should survive individual implementation ph
 ## Product invariants
 
 - Infinite Stellar is a Sui-native, zero-knowledge, fully onchain seasonal strategy game in planning and pre-production.
-- A Soul is the persistent actor; an Animacraft Projection is its visual embodiment; a Commander Projection is its seasonal role; a Season Seat controls a temporary Civilization.
+- An address authorizes; a Soul is the persistent actor; Animacraft supplies accepted visual material; a Commander Projection freezes the seasonal Soul/visual/role/Seat binding; a fixed Season Seat controls a temporary Civilization and owns Planets through `owner_seat_id`.
+- One controller address may create at most one ranked Seat per league and season. Manifest-pinned registry parents and typed-key/shard vectors deterministically derive the Season Seat itself as the logical `ControllerLeagueSeasonSlot` and direct lookup. This is address-level fairness, not human-level Sybil resistance.
+- A bounded enrollment-only capacity object atomically enforces manifest `max_ranked_seats`; it is not an ordinary-play global write.
+- Atomic enrollment creates the Seat/binding/state set but no Planet. `CivilizationState` begins `AwaitingHome`; one later finalized `claim_home` creates the Seat-owned Founding Planet and changes it to `Active`. Pre-home Seats cannot move, score, colonize, or recover.
+- The five-minute activation metric begins at chain-derived `HomeSearchAvailableAt`; `HomeClaimAvailableAt` separately records when submission is legal. A nonzero Clock-time observation delay rejects immediate claims but does not claim checkpoint separation. Public-seed local work remains possible during a claim pause, so pauses are never subtracted to make latency look better.
+- Permissionless capped availability ticks credit the minimum home-claim window. At close, global `home_window_resolution` becomes `ClosedAvailable` or `CancelledUnavailable` before any Seat may act or finalize further; a delayed opening, pause, or unevidenced chain/ticker gap that leaves insufficient credit reaches global `HomeWindowUnavailable` cancellation/refund rather than player-caused missed activation.
+- The official client resolves an existing fixed-controller Seat before current Soul ownership. Its encrypted map vault is Seat/controller-scoped and never follows Soul transfer.
 - Civilizations, planets, energy, fleets, map advantage, score, and ranked power reset. Soul-linked history and expression may persist without creating ranked advantage.
 - Soulidity is the canonical identity/ownership layer. Infinite Stellar validates the live Soul owner and ownership epoch but does not take Soul custody.
 - Infinite Flow Engine may host a separate Soul-bound prologue or PvE Scene with independent history; it is neither the guest tutorial nor the asynchronous multiplayer universe authority.

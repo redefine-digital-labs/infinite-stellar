@@ -9,6 +9,8 @@ This document records primary references behind the planning assumptions. It is 
 - [Sui JSON-RPC migration guide](https://docs.sui.io/develop/accessing-data/json-rpc-migration) marks JSON-RPC deprecated and directs new integrations toward gRPC or GraphQL. It also explains gRPC streams, retention, and production endpoint expectations.
 - [Sui custom indexing framework](https://docs.sui.io/develop/accessing-data/custom-indexer/) describes checkpoint processing and PostgreSQL-backed examples.
 - [Sui onchain randomness](https://docs.sui.io/sui-stack/on-chain-primitives/randomness-onchain) documents the `Random` object and resource-exhaustion considerations for randomness-dependent Move flows.
+- [`sui::clock`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/clock.move) shows that the singleton Clock is updated by the consensus-commit prologue. Clock delay and checkpoint separation are therefore treated as different claims in this plan.
+- [Sui checkpoint summary source](https://github.com/MystenLabs/sui/blob/main/crates/sui-types/src/messages_checkpoint.rs) documents monotonic but not strictly increasing checkpoint timestamps. The target network's checkpoint batching, Clock, and finality semantics must be pinned and tested rather than inferred from timestamp inequality.
 - [`sui::package::make_immutable`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/package.move) consumes an `UpgradeCap`; the production plan relies on this enforced immutability rather than manifest text alone.
 - [Sui repository](https://github.com/MystenLabs/sui) is the primary source for framework APIs, protocol configuration, and release behavior.
 
@@ -46,6 +48,7 @@ Implementation work must pin the exact Soulidity package and interface version u
 - Derived-object API availability and behavior on the target Sui release.
 - gRPC and GraphQL SDK maturity for all required client paths.
 - Checkpoint source retention and rebuild time at production scale.
+- Clock-delay, consensus-commit, checkpoint-batching, finality, and same-checkpoint ordered-event reconstruction on the target Sui release.
 - Sponsor UX and abuse cost.
 
 Record measurements with hardware, browser, Sui version, package revision, circuit hash, dataset, and test command. Do not promote a benchmark into a product claim without that context.

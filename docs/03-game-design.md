@@ -9,7 +9,7 @@ Create a strategy game where private knowledge, timing, and relationships matter
 ```mermaid
 flowchart LR
     A["Scan locally"] --> B["Discover a candidate"]
-    B --> C["Establish a home or launch colonization"]
+    B --> C["Claim the Founding Planet or launch colonization"]
     C --> D["Grow energy and reach"]
     D --> E["Move, reinforce, or attack"]
     E --> F["Learn from public outcomes"]
@@ -25,6 +25,8 @@ Each step should create a meaningful choice:
 - **Interact:** fight, reinforce, coordinate, bluff, or withhold.
 - **Learn:** update a private map using only information legitimately observed.
 
+A newly enrolled ranked Civilization begins `AwaitingHome` and controls no Planet. Its first finalized `claim_home` creates exactly one Seat-owned Founding Planet and activates the Civilization. Later discovery still grants knowledge rather than ownership; expansion requires a proof-bound arrival.
+
 ## Season structure
 
 ### Tutorial universe
@@ -33,7 +35,7 @@ Each step should create a meaningful choice:
 - No Soul required.
 - Teaches map privacy, proof generation, claiming, movement, arrival, and settlement.
 - Target completion time: 8–12 minutes.
-- Uses sponsored transactions and a denser, smaller tutorial universe. If it ever uses a simpler circuit, that circuit has a separate domain, verifying key, and non-ranked state.
+- Uses a deterministic local simulation with clearly labeled simulated transaction/finality states and a denser, smaller tutorial universe. It requires no wallet or onchain signer. If a later tutorial becomes onchain or uses a simpler circuit, that is a separately specified authority/domain, verifying key, privacy model, and non-ranked state.
 - Uses a game-local tutorial authority and creates no Infinite Flow profile or Run history.
 
 A separate, optional Soul-bound prologue or PvE experience may later use a pinned Infinite Flow Engine Scene. Its persistent unranked Run history remains outside Infinite Stellar ranking, progression, and receipts.
@@ -43,6 +45,7 @@ A separate, optional Soul-bound prologue or PvE experience may later use a pinne
 - Seven days of live play.
 - 100–300 active players.
 - One ruleset and one ranked Human League.
+- At most one ranked Seat per controller address in that league and season; this is not human-level Sybil resistance.
 - Fixed start and end times.
 - No mid-season balance changes.
 - One public Last Light Beacon activated at a manifest-declared time from fresh Sui randomness.
@@ -71,12 +74,14 @@ The manifest pins the derivation domain and opening time before enrollment. The 
 
 Local discovery does not grant ownership.
 
-- `claim_home` is a once-per-Seat exception that creates one valid, unclaimed home planet with the declared starting state.
+- `claim_home` is a once-per-Seat transition available only from `AwaitingHome`. It consumes the unused home claim, creates one valid Founding Planet with `owner_seat_id = seat_id`, updates the controlled-planet count, and atomically changes the Civilization to `Active`.
 - `move_new` creates a valid destination as a neutral planet and registers a colonization arrival in the same transaction.
 - The neutral planet changes owner only when that arrival is settled under the normal combat/colonization rules.
 - Finding or publishing a location commitment alone creates no property right.
 
 This keeps exploration valuable without letting a scanner acquire territory without spending in-world resources.
+
+The manifest freezes `home_claim_open_at`, `home_claim_close_at`, a nonzero `seed_observation_delay_ms`, and any common competitive `season_start`. `HomeSearchAvailableAt` begins when the universe seed is finalized and authoritative local search becomes possible; a custom client may speculate on a publicly observed pre-checkpoint effect, so the protocol does not claim that pre-final computation is impossible. `HomeClaimAvailableAt` begins only after `max(effective_home_claim_open_at, universe_opened_at + seed_observation_delay_ms)` when the onchain claim path is open and unpaused. This creates a published Clock-time observation buffer but does not assert that opening and claim land in different checkpoints. Both anchors derive from ordered effects and recorded Clock time, never a client clock. Once the seed is public, no protocol pause can prevent local mining, so the official client keeps search and proof preparation available while disabling submission with a clear reason. If home claims are allowed before competitive play, starting energy and growth clamp to `season_start`, and all non-home strategic actions reject before that common boundary.
 
 ## Planet model
 
@@ -84,7 +89,7 @@ The first version should keep planet state intentionally small:
 
 ```text
 location_hash
-owner_seat
+owner_seat_id
 level
 planet_type
 energy
@@ -189,6 +194,9 @@ Beacon-related pending actions increment a bounded counter on the source Seat's 
 Losing the final controlled planet must not leave a player in an undefined seven-day state. `CivilizationState` follows a bounded lifecycle:
 
 ```text
+AwaitingHome -> Active
+AwaitingHome -> Eliminated(HomeNotEstablished)
+AwaitingHome -> Cancelled(HomeWindowUnavailable)
 Active -> AtRisk
 Active/AtRisk -> RecoveryEligible -> Active
 Active/AtRisk/RecoveryEligible -> Eliminated
@@ -196,12 +204,17 @@ Active/AtRisk/RecoveryEligible/Eliminated -> Settled
 Any non-terminal state -> Cancelled
 ```
 
+- **AwaitingHome:** enrollment finalized, the one home claim remains unused, and the Seat has never activated or controlled a Planet. It cannot move, colonize, score, or recover.
 - **Active:** the Seat controls at least one planet.
 - **AtRisk:** it controls no planet but still has at least one bounded, unsettled arrival that could capture a planet.
 - **RecoveryEligible:** it controls no planet, has no qualifying capture arrival, has not consumed its one recovery, and the effective time is before `recovery_close`.
 - **Eliminated:** it controls no planet, has no qualifying capture arrival, and recovery is unavailable, expired, or already consumed.
 
-`recover_home` consumes the season's unique `RecoverySlot` for that Seat and proves a valid, unclaimed low-level coordinate under a separate recovery domain. The recovered planet starts with the manifest-declared `recovery_energy`, never awards a second home/claim score, and cannot exceed the original starting budget. A Seat cannot recover while it controls a planet or has a qualifying capture arrival.
+`recover_home` consumes the season's unique `RecoverySlot` for that Seat and proves a valid, unclaimed low-level coordinate under a separate recovery domain. The recovered planet starts with the manifest-declared `recovery_energy`, never awards a second home/claim score, and cannot exceed the original starting budget. A Seat cannot recover while it controls a planet, has a qualifying capture arrival, or remains `AwaitingHome`. Vault restore and controller recovery are unrelated product concepts.
+
+At effective `home_claim_close_at`, a permissionless resolver settles the capped availability tick and checks the bounded onchain-evidenced claimable-time accumulator. If the manifest minimum was credited, it globally records `ClosedAvailable`; every remaining `AwaitingHome` Seat is then logically `Eliminated(HomeNotEstablished)` and can materialize that fact through a bounded permissionless per-Seat transition, without a global loop. It receives no Founding Planet, recovery, score, or activation recognition. If availability was below the minimum—including after an unevidenced chain/ticker gap—the universe instead records `CancelledUnavailable` and enters irreversible `Cancelled(HomeWindowUnavailable)` with its predeclared refund/receipt policy. No operator is required and no Seat remains stuck.
+
+After close, every strategic, settlement, or record-finalization entry point for every Seat must first execute or require this global resolution. It cannot let an Active Seat act or settle first, or settle an unresolved `AwaitingHome` Seat directly, and thereby bypass the cancellation decision.
 
 After `recovery_close`, the transition to `Eliminated` is permissionless and deterministic. An eliminated player may observe public state, use social surfaces, export private data, and receive a participation/settlement record, but cannot create new strategic actions.
 
@@ -236,6 +249,8 @@ Acceptable candidates include cosmetic commander projections, commemorative pres
 - A player who loses every controlled planet receives the single bounded recovery path above until `recovery_close`.
 - Congestion must not silently favor players with faster RPC access.
 - The game must offer encrypted local map export and recovery warnings; losing browser storage should not be a surprise.
+- A missing, locked, corrupt, wrong-network, wrong-season, or wrong-Seat vault has a distinct, non-destructive restore path. The client never replaces a returning controller's vault with an empty one silently.
+- Before submitting `claim_home`, the client durably encrypts the pending coordinate, salt, commitment, namespace, and transaction status; reload after submission reconciles by chain result rather than issuing a blind duplicate.
 - Settlement and season-end behavior must be visible before a player commits a high-value move.
 
 ## Questions for playtesting

@@ -18,22 +18,23 @@ Players explore a shared seasonal universe without revealing private coordinates
 
 The identity model is deliberately split:
 
+- A connected **address** authorizes enrollment and becomes the fixed controller of one ranked Seat; it is a command key, not the protagonist.
 - A **Soul** is the persistent actor: identity, personality, relationships, and career history.
-- An **Animacraft visual projection** is the Soul's versioned embodiment for a season.
-- A **Commander Projection** binds that Soul and embodiment to one seasonal role.
-- A **Season Seat** owns control, accountability, ranking, and anti-abuse state for one season.
-- A **Civilization** is disposable strategic state: planets, fleets, energy, resources, and score.
+- An **Animacraft visual projection** or neutral fallback gives that actor versioned visible form.
+- A **Commander Projection** binds the Soul, frozen presentation, and ownership epoch to one seasonal role.
+- A **Season Seat** owns control, Planet custody, accountability, ranking, and anti-abuse state for one season.
+- A **Civilization** is disposable strategic state. It begins `AwaitingHome`, becomes `Active` when its Seat claims a Founding Planet, and ends with the universe.
 
 A Soul is more than an avatar because it creates continuity between worlds. It is less than a traditional hero because it carries no permanent combat or economic power. The shortest product rule is:
 
-> Soul is the actor. Commander Projection is the role. Civilization is the run.
+> Addresses authorize. Souls cross. Animacraft gives form. Commander Projections bind roles. Seats control. Civilizations expand.
 
 ## Ecosystem boundaries
 
 | System | Role in Infinite Stellar | Explicit boundary |
 | --- | --- | --- |
 | **Soulidity** | Canonical Soul identity, current owner, ownership epoch, grants, content, and optional directly holder-signed Chronicle memory | Soul metadata, memory, popularity, price, and grants never determine ranked power or game control |
-| **Animacraft** | Versioned visual embodiment and provenance snapshot for a Commander Projection | Provenance is not a display license; unsupported rights fall back to neutral art, and cosmetics never affect ranked outcomes |
+| **Animacraft** | Versioned visual material and provenance input for a Commander Projection | It is not game authority or the binding record; provenance is not a display license, unsupported rights fall back to neutral art, and cosmetics never affect ranked outcomes |
 | **Infinite Flow Engine** | Candidate runtime for optional Soul-bound prologue and PvE Scenes | It requires a Soul and creates independent persistent Run history; it is neither the guest tutorial nor multiplayer authority |
 | **Infinite Stellar** | Dedicated Season, Seat, Civilization, Planet, Arrival, score, privacy, and settlement authority | It never takes custody of a Soul; its official Chronicle flow requires a direct current-holder signature |
 
@@ -49,6 +50,7 @@ These are integration boundaries, not claims that every integration is already s
 6. **No token-first economy.** Season 0 has no fungible token, land sale, yield loop, or pay-to-win market.
 7. **Verifiable operations.** Every production season pins package, circuit, client-core, rules, and configuration hashes before play begins.
 8. **Finite seasons, infinite continuity.** Every universe has declared bounds, phases, settlement, and a deterministic end.
+9. **One ranked command.** One address may control at most one ranked Seat per league and season; this is a product-fairness quota, not Sybil resistance.
 
 ## First public target
 
@@ -59,6 +61,7 @@ The first public target is a web-first Sui testnet season:
 - Explore, discover, claim, grow, move, reinforce, attack, defend, and score.
 - Browser-local mining and proof generation in Web Workers.
 - Sponsored transactions and a guest tutorial.
+- Ranked entry requires an eligible Soul; the guest tutorial requires no Soul and creates no ranked or Soul-linked history.
 - Social coordination without a protocol-enforced alliance system in the initial release.
 - Human League first; an explicitly separate Open Agent League follows only after the human game is stable.
 - No token, tradable ranked advantage, or persistent military power.
@@ -81,6 +84,7 @@ Mainnet is gated by circuit, contract, performance, privacy, indexer-rebuild, op
 | [Decision log](docs/08-decisions.md) | Accepted decisions, hypotheses, and unresolved choices |
 | [Research notes](docs/09-research-notes.md) | Primary references and claims that require prototype validation |
 | [Product requirements](docs/10-product-requirements.md) | Prioritized requirements, user journeys, acceptance criteria, and launch scope |
+| [Onboarding and narrative flow](docs/11-onboarding-and-narrative-flow.md) | Address-to-Soul entry, screen routing, lifecycle, Founding Planet, transfer, vault, and accessibility contracts |
 
 ## Intended repository evolution
 

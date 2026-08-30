@@ -4,7 +4,7 @@ This repository is currently a pre-production specification. Contributions shoul
 
 ## Before proposing implementation
 
-Read the [World Bible](docs/00-world-bible.md), [product vision](docs/01-product-vision.md), [Soul role](docs/02-soul-role.md), [product requirements](docs/10-product-requirements.md), [technical architecture](docs/04-technical-architecture.md), and [decision log](docs/08-decisions.md). A proposal that changes a non-negotiable principle should update the decision log and explain the evidence for the change.
+Read the [World Bible](docs/00-world-bible.md), [product vision](docs/01-product-vision.md), [Soul role](docs/02-soul-role.md), [product requirements](docs/10-product-requirements.md), [onboarding and narrative flow](docs/11-onboarding-and-narrative-flow.md), [technical architecture](docs/04-technical-architecture.md), and [decision log](docs/08-decisions.md). A proposal that changes a non-negotiable principle should update the decision log and explain the evidence for the change.
 
 ## Documentation changes
 
@@ -13,7 +13,7 @@ Read the [World Bible](docs/00-world-bible.md), [product vision](docs/01-product
 - Link technical claims to primary documentation.
 - Give every performance number a device, version, dataset, and command.
 - Do not describe unimplemented behavior as shipped.
-- Preserve the distinction between Soul, Commander Projection, Season Seat, and Civilization State.
+- Preserve the distinction between the authorizing address, Soul, Animacraft visual input, Commander Projection binding, Season Seat, Civilization State, and Seat-owned Planets.
 
 ## Future code changes
 

@@ -10,7 +10,7 @@ Use independent Sui objects and derive natural contention boundaries. Do not rep
 
 ### D-002 — Soul is the persistent actor, not the empire
 
-The Soul supplies persistent identity. `CommanderProjection` is its seasonal role. `CivilizationState` and `SeasonSeat` hold temporary competitive state. Infinite Stellar relationships and career facts are external receipts associated with the Soul, not fields already present in `SoulState`.
+The controller address authorizes entry but is not the actor. The Soul supplies persistent identity; Animacraft supplies accepted visual material; `CommanderProjection` freezes the seasonal Soul/visual/role/Seat binding; `SeasonSeat` owns control, Planet custody, and accountability; and `CivilizationState` holds temporary lifecycle and bounded strategic aggregates. Infinite Stellar relationships and career facts are external receipts associated with the Soul, not fields already present in `SoulState`.
 
 ### D-003 — Soul progression is non-power progression
 
@@ -52,9 +52,9 @@ Every season pins an immutable engine/dependency set, rules, circuit, proving ar
 
 Infinite Stellar may learn from the design space opened by Dark Forest, but requires original fiction, art, writing, and—if implementation begins—original Move code and circuits unless a deliberate GPL-compatible strategy is approved.
 
-### D-013 — One ranked binding per Soul and Seat per season
+### D-013 — One ranked binding per Soul, Seat, and controller scope
 
-Both the Soul slot and Seat commander slot remain consumed for the entire season. Transfer detaches the projection; the Seat continues with a neutral commander and the buyer waits until the next ranked season.
+The Soul slot, single immutable Seat commander reference, and logical `ControllerLeagueSeasonSlot(season_id, league, controller)` remain consumed for the entire ranked scope. The Season Seat is derived from manifest-pinned registry parents, shard/key encoding, and controller key and is itself the uniqueness claim and direct lookup; no redundant transferable controller slot exists. A bounded enrollment-only capacity object atomically enforces `max_ranked_seats`. The controller is derived only from `ctx.sender()`; a sponsor supplies gas but never selects it. Transfer detaches the projection; the Seat continues with a neutral commander and the buyer waits until the next ranked season. One-address uniqueness is a fairness quota, not proof of one human.
 
 ### D-014 — Receipts are external and attribution is live-validated
 
@@ -66,7 +66,7 @@ Universe and beacon entropy use one-way, permissionless Sui Random transitions a
 
 ### D-016 — Fixed controller for ranked Alpha
 
-The Season Seat controller is fixed at enrollment and human actions validate `ctx.sender()`. Mid-season recovery/delegation is deferred; future capabilities remain separate from Soul ownership.
+The Season Seat controller is fixed at enrollment, equals the canonical current Soul owner at that moment, and is derived from `ctx.sender()`. Human actions validate that controller. Mid-season recovery/delegation is deferred; future capabilities remain separate from Soul ownership.
 
 ### D-017 — Bounded canonical Season 0 outcome
 
@@ -80,11 +80,15 @@ This decision records the user's working-name choice; it does not establish a le
 
 ### D-019 — Ecosystem layers remain separate
 
-Soulidity supplies canonical identity and ownership epochs. Animacraft is the intended versioned visual embodiment layer. Infinite Flow Engine may support a separate Soul-bound prologue or PvE Scene with its own persistent unranked Run history; it cannot provide the no-Soul guest tutorial. The asynchronous multiplayer universe has its own Infinite Stellar Season, Seat, Civilization, Planet, Arrival, score, and settlement authority. No integration is described as shipped until an exact package/interface version passes end-to-end acceptance.
+Soulidity supplies canonical identity and ownership epochs. Animacraft supplies versioned visual and provenance input; it is not the Commander Projection binding or game authority. Infinite Flow Engine may support a separate Soul-bound prologue or PvE Scene with its own persistent unranked Run history; it cannot provide the no-Soul guest tutorial. The asynchronous multiplayer universe has its own Infinite Stellar Season, Seat, Civilization, Planet, Arrival, score, and settlement authority. No integration is described as shipped until an exact package/interface version passes end-to-end acceptance.
 
 ### D-020 — The repository is open source under MIT
 
 Planning documents and future original implementation in this repository use the MIT License. Dependencies, copied material, generated artifacts, fonts, art, audio, and other third-party assets require separate license provenance.
+
+### D-021 — Enrollment precedes the Founding Planet
+
+Enrollment atomically creates every uniqueness claim, the fixed Season Seat, Commander Projection, attribution/score state, unused home state, and `CivilizationState(status = AwaitingHome)`, but no Planet. After the universe opens, one finalized `claim_home` creates the Seat-owned Founding Planet and changes the Civilization to `Active`. `AwaitingHome` cannot move, score, colonize, or use gameplay recovery. A nonzero manifest Clock-time observation delay rejects an immediate claim without pretending to force checkpoint separation. Permissionless capped ticks credit onchain-evidenced claimable time: at close, sufficient credit first records global `ClosedAvailable` and permits `HomeNotEstablished`, while insufficient evidence records global `CancelledUnavailable` and applies `HomeWindowUnavailable` cancellation/refund before any Seat can act or finalize further. `HomeSearchAvailableAt` anchors end-to-end activation because a public seed permits local work even during a pause; `HomeClaimAvailableAt` separately records the onchain submission gate. Neither uses Seat creation or client/indexer observation.
 
 ## Working hypotheses
 

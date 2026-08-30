@@ -13,6 +13,7 @@ The game combines smart-contract, zero-knowledge, browser, economic, and live-op
 - Soul ownership and ownership-epoch integrity.
 - Projection provenance, display rights, and fallback availability.
 - Season Seat and command capabilities.
+- Ranked controller/Soul/Seat uniqueness claims and Founding Planet lifecycle integrity.
 - Proving and verifying artifact integrity.
 - Sponsor funds and anti-abuse budget.
 - Upgrade, pause, publishing, and deployment keys.
@@ -32,10 +33,14 @@ The game combines smart-contract, zero-knowledge, browser, economic, and live-op
 | Arrival queue denial of service | Hard queue bounds, action fees/rate limits, permissionless bounded settlement |
 | Sponsor draining | Per-seat/IP/device heuristics, budgets, captchas where appropriate, circuit breaker |
 | Soul transfer authority leak | Canonical owner and `ownership_epoch` validation on every Soul-attributed path |
+| Duplicate ranked Seats or sponsor/controller confusion | Derive controller only from `ctx.sender()`; atomically claim one controller key per league/season; treat sponsorship as gas only |
+| Seat-cap overflow or enrollment rollback bug | Manifest-pinned enrollment-only capacity object, atomic count/identity effects, final-slot race and contention tests |
+| Pre-home recovery, cross-Seat slot substitution, or duplicate activation | Explicit `AwaitingHome`, non-transferable Seat-bound one-use home state, Seat-owned Planet, and rejection of movement/scoring/recovery before activation |
 | Projection substitution or rights loss | Freeze exact visual/provenance commitments and policy version; retain a neutral permanent fallback |
 | Dependency/package drift | Pin exact Soulidity, Animacraft, optional Infinite Flow Engine, circuit, and client-core identities in the applicable season manifest or separate product release record |
 | Agent overreach | Separate scoped `WorldCommandCap`; never reuse broad Soul grants |
 | Coordinate exfiltration | Local-only witnesses, worker isolation, telemetry schema denylist, no session replay on map |
+| Visual-host identity correlation | Content-addressed same-origin cache/privacy proxy, stripped referrer, strict CSP/host allowlist, no wallet/Soul query parameters |
 | Plugin exfiltration | No executable plugins initially; later capability manifest and isolated worker |
 | Cross-language math drift | Shared golden vectors in Move, TypeScript, Rust, and Circom |
 | Indexer divergence | Checkpoint cursor, reconciliation, clean rebuild drill, chain-linked UI evidence |
@@ -62,7 +67,7 @@ Required practices:
 - Gas profiling at every declared collection bound.
 - Independent Move audit before valuable mainnet play.
 
-Critical invariants include conservation of action energy, unique planet claims, monotonic nonces, deterministic arrival order, single ranked Soul binding per season, and immediate epoch-based invalidation.
+Critical invariants include conservation of action energy, unique Planet claims, monotonic nonces, deterministic arrival order, one ranked Seat per controller/league/season, single ranked Soul and commander bindings, `AwaitingHome` exclusion from recovery, one Seat-owned Founding Planet, and immediate epoch-based attribution invalidation. Adversarial programmable-transaction tests must prove that concurrent or multi-call enrollment yields at most one Seat and that any abort leaves every uniqueness claim and created object absent.
 
 ## Client privacy controls
 
@@ -74,6 +79,11 @@ Critical invariants include conservation of action energy, unique planet claims,
 - Third-party UI packages cannot access the local map vault by default.
 - Clipboard, export, and support flows warn when data contains private map material.
 - The team runs a browser network-capture test that exercises the full season loop and confirms no coordinate leakage.
+- Vault exports authenticate network, engine package, season, Seat, controller, schema, and encryption parameters. A wrong or corrupt import fails without overwriting the current vault.
+- Pending Founding Planet secrets are encrypted before submission and reconciled by transaction digest after reload. Vault loss never enables another home claim or `recover_home`.
+- Pending home/recovery state is promoted only by exact digest/effects or commitment-derived Planet ID; another tab's winning candidate never causes the wrong secret to be marked final.
+- The official client never routes a buyer into a seller's Seat or map vault merely because the buyer now owns the bound Soul.
+- Client device/wallet/proof-performance aggregates are consented and never joined to chain-derived wallet/Soul/Seat cohorts; accessibility preferences are not telemetry.
 
 ## Metadata and correlation limits
 
@@ -124,6 +134,9 @@ Mainnet is blocked until all of the following are true:
 - Hot-planet and queue-limit stress tests pass.
 - Package, circuit, client, rules, and manifest hashes are reproducible.
 - Indexer rebuild and RPC failover drills pass.
+- Duplicate-controller enrollment, `AwaitingHome` lifecycle, transfer-resume, and home-claim exact-boundary tests pass.
+- Capacity final-slot/rollback, seed-observation-delay, repeated-pause, long availability-tick/checkpoint-gap, Active-first settlement ordering, and permissionless-home-window-cancellation tests pass without operator participation.
+- Clean-profile vault restore and crash injection before submission, after submission, and after finality recover without secret loss or duplicate claims.
 - Pause, settlement, extension/cancellation, and disclosure runbooks are rehearsed.
 - A public security contact and funded bug bounty exist.
 

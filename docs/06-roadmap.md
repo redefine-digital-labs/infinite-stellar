@@ -16,6 +16,9 @@ Deliverables:
 - Browser Web Worker that generates proofs from local coordinates.
 - Move package that pins a verifying key and verifies action-bound proofs.
 - Two or more independently mutable derived/shared planet objects.
+- Sharded deterministic controller-to-Seat derivation proving one ranked Seat per address and direct Seat-first lookup.
+- Enrollment-only capacity object with exact final-slot race, rollback, and 100–300 entrant contention evidence.
+- Nonzero seed-observation gate plus permissionless, capped home-availability accumulator and global close-time resolution required before every later action or finalization.
 - Lazy energy update and one deterministic arrival/combat path.
 - TypeScript, Circom, Rust, and Move golden-vector suite.
 - Synthetic load harness for uniform traffic and a hot destination.
@@ -33,6 +36,7 @@ Go criteria:
 - Hot-planet failure behavior is understood and surfaced to the client.
 - A clean database rebuild reaches the same public projections.
 - No coordinate preimage appears in captured network traffic or telemetry.
+- Immediate claim before the observation delay fails; same-checkpoint multi-commit timing remains reconstructible, and long tick/checkpoint gaps undercredit availability and resolve to cancellation rather than missed activation.
 
 No-go or redesign triggers:
 
@@ -54,9 +58,12 @@ Scope:
 - Guest tutorial.
 - Wallet connection and sponsored transactions.
 - Existing Soul selection, canonical eligibility readback, and transfer disclosure.
-- Commander Projection and Season Seat binding with a public Animacraft projection snapshot or neutral fallback.
+- Seat-first routing plus distinct zero-Soul, ineligible, one-Soul, multiple-Soul, returning, and transferred-Soul states.
+- Atomic Commander Projection and Season Seat binding with a public Animacraft visual snapshot or neutral fallback, all ranked uniqueness claims, and an `AwaitingHome` Civilization.
 - Local mining and encrypted map vault.
-- Planet claim, growth, move, arrival, reinforcement, combat.
+- Finality-aware seed search, published observation delay, sponsored availability ticks, pause/resume capability separation, and permissionless unavailable-window cancellation.
+- Crash-safe pending-home storage, Seat-owned Founding Planet claim, `AwaitingHome → Active`, growth, move, arrival, reinforcement, combat.
+- Tactical List accessibility path plus complete `AtRisk → RecoveryEligible → Active/Eliminated` recovery journey.
 - Basic public map and transaction-state UX.
 - Deterministic end-of-season settlement.
 - Minimal frozen `InfiniteStellarSeatReceipt` and `InfiniteStellarSoulSegmentReceipt` objects, externally associated with canonical Soul IDs.
@@ -65,9 +72,10 @@ Exit criteria:
 
 - Ten internal players finish a 60-minute session without operator state edits.
 - A player can export and restore the private map.
+- Wrong-chain/package/season/Seat/controller/schema/KDF/AEAD/tag or corrupt vault restore is non-destructive, and concurrent/reloaded home or recovery submissions cannot finalize the wrong secret or issue a blind duplicate.
 - Every visible result links to canonical transaction/state evidence.
 - Transfer of a bound Soul invalidates Soul attribution without transferring the civilization.
-- Median time from ranked Seat creation to finalized home claim is under 5 minutes.
+- Median wall-clock time from canonical `HomeSearchAvailableAt` to finalized Founding Planet claim is under 5 minutes; operationally interrupted cohorts are reported separately rather than improved by subtracting pauses.
 
 ## Phase 2 — Closed Alpha
 
@@ -105,7 +113,7 @@ Beyond this disclosed public planning repository and its repository metadata, no
 
 Additions:
 
-- Public onboarding and documentation.
+- Public onboarding and documentation covering no Soul, one or multiple Souls, ineligible Souls, existing Seat resume, both sides of a Soul transfer, and missing/locked/corrupt/wrong vault states.
 - Sponsored-transaction abuse controls.
 - Alternate read endpoints and degraded-mode UX.
 - Soul chronicle review and acceptance flow.

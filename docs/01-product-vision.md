@@ -8,7 +8,7 @@ Infinite Stellar is a persistent-identity, seasonal strategy game on Sui where p
 
 The player should feel like an explorer in a universe that exists whether or not the official client is open. The map begins as darkness. Knowledge has value because it is earned locally and is not automatically published. Every move exposes intent while preserving enough uncertainty for scouting, deception, diplomacy, and betrayal to matter.
 
-At the same time, the game should not feel like a one-off wallet leaderboard. A Soul enters each universe with a recognizable identity, adopts a seasonal command role, forms relationships, and leaves with independently verifiable Echoes plus an optional holder-approved Chronicle. The strategic board resets; the character's history does not.
+At the same time, the game should not feel like a one-off wallet leaderboard. An address authorizes a Soul to enter; an accepted visual gives it form; a Commander Projection binds its seasonal role; and a fixed Season Seat controls the temporary civilization and Planets. The Soul forms relationships and leaves with independently verifiable Echoes plus an optional holder-approved Chronicle. The strategic board resets; the character's history does not.
 
 “Infinite” describes the number of worlds a Soul may experience over time. It does not describe the duration of one season, the size of a mutable collection, or a promise that a single universe never settles.
 
@@ -61,7 +61,7 @@ A season has a declared start, end, ruleset, and settlement process. Planetary p
 
 ### 4. Souls create continuity without power creep
 
-Infinite Stellar associates public Echoes, provenance-tagged relationships, records of past doctrine choices, and cosmetic expression with a Soul through external receipts. An optional Chronicle is separately reviewed and directly signed by the current holder. Animacraft is the intended versioned embodiment layer, but projection provenance never enters ranked math. Functional doctrine and build state belong to the Season Seat and reset. A Soul does not keep energy, planets, combat modifiers, resource multipliers, faster proving, privileged map data, or ranking bonuses.
+Infinite Stellar associates public Echoes, provenance-tagged relationships, records of past doctrine choices, and cosmetic expression with a Soul through external receipts. An optional Chronicle is separately reviewed and directly signed by the current holder. Animacraft supplies accepted versioned visual material; `CommanderProjection` is the historical Soul/visual/role/Seat binding. Neither visual provenance nor presentation enters ranked math. Functional doctrine and build state belong to the Season Seat and reset. A Soul does not keep energy, planets, combat modifiers, resource multipliers, faster proving, privileged map data, or ranking bonuses.
 
 ### 5. Social strategy is a first-class system
 
@@ -89,16 +89,18 @@ Players should have reasons to cooperate before they have reasons to fight. Shar
 
 Season 0 proves one complete strategic arc:
 
-1. Enter through a guest tutorial.
-2. Select an existing eligible Soul owned by the connected wallet.
-3. Bind the Soul as commander of a fresh Season Seat.
-4. Discover and claim a home planet.
-5. Grow energy and extend reach.
-6. Move between known planets using a locally generated proof.
-7. Attack, defend, cooperate, and contest a public endgame beacon.
-8. Settle the season deterministically.
-9. Receive a factual season receipt issued by Infinite Stellar and optionally approve a separate narrative-memory transaction.
-10. Return with the same Soul to a new universe without carrying power forward.
+1. Enter the optional no-wallet, no-career-history guest tutorial or connect a wallet directly.
+2. Resolve any existing fixed-controller Seat before current Soul ownership; returning controllers resume that Seat, including after Soul transfer.
+3. If no Seat exists and enrollment is open, distinguish zero, one, multiple, and ineligible Souls, then explicitly select one eligible Soul.
+4. Select a licensed visual or neutral fallback and an equal-budget doctrine, then atomically consume the controller/Soul/commander claims and create the Commander Projection, Season Seat, and `AwaitingHome` Civilization.
+5. Wait in the sealed-universe lobby until opening finality publishes the seed, then create or restore the Seat-scoped vault and begin local discovery even if claim submission is gated.
+6. When home claiming becomes canonically available, submit the saved proof and claim the Seat-owned Founding Planet to become `Active`.
+7. Grow energy and extend reach.
+8. Move between known planets using a locally generated proof.
+9. Attack, defend, cooperate, and contest a public endgame beacon.
+10. Settle the season deterministically.
+11. Receive a factual season receipt issued by Infinite Stellar and optionally approve a separate narrative-memory transaction.
+12. Return with the same Soul to a new universe without carrying power forward.
 
 Out of scope for Season 0:
 
@@ -130,7 +132,7 @@ A meaningful interaction is a state-changing action involving another player or 
 
 | Area | Target |
 | --- | --- |
-| Ranked Seat to first finalized home claim | Under 5 minutes p50 |
+| Home search available to finalized Founding Planet | Under 5 minutes p50 wall-clock; incident-affected cohorts reported separately |
 | Tutorial completion | At least 60% |
 | Day-1 retention | At least 30% |
 | Day-7 retention | At least 15% |
