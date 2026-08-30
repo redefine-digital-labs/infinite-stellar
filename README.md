@@ -4,13 +4,13 @@
 
 **Infinite Stellar is a Soul-centered, zero-knowledge, fully onchain seasonal strategy game built on Sui.**
 
-> **Status:** Planning and pre-production. This repository does not yet contain a playable implementation or an onchain deployment.
+> **Status:** Experimental pre-production vertical slice. The repository contains a tested P0 Sui Move foundation, typed game SDK, and runnable English player client. Ranked Soul enrollment, production ZK verification, movement/combat, and onchain deployment remain unavailable and fail closed.
 
 The name describes an endless succession of bounded stellar worlds, not one season that runs forever. A player's civilization disappears when its universe closes; the Soul remains as the persistent actor and carries only verifiable history, relationships, and expression into the next world.
 
 Infinite Stellar uses *stellar* in its astronomical sense and is built on Sui. “Stellar” is a trademark of the Stellar Development Foundation. All rights reserved. This is an independent project, not affiliated with, sponsored by, or endorsed by the Stellar Development Foundation.
 
-Prior written name consent has not been obtained. The public planning name is legally unconfirmed and may require another rename. Except for this disclosed planning repository and its repository metadata, do not expand the brand—including to a domain, internet or social account, app-store listing, external campaign whether paid or unpaid, commercial announcement, or release—until counsel completes clearance and any required prior written consent is obtained. See the [decision log](docs/08-decisions.md).
+Prior written name consent has not been obtained. The public working name is legally unconfirmed and may require another rename. On 30 August 2026, the project owner authorized a narrow, unannounced technical canary using this existing GitHub repository, Sui testnet, and a default Vercel project URL. That authorization is not trademark clearance. Custom domains, internet or social accounts, app-store listings, campaigns, public events, commercial announcements, mainnet, and promoted releases remain blocked until counsel completes clearance and any required prior written consent is obtained. See the [decision log](docs/08-decisions.md).
 
 ## Product thesis
 
@@ -66,7 +66,7 @@ The first public target is a web-first Sui testnet season:
 - Human League first; an explicitly separate Open Agent League follows only after the human game is stable.
 - No token, tradable ranked advantage, or persistent military power.
 
-Mainnet is gated by circuit, contract, performance, privacy, indexer-rebuild, operations, licensing, and name-clearance evidence—not by a calendar promise. Public brand expansion is blocked earlier by the unresolved written-consent issue above.
+Mainnet is gated by circuit, contract, performance, privacy, indexer-rebuild, operations, licensing, and name-clearance evidence—not by a calendar promise. The limited testnet/Vercel canary above does not satisfy any mainnet or public-launch gate.
 
 ## Repository map
 
@@ -85,8 +85,33 @@ Mainnet is gated by circuit, contract, performance, privacy, indexer-rebuild, op
 | [Research notes](docs/09-research-notes.md) | Primary references and claims that require prototype validation |
 | [Product requirements](docs/10-product-requirements.md) | Prioritized requirements, user journeys, acceptance criteria, and launch scope |
 | [Onboarding and narrative flow](docs/11-onboarding-and-narrative-flow.md) | Address-to-Soul entry, screen routing, lifecycle, Founding Planet, transfer, vault, and accessibility contracts |
+| [Soul adapter contract](docs/12-soul-adapter-contract.md) | Replaceable Soulidity boundary, frozen game-core inputs, production gates, and current Move evidence |
+| [Player vertical slice](docs/13-player-vertical-slice.md) | Runnable client journey, SDK boundary, persistence, real-versus-demo capability matrix, and validation |
+| [`apps/web`](apps/web) | Responsive React player client with Sui wallet connection and a clearly labeled local First Light simulation |
+| [`packages/game-sdk`](packages/game-sdk) | Typed player state machine, deterministic demo fixtures, persistence, routing, and fail-closed Sui transaction gateway |
+| [`move/infinite_stellar`](move/infinite_stellar) | Sui Move package for season, identity, Soul adapter, Planet, and bootstrap invariants |
 
-## Intended repository evolution
+## Run the player vertical slice
+
+Requirements: Node.js 22.13 or newer, npm 11 or newer, and a modern browser.
+
+```bash
+npm ci
+npm run dev
+```
+
+Open `http://127.0.0.1:4173`. The client can connect a Sui wallet on testnet, but all ranked writes are disabled because no package deployment or production Soul/proof adapter is pinned. Choose **Explore local demo** to run the complete implemented journey: choose a demo Soul, create a fixed Season Seat, wait for simulated finality, open the universe, search privately for a Founding Planet, claim it, and reach the Active civilization dashboard.
+
+Run all TypeScript checks with:
+
+```bash
+npm run validate:web
+npm run lint:docs
+```
+
+The capability boundary and remaining work are documented in the [player vertical slice](docs/13-player-vertical-slice.md).
+
+## Repository evolution
 
 If the technical prototype passes its gates, this repository becomes the product monorepo rather than being discarded:
 
@@ -108,14 +133,14 @@ ops/
   seasons/                   signed manifests and release procedures
 ```
 
-No implementation directory should be created merely to imply progress. Each appears when its workstream starts and must include tests and reproducible build instructions.
+Implemented directories are shown above. The remaining entries are roadmap targets and appear only when their workstream begins with tests and reproducible build instructions.
 
 ## Current status
 
-- **Phase:** Planning / pre-production
+- **Phase:** P0 Move foundation plus player-facing full-stack vertical slice
 - **Network:** Undeployed
-- **Implementation:** Not started
+- **Implementation:** Core season, deterministic enrollment, home-window, and Founding Planet transitions are implemented in Move; a typed SDK and responsive player client implement the address/Soul/Seat/Planet activation journey using local demo fixtures
 - **License:** [MIT](LICENSE)
-- **Next gate:** The three-week technical go/no-go prototype in the [roadmap](docs/06-roadmap.md)
+- **Next gate:** Freeze the Soulidity adapter ABI and proof-verifier interface, publish a testnet deployment manifest, and replace the local enrollment/claim simulation with signed Sui transactions
 
-Dark Forest v0.6 is GPL-3.0 licensed. Infinite Stellar requires original fiction, art direction, writing, and—if implementation begins—original Move code and circuits unless the team deliberately accepts the obligations of incorporating GPL-licensed material. See [research notes](docs/09-research-notes.md).
+Dark Forest v0.6 is GPL-3.0 licensed. Infinite Stellar requires original fiction, art direction, writing, Move code, and circuits unless the team deliberately accepts the obligations of incorporating GPL-licensed material. See [research notes](docs/09-research-notes.md).

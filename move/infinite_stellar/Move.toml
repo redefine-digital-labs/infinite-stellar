@@ -1,0 +1,6 @@
+[package]
+name = "infinite_stellar"
+edition = "2024.beta"
+
+[addresses]
+infinite_stellar = "0x0"

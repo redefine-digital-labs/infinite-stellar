@@ -109,7 +109,7 @@ Exit criteria:
 
 Entry gate:
 
-Beyond this disclosed public planning repository and its repository metadata, no Infinite Stellar domain, internet or social account, app-store listing, external campaign, public event promotion, commercial announcement, or release may proceed until counsel completes name clearance and any required prior written consent is obtained. Phase 3 public onboarding and community activity are contingent on this gate.
+Beyond D-023's narrow unannounced canary on the existing GitHub repository, Sui testnet, and a default Vercel URL, no Infinite Stellar custom domain, internet or social account, app-store listing, external campaign, public event promotion, commercial announcement, mainnet release, or promoted public launch may proceed until counsel completes name clearance and any required prior written consent is obtained. Phase 3 public onboarding and community activity remain contingent on this gate.
 
 Additions:
 

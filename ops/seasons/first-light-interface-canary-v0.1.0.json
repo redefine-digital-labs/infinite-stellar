@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "First Light Interface Canary v0.1.0",
+  "purpose": "Non-player testnet bootstrap canary for object topology and client integration. Ranked enrollment and home claiming remain disabled.",
+  "network": "testnet",
+  "league": 255,
+  "enrollmentCloseAtMs": 1893456000000,
+  "universeOpenAtMs": 1893542400000,
+  "homeClaimOpenAtMs": 1893628800000,
+  "homeClaimCloseAtMs": 1896307200000,
+  "seasonEndAtMs": 1896393600000,
+  "seedObservationDelayMs": 60000,
+  "minimumHomeClaimWindowMs": 86400000,
+  "maxHomeAvailabilityTickGapMs": 600000,
+  "maxRankedSeats": 1,
+  "productionSoulAdapterReady": false,
+  "productionProofVerifierReady": false
+}

@@ -1,0 +1,32 @@
+{
+  "name": "infinite-stellar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Player client and SDK workspace for Infinite Stellar.",
+  "license": "MIT",
+  "engines": {
+    "node": "24.x"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @infinite-stellar/web",
+    "build": "npm run build --workspace @infinite-stellar/game-sdk && npm run build --workspace @infinite-stellar/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "eslint apps packages --max-warnings=0",
+    "lint:docs": "markdownlint-cli2 README.md CONTRIBUTING.md SECURITY.md 'docs/**/*.md' 'apps/**/*.md' 'packages/**/*.md' move/infinite_stellar/README.md",
+    "validate:web": "npm run typecheck && npm run lint && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "25.5.0",
+    "eslint": "10.9.1",
+    "globals": "17.3.0",
+    "markdownlint-cli2": "0.23.2",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.68.0"
+  }
+}

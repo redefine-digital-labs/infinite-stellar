@@ -2,7 +2,7 @@
 
 ## Current status
 
-Infinite Stellar is a planning and pre-production repository. It contains no playable implementation, deployed package, production circuit, live sponsor, or player-secret service.
+Infinite Stellar is a pre-production repository with an experimental, unaudited Sui Move foundation, typed SDK, and runnable local player vertical slice. It contains no deployed package, live ranked client, production Soul adapter, production circuit, live sponsor, or player-secret service. The local simulation creates no wallet signature, Sui write, or Soul history.
 
 No released version is currently supported. Security claims in the planning documents are requirements, not evidence that an implementation has passed them.
 

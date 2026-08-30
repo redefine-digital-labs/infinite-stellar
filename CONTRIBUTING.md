@@ -1,6 +1,6 @@
 # Contributing
 
-This repository is currently a pre-production specification. Contributions should reduce uncertainty or make a decision more testable.
+This repository is an experimental pre-production product monorepo with specifications, a Sui Move foundation, a typed game SDK, and a player-facing vertical slice. Contributions should reduce uncertainty, improve the runnable evidence, or make a decision more testable.
 
 ## Before proposing implementation
 
@@ -15,9 +15,19 @@ Read the [World Bible](docs/00-world-bible.md), [product vision](docs/01-product
 - Do not describe unimplemented behavior as shipped.
 - Preserve the distinction between the authorizing address, Soul, Animacraft visual input, Commander Projection binding, Season Seat, Civilization State, and Seat-owned Planets.
 
-## Future code changes
+## Code changes
 
-When implementation begins, every pull request should include relevant tests. Changes to math, hashes, proof statements, public inputs, object topology, authorization, or season artifacts require cross-language vectors and security review.
+Every implementation pull request should include relevant tests. Changes to math, hashes, proof statements, public inputs, object topology, authorization, or season artifacts require cross-language vectors and security review.
+
+For the TypeScript workspaces, install and validate from the repository root:
+
+```bash
+npm ci
+npm run validate:web
+npm run lint:docs
+```
+
+For Move changes, run the strict build, unit tests, and linter documented in [`move/infinite_stellar`](move/infinite_stellar).
 
 Never include private keys, seed phrases, production capability objects, ceremony secrets, real player coordinates, or map-vault exports in issues, fixtures, logs, or commits.
 

@@ -1,6 +1,6 @@
 # Onboarding and Narrative Flow
 
-> **Status:** Normative P0 interaction specification for the official client, subordinate to the PRD and accepted decision log. Infinite Stellar remains in planning and pre-production; no screen, transaction, or onchain object described here is implemented or deployed.
+> **Status:** Normative P0 interaction specification for the official client, subordinate to the PRD and accepted decision log. Infinite Stellar remains in pre-production. An experimental Move foundation and local player activation vertical slice exist; no production Soul/proof integration, live ranked flow, or onchain deployment exists yet.
 
 This document defines how a person moves from a public season page to a Soul-bound ranked civilization, how the official client resolves returning and transfer states, and how protocol facts become a coherent story without confusing identity with control.
 

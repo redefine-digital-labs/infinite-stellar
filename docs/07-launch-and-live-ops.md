@@ -87,7 +87,7 @@ Never attach coordinates, local labels, map-vault content, raw worker messages, 
 
 ## Community rollout
 
-Except for this disclosed planning repository and its repository metadata, no domain, internet or social account, app-store listing, external campaign whether paid or unpaid, public event promotion, commercial announcement, or release may use the Infinite Stellar brand until counsel completes clearance and any required prior written consent is obtained. Repository planning under a working name is not evidence of clearance.
+D-023 permits only an unannounced engineering canary on the existing GitHub repository, Sui testnet, and a default Vercel URL. No custom domain, internet or social account, app-store listing, external campaign whether paid or unpaid, public event promotion, commercial announcement, mainnet release, or promoted public launch may use the Infinite Stellar brand until counsel completes clearance and any required prior written consent is obtained. Repository planning and the technical canary are not evidence of clearance.
 
 ### Before closed Alpha
 

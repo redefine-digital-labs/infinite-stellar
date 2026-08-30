@@ -12,6 +12,8 @@ coverage/
 
 target/
 *.log
+.vite/
+*.tsbuildinfo
 
 # Local proof artifacts and private player data
 *.zkey
@@ -23,3 +25,4 @@ private-coordinates*
 # Editors
 .idea/
 .vscode/
+.vercel

@@ -6,10 +6,10 @@
 | --- | --- |
 | Product | Infinite Stellar |
 | Document version | 0.2 |
-| Status | Planning / pre-production |
+| Status | P0 engineering foundation plus player vertical slice / pre-production |
 | Target network | Sui testnet before any mainnet release |
 | Product authority | This document plus the accepted decision log |
-| Implementation status | No playable implementation or deployment |
+| Implementation status | Tested Move foundation, typed SDK, and runnable local player vertical slice; no production integrations or deployment |
 
 This PRD defines the first complete player product. [Onboarding and Narrative Flow](11-onboarding-and-narrative-flow.md) is normative for official-client routes, screens, copy boundaries, and interaction acceptance, but cannot override this PRD or an accepted decision. Detailed game constants belong in a versioned season rules specification; protocol and security details belong in the linked architecture documents.
 
@@ -447,7 +447,7 @@ Ten internal players complete a 60-minute universe with Seat-first routing, ever
 
 Only after independent Move and circuit audits, trusted setup, reproducible artifacts, privacy capture, load gates, incident rehearsals, license review, and name clearance.
 
-Brand expansion beyond this planning repository is separately blocked now: the team has not obtained prior written consent for the current working name and must not assume that a mainnet-only gate is sufficient.
+Brand expansion remains separately blocked: the team has not obtained prior written consent for the current working name. D-023 permits only an unannounced existing-infrastructure testnet/Vercel canary and must not be read as satisfying any public-launch or mainnet gate.
 
 ## Dependencies and truth constraints
 
