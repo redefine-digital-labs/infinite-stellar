@@ -798,6 +798,17 @@ h1 {
 
 .gate-ok { color: var(--green); }
 .gate-wait { color: var(--amber); }
+.gate-proof {
+  color: var(--text);
+  font-size: 0.72rem;
+  text-decoration-color: var(--green);
+  text-underline-offset: 0.25rem;
+}
+
+.gate-proof:hover,
+.gate-proof:focus-visible {
+  color: var(--green);
+}
 
 .lobby-console {
   display: grid;

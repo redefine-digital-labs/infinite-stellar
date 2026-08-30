@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
+import type { InfiniteStellarDeployment } from '@infinite-stellar/game-sdk';
 import { usePlayerJourney } from './use-player-journey';
+import { TESTNET_DEPLOYMENT, TESTNET_DEPLOYMENT_EVIDENCE } from './deployment';
 import {
   BrandMark,
   Eyebrow,
@@ -14,9 +16,15 @@ export interface GameShellProps {
   walletAddress?: string;
   network?: string;
   walletControl?: ReactNode;
+  deployment?: InfiniteStellarDeployment;
 }
 
-export function GameShell({ walletAddress, network = 'testnet', walletControl }: GameShellProps) {
+export function GameShell({
+  walletAddress,
+  network = 'testnet',
+  walletControl,
+  deployment = TESTNET_DEPLOYMENT,
+}: GameShellProps) {
   const journey = usePlayerJourney(walletAddress);
   const { session } = journey;
   const selectedSoul = session.souls.find((soul) => soul.id === session.selectedSoulId);
@@ -108,14 +116,24 @@ export function GameShell({ walletAddress, network = 'testnet', walletControl }:
             <Eyebrow>LIVE TESTNET GATE</Eyebrow>
             <h1 id="unavailable-title">The bridge to Soulidity is not pinned yet.</h1>
             <p>
-              Wallet connection is available, but ranked enrollment cannot be built or signed until
-              the exact Soul package, ownership epoch rules, proof verifier, and deployment objects are frozen.
+              The Move foundation and a sealed interface canary are pinned on Sui testnet. Wallet
+              connection is available, but ranked enrollment cannot be built or signed until the
+              exact Soul package, ownership epoch rules, and proof verifier are frozen.
             </p>
             <div className="gate-list">
               <span className="gate-ok">✓ Move foundation verified</span>
+              <span className="gate-ok">✓ Testnet package deployed</span>
+              <span className="gate-ok">✓ Sealed interface canary created</span>
               <span className="gate-wait">○ Production Soul adapter pending</span>
               <span className="gate-wait">○ Production proof verifier pending</span>
-              <span className="gate-wait">○ Testnet package undeployed</span>
+              <a
+                className="gate-proof"
+                href={TESTNET_DEPLOYMENT_EVIDENCE.packageExplorerUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Inspect package {deployment.packageId?.slice(0, 10)}… on Sui Explorer ↗
+              </a>
             </div>
             <div className="hero-actions centered-actions">
               <button className="button button-primary" type="button" onClick={journey.enterDemo}>Run local demo</button>

@@ -11,7 +11,7 @@ The slice is a product and integration baseline, not a complete Dark Forest-styl
 The English web client supports this complete implemented journey:
 
 1. Open Infinite Stellar and connect a Sui wallet on testnet if desired.
-2. See that live ranked enrollment is unavailable while deployment and adapters are unpinned.
+2. Inspect the pinned testnet package and see that live ranked enrollment remains unavailable while production adapters are unpinned.
 3. Enter a clearly labeled local simulation with three deterministic demo Souls.
 4. Select a Soul and review the fixed-controller Season Seat consequences.
 5. Approve simulated enrollment and wait through a checkpoint-shaped finality state.
@@ -29,12 +29,12 @@ The journey persists by controller address in browser storage. Reloading resumes
 | --- | --- | --- | --- | --- |
 | Wallet connection and testnet identity | Real Mysten dApp Kit | Address input | Not required for read-only connection | Available |
 | Eligible Soul list | Deterministic demo fixtures | Typed `SoulCandidate` | Fail-closed `soul_adapter` boundary | Production unavailable |
-| Existing-Seat-first routing | Local persisted Seat | Pure route resolver | Deterministic fixed-controller Seat | Demo available; chain query pending deployment |
+| Existing-Seat-first routing | Local persisted Seat | Pure route resolver | Deterministic fixed-controller Seat | Demo available; production chain resolver not implemented |
 | Enrollment | Approval and finality UX | Typed state transitions | Atomic Seat/binding/capacity invariants | Demo available; signed production builder unavailable |
-| Universe opening | Simulated keeper action | Real transaction builder seam | Permissionless Sui Random transition | Builder available; deployment unavailable |
+| Universe opening | Simulated keeper action | Real transaction builder seam | Permissionless Sui Random transition | Builder and canary objects pinned; canary sealed until 2030 |
 | Founding Planet search | Local browser operation | Deterministic fixture search | No private coordinates stored | Demo fixture only |
 | Home claim | Approval and finality UX | Fail-closed production builder | Proof-bound atomic activation | Demo available; production verifier unavailable |
-| Active dashboard | Real client projection of local session | Typed Active snapshot | Canonical state exists in Move | Demo projection; chain read pending deployment |
+| Active dashboard | Real client projection of local session | Typed Active snapshot | Canonical state exists in Move | Demo projection; production chain read not implemented |
 | Movement, combat, recovery, Last Light | Explicitly locked | Not implemented | Not implemented | Out of slice |
 
 ## Architecture
@@ -55,7 +55,7 @@ React player client ───── controller-scoped browser persistence
               │
               ▼
        infinite_stellar Move package
-       (undeployed in this repository)
+       (pinned testnet foundation; ranked writes closed)
 ```
 
 The client never treats a demo transition as a Sui transaction. Demo screens, status pills, approval copy, footer, and live-region messages identify the simulation. The live testnet route reports each missing production gate and cannot create an enrollment or home-claim transaction.
@@ -110,11 +110,11 @@ sui move lint
 - Exact candidate coordinates and salt stay in controller-scoped browser storage for this prototype. This storage is not encrypted and is labeled as demo-only; a production encrypted vault, export, and recovery design remains a release gate.
 - Production enrollment throws `SOUL_ADAPTER_UNAVAILABLE` until the exact manifest-pinned Soulidity adapter is compatible.
 - Production home claiming throws `PROOF_VERIFIER_UNAVAILABLE` until the circuit and verifier are pinned.
-- Public keeper builders require package and object IDs and throw `DEPLOYMENT_UNAVAILABLE` otherwise.
+- Public keeper builders require complete package and object IDs; the client pins the sealed testnet canary while unconfigured deployments still throw `DEPLOYMENT_UNAVAILABLE`.
 - A Soul transfer never transfers the fixed Season Seat, Planet authority, or local controller-scoped vault.
 
 ## Exit evidence
 
 The slice is complete when the locked workspace install is reproducible, SDK and web tests pass, TypeScript and ESLint checks pass, the production bundle builds, the player journey works at desktop and mobile widths, and all existing Move tests remain green.
 
-This evidence validates the vertical slice only. It is not an audit, deployment, mainnet claim, or completion claim for the full game.
+This evidence validates the vertical slice only. The separate deployment record proves the experimental testnet package and sealed canary, but neither artifact is an audit, mainnet claim, live-ranked claim, or completion claim for the full game.

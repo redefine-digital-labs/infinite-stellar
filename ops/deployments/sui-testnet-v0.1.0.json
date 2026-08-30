@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "release": "sui-testnet-v0.1.0",
+  "status": "experimental-interface-canary",
+  "network": "testnet",
+  "chainIdentifier": {
+    "base58": "69WiPg3DAQiwdxfncX6wYQ2siKwAe6L9BZthQea3JNMD",
+    "hex": "4c78adac"
+  },
+  "grpcUrl": "https://fullnode.testnet.sui.io:443",
+  "graphqlUrl": "https://graphql.testnet.sui.io/graphql",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "commit": "2852942d191cb6223104d7007b995521b2f0ed1e",
+    "movePackagePath": "move/infinite_stellar",
+    "suiCliVersion": "1.78.1-homebrew"
+  },
+  "publisher": "0xadea1910ac0e738dc020247bc5408b57b15f3701026a96098b716a35c3a6c52f",
+  "package": {
+    "packageId": "0x1199adc93f61acd99d6d7889c82650b79c90e51ed3816c8c40d0544f9e2c9665",
+    "objectDigest": "7vDaxH7YMcTM5mMyG37DDLVq9PKrHYUGmJfZLC4mUNUu",
+    "version": "1",
+    "modules": [
+      "bootstrap",
+      "identity",
+      "planet",
+      "season",
+      "soul_adapter"
+    ],
+    "publishTransaction": "4UQtWdTPhTcD42bLp8J6dijgFDXpHaoCF6szq2P8hL7c",
+    "publishCheckpoint": "377868440",
+    "publishedAt": "2026-08-30T18:51:43.621Z",
+    "publishGasMist": "95014280"
+  },
+  "upgradeCapability": {
+    "objectId": "0x50eec9dab66c1b6ccc4482149fd32fa203a6f7fe3dfa065af0bc8500931b81ed",
+    "objectDigest": "8VmUDKjBTcVSVwNkqTRfkCWnd4WqLyickn3qX9kd1C4b",
+    "owner": "0xadea1910ac0e738dc020247bc5408b57b15f3701026a96098b716a35c3a6c52f"
+  },
+  "canary": {
+    "name": "First Light Interface Canary v0.1.0",
+    "configuration": "ops/seasons/first-light-interface-canary-v0.1.0.json",
+    "bootstrapTransaction": "4qpWz1qmbSHgG8w9MStaTMYjkET7Zc185LZXCWyZtBso",
+    "bootstrapCheckpoint": "377868731",
+    "bootstrappedAt": "2026-08-30T18:52:46.638Z",
+    "bootstrapGasMist": "10502280",
+    "objects": {
+      "manifest": {
+        "objectId": "0x462831ce16999c96806cf49eba26ab7241fe67ed363d53eb6a26c4336d3fcb60",
+        "objectDigest": "AsSiB8uR4sdRD5PxWYzCVNranaJuxqyCwEeYdAi1vtw1",
+        "initialSharedVersion": "349181940"
+      },
+      "runtime": {
+        "objectId": "0xd2566cb35d34878813dfddd28abb15f8c9b5f000b6f7c7a84e9dd94c634a2a53",
+        "objectDigest": "HWc2uhVafP3V4B9qsGtypSjeDbXvwdEcvUtE2LrCnt1e",
+        "initialSharedVersion": "349181940"
+      },
+      "enrollmentRegistry": {
+        "objectId": "0x6ce34ef502b587568481d7f4a90bc9b6263e96d7dd4dada5c22f709ba22b1008",
+        "objectDigest": "Ahuog2JshWnGKAjg4vU9rKW1PhtLqs3uWdS5smjJ2BpM",
+        "initialSharedVersion": "349181940"
+      },
+      "planetRegistry": {
+        "objectId": "0x45573501f0555830166699b3bc7e6540e05f9209a5337f5e13190df9d7fc0983",
+        "objectDigest": "5PHWBBW8VvkH6wTtfxHSW4gVR3jycGpAfeMZjwuRbrCv",
+        "initialSharedVersion": "349181940"
+      },
+      "seasonAdminCapability": {
+        "objectId": "0x8063de610cce2eea3cdd668a51ad326ec04c93ba47b1bb4433da1c90e61dc47b",
+        "objectDigest": "4cCpCn3CVd7vVkLW3Mcg97wN96qs1CAMuLha7B2y6qZz",
+        "owner": "0xadea1910ac0e738dc020247bc5408b57b15f3701026a96098b716a35c3a6c52f"
+      }
+    }
+  },
+  "systemObjects": {
+    "clock": "0x6",
+    "random": "0x8"
+  },
+  "readiness": {
+    "productionSoulAdapterReady": false,
+    "productionProofVerifierReady": false,
+    "rankedEnrollmentEnabled": false,
+    "homeClaimEnabled": false,
+    "audited": false,
+    "mainnetReady": false
+  },
+  "links": {
+    "package": "https://suiexplorer.com/object/0x1199adc93f61acd99d6d7889c82650b79c90e51ed3816c8c40d0544f9e2c9665?network=testnet",
+    "publishTransaction": "https://suiexplorer.com/txblock/4UQtWdTPhTcD42bLp8J6dijgFDXpHaoCF6szq2P8hL7c?network=testnet",
+    "manifest": "https://suiexplorer.com/object/0x462831ce16999c96806cf49eba26ab7241fe67ed363d53eb6a26c4336d3fcb60?network=testnet",
+    "bootstrapTransaction": "https://suiexplorer.com/txblock/4qpWz1qmbSHgG8w9MStaTMYjkET7Zc185LZXCWyZtBso?network=testnet"
+  }
+}

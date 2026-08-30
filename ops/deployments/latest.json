@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "network": "testnet",
+  "release": "sui-testnet-v0.1.0",
+  "record": "sui-testnet-v0.1.0.json"
+}

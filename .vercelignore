@@ -2,7 +2,6 @@
 .github
 docs
 move
-ops
 packages/game-sdk/test
 apps/web/src/**/*.test.tsx
 apps/web/src/test

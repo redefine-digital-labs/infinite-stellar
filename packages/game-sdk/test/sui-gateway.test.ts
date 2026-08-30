@@ -3,12 +3,12 @@ import {
   buildEnrollmentTransaction,
   buildHomeClaimTransaction,
   buildOpenUniverseTransaction,
-  UNDEPLOYED_TESTNET,
+  UNCONFIGURED_TESTNET,
 } from '../src';
 
 describe('Sui gateway', () => {
   it('keeps real Soul enrollment fail-closed', () => {
-    expect(() => buildEnrollmentTransaction(UNDEPLOYED_TESTNET)).toThrowError(
+    expect(() => buildEnrollmentTransaction(UNCONFIGURED_TESTNET)).toThrowError(
       expect.objectContaining({
         code: 'SOUL_ADAPTER_UNAVAILABLE',
       }),
@@ -16,7 +16,7 @@ describe('Sui gateway', () => {
   });
 
   it('keeps real home proving fail-closed', () => {
-    expect(() => buildHomeClaimTransaction(UNDEPLOYED_TESTNET)).toThrowError(
+    expect(() => buildHomeClaimTransaction(UNCONFIGURED_TESTNET)).toThrowError(
       expect.objectContaining({
         code: 'PROOF_VERIFIER_UNAVAILABLE',
       }),
@@ -24,7 +24,7 @@ describe('Sui gateway', () => {
   });
 
   it('requires a fully pinned deployment for public keeper transactions', () => {
-    expect(() => buildOpenUniverseTransaction(UNDEPLOYED_TESTNET)).toThrowError(
+    expect(() => buildOpenUniverseTransaction(UNCONFIGURED_TESTNET)).toThrowError(
       expect.objectContaining({
         code: 'DEPLOYMENT_UNAVAILABLE',
       }),

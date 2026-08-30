@@ -139,7 +139,7 @@ export function buildHomeClaimTransaction(
   );
 }
 
-export const UNDEPLOYED_TESTNET: InfiniteStellarDeployment = {
+export const UNCONFIGURED_TESTNET: InfiniteStellarDeployment = {
   network: 'testnet',
   productionSoulAdapterReady: false,
   productionProofVerifierReady: false,

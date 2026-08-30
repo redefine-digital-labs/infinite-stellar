@@ -14,3 +14,9 @@ Rules:
   suites and release gates pass.
 - Verify every ID against the named Sui network and transaction before merging.
 - A testnet deployment is not a mainnet release or an audit claim.
+
+Verify the current record against Sui's public testnet GraphQL endpoint with:
+
+```bash
+npm run verify:deployment
+```

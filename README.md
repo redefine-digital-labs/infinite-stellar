@@ -4,7 +4,7 @@
 
 **Infinite Stellar is a Soul-centered, zero-knowledge, fully onchain seasonal strategy game built on Sui.**
 
-> **Status:** Experimental pre-production vertical slice. The repository contains a tested P0 Sui Move foundation, typed game SDK, and runnable English player client. Ranked Soul enrollment, production ZK verification, movement/combat, and onchain deployment remain unavailable and fail closed.
+> **Status:** Experimental pre-production testnet canary. The P0 Move foundation and a sealed interface canary are deployed on Sui testnet; the repository also contains a typed game SDK and runnable English player client. Ranked Soul enrollment, production ZK verification, movement/combat, and all player-changing onchain actions remain unavailable and fail closed.
 
 The name describes an endless succession of bounded stellar worlds, not one season that runs forever. A player's civilization disappears when its universe closes; the Soul remains as the persistent actor and carries only verifiable history, relationships, and expression into the next world.
 
@@ -90,23 +90,25 @@ Mainnet is gated by circuit, contract, performance, privacy, indexer-rebuild, op
 | [`apps/web`](apps/web) | Responsive React player client with Sui wallet connection and a clearly labeled local First Light simulation |
 | [`packages/game-sdk`](packages/game-sdk) | Typed player state machine, deterministic demo fixtures, persistence, routing, and fail-closed Sui transaction gateway |
 | [`move/infinite_stellar`](move/infinite_stellar) | Sui Move package for season, identity, Soul adapter, Planet, and bootstrap invariants |
+| [Sui testnet deployment](ops/deployments/sui-testnet-v0.1.0.json) | Immutable package, transaction, capability, canary-object, source-commit, and readiness evidence |
 
 ## Run the player vertical slice
 
-Requirements: Node.js 22.13 or newer, npm 11 or newer, and a modern browser.
+Requirements: Node.js 24.x, npm 11 or newer, and a modern browser.
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Open `http://127.0.0.1:4173`. The client can connect a Sui wallet on testnet, but all ranked writes are disabled because no package deployment or production Soul/proof adapter is pinned. Choose **Explore local demo** to run the complete implemented journey: choose a demo Soul, create a fixed Season Seat, wait for simulated finality, open the universe, search privately for a Founding Planet, claim it, and reach the Active civilization dashboard.
+Open `http://127.0.0.1:4173`. The client can connect a Sui wallet and inspect the pinned testnet package, but all ranked writes remain disabled because the production Soul and proof adapters are not pinned. Choose **Explore local demo** to run the complete implemented journey: choose a demo Soul, create a fixed Season Seat, wait for simulated finality, open the universe, search privately for a Founding Planet, claim it, and reach the Active civilization dashboard.
 
 Run all TypeScript checks with:
 
 ```bash
 npm run validate:web
 npm run lint:docs
+npm run verify:deployment
 ```
 
 The capability boundary and remaining work are documented in the [player vertical slice](docs/13-player-vertical-slice.md).
@@ -137,10 +139,10 @@ Implemented directories are shown above. The remaining entries are roadmap targe
 
 ## Current status
 
-- **Phase:** P0 Move foundation plus player-facing full-stack vertical slice
-- **Network:** Undeployed
+- **Phase:** Experimental testnet interface canary plus player-facing full-stack vertical slice
+- **Network:** Sui testnet package and sealed canary deployed; no mainnet deployment
 - **Implementation:** Core season, deterministic enrollment, home-window, and Founding Planet transitions are implemented in Move; a typed SDK and responsive player client implement the address/Soul/Seat/Planet activation journey using local demo fixtures
 - **License:** [MIT](LICENSE)
-- **Next gate:** Freeze the Soulidity adapter ABI and proof-verifier interface, publish a testnet deployment manifest, and replace the local enrollment/claim simulation with signed Sui transactions
+- **Next gate:** Freeze the Soulidity adapter ABI and proof-verifier interface, then replace the local enrollment/claim simulation with audited signed Sui transactions
 
 Dark Forest v0.6 is GPL-3.0 licensed. Infinite Stellar requires original fiction, art direction, writing, Move code, and circuits unless the team deliberately accepts the obligations of incorporating GPL-licensed material. See [research notes](docs/09-research-notes.md).

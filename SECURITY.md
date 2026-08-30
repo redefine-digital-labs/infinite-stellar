@@ -2,9 +2,9 @@
 
 ## Current status
 
-Infinite Stellar is a pre-production repository with an experimental, unaudited Sui Move foundation, typed SDK, and runnable local player vertical slice. It contains no deployed package, live ranked client, production Soul adapter, production circuit, live sponsor, or player-secret service. The local simulation creates no wallet signature, Sui write, or Soul history.
+Infinite Stellar is a pre-production repository with an experimental, unaudited Sui testnet package, sealed interface canary, typed SDK, and runnable local player vertical slice. It contains no live ranked client, production Soul adapter, production circuit, live sponsor, or player-secret service. The local simulation creates no wallet signature, Sui write, or Soul history.
 
-No released version is currently supported. Security claims in the planning documents are requirements, not evidence that an implementation has passed them.
+Private reports are accepted for the testnet package and canary recorded as [`sui-testnet-v0.1.0`](ops/deployments/sui-testnet-v0.1.0.json). No mainnet or production-player version is supported. Security claims in the planning documents are requirements, not evidence that an implementation has passed them.
 
 ## Reporting
 
@@ -22,7 +22,7 @@ If private vulnerability reporting is unavailable, do not publish sensitive deta
 
 ## Future scope
 
-Before public testnet, the reporting program must define supported versions, response targets, disclosure coordination, safe harbor, and bounty scope for:
+Before a player-facing public testnet, the reporting program must define response targets, disclosure coordination, safe harbor, and bounty scope for:
 
 - Sui Move packages and capabilities;
 - zero-knowledge circuits, setup, and artifacts;

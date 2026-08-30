@@ -4,7 +4,7 @@ This file contains stable facts that should survive individual implementation ph
 
 ## Product invariants
 
-- Infinite Stellar is a Sui-native, zero-knowledge, fully onchain seasonal strategy game in pre-production. It has an experimental P0 Move foundation and a runnable local player vertical slice, but no deployed or playable onchain release.
+- Infinite Stellar is a Sui-native, zero-knowledge, fully onchain seasonal strategy game in pre-production. It has an experimental P0 Move foundation, a sealed Sui testnet interface canary, and a runnable local player vertical slice, but no playable ranked onchain release.
 - An address authorizes; a Soul is the persistent actor; Animacraft supplies accepted visual material; a Commander Projection freezes the seasonal Soul/visual/role/Seat binding; a fixed Season Seat controls a temporary Civilization and owns Planets through `owner_seat_id`.
 - One controller address may create at most one ranked Seat per league and season. Manifest-pinned registry parents and typed-key/shard vectors deterministically derive the Season Seat itself as the logical `ControllerLeagueSeasonSlot` and direct lookup. This is address-level fairness, not human-level Sybil resistance.
 - A bounded enrollment-only capacity object atomically enforces manifest `max_ranked_seats`; it is not an ordinary-play global write.

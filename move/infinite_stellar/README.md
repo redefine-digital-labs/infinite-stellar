@@ -1,7 +1,9 @@
 # Infinite Stellar Move Foundation
 
 This package is the first bounded Sui Move implementation of Infinite Stellar's
-ranked-season foundation. It is experimental, unaudited, and undeployed.
+ranked-season foundation. It is experimental and unaudited. Version 1 is
+published to Sui testnet with a sealed, non-player interface canary; see the
+[immutable deployment record](../../ops/deployments/sui-testnet-v0.1.0.json).
 
 Implemented modules:
 
