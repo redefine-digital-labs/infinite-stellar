@@ -1,15 +1,14 @@
 # Infinite Stellar Current Phase
 
-- **Status:** Active
+- **Status:** Complete
 - **Phase:** Production-grade experimental testnet release
-- **Goal:** Publish the verified Move foundation to the existing Sui testnet account, pin and expose non-secret deployment evidence, commit and push the English monorepo to GitHub, deploy the player client through the existing Vercel production project, and verify each public surface end to end.
-- **Constraints:** Sui testnet only; no mainnet deployment or audited/full-game claim. Real Soul enrollment and proof submission remain fail-closed. Use only already configured infrastructure and credentials. No force push, destructive replacement, secret material, production player coordinates, or unresolved adapter enablement.
-- **Acceptance checks:** Validate GitHub/Vercel/Sui authority and targets; pass clean npm, SDK/web, Move, Markdown, diff, secret, and English checks; publish and verify testnet package/object/digest evidence; commit and push a release branch; deploy and smoke-test the Vercel production URL on desktop and mobile; preserve explicit experimental/unaudited/unavailable labels; create a release handoff.
-- **Repository:** `https://github.com/redefine-digital-labs/infinite-stellar`
-- **Implementation baseline:** `34cfbcde3a802d7317dfa5e1b7983fa20db9e7e7`
-- **Durable decision:** Addresses authorize; Souls cross; Animacraft gives form; Commander Projections bind roles; deterministic fixed-controller Seats control; Civilizations begin `AwaitingHome`; a later proof-bound claim creates the Seat-owned Founding Planet.
-- **Risk:** The Soulidity ABI and production proof verifier remain unresolved; name clearance is incomplete. The release is an experimental public testnet foundation and local simulation, not a complete live game.
-- **Exact next action:** Audit the configured GitHub remote/auth, Vercel project/auth, Sui active environment/address/gas, release scripts, branch state, and repository secrets before any external write.
-- **Latest handoff:** `docs/codex/handoffs/2026-08-30-player-vertical-slice.md`
+- **Outcome:** The experimental Move foundation and sealed non-player canary are verified on Sui testnet. GitHub `main` and `codex/testnet-release` contain the tested English full stack, and the existing Vercel production project serves the fail-closed player client at <https://infinite-stellar.vercel.app>.
+- **Final source commit:** `3d2bcf1e3fc17effe9a7df4751e415214a674b0b`
+- **Move package:** `0x1199adc93f61acd99d6d7889c82650b79c90e51ed3816c8c40d0544f9e2c9665` on Sui testnet.
+- **Production gates:** Soul enrollment and proof-backed home claims remain intentionally unavailable until exact production dependencies are frozen and audited.
+- **Risk:** Name clearance remains incomplete. Mainnet, custom domain, promotion, and commercial-announcement work remain blocked by D-023. GitHub Actions activation awaits an authorized credential with `workflow` scope.
+- **Exact next action:** Freeze the Soulidity Soul ABI and proof verifier interface, then start a new bounded compatibility and security-integration phase.
+- **Latest handoff:** `docs/codex/handoffs/2026-08-30-production-testnet-release.md`
 
-The linked handoff records the completed full-stack phase. Start a new bounded phase before changing the integration objective or implementing movement/combat.
+Read only the linked handoff when resuming. Do not enable player writes from the
+testnet canary or describe the local simulation as ranked onchain gameplay.
