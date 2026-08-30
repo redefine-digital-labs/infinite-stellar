@@ -40,6 +40,8 @@ describe('Infinite Stellar player shell', () => {
     expect(screen.getByRole('heading', { name: /bridge to soulidity is not pinned/i })).toBeInTheDocument();
     expect(screen.getByText(/testnet package deployed/i)).toBeInTheDocument();
     expect(screen.getByText(/production soul adapter pending/i)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/production soul adapter and proof verifier/i);
+    expect(screen.getByText(/experimental · unaudited · testnet canary/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /inspect package/i })).toHaveAttribute(
       'href',
       expect.stringContaining('0x1199adc93f61acd99d6d7889c82650b79c90e51ed3816c8c40d0544f9e2c9665'),

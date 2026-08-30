@@ -55,7 +55,7 @@ export function enterOnchainUnavailable(
     stage: 'unavailable',
     lastStableStage: 'unavailable',
     notice:
-      'Live Soul enrollment is fail-closed until the Soulidity adapter and deployment are pinned.',
+      'Live Soul enrollment is fail-closed until the production Soul adapter and proof verifier are pinned.',
   };
 }
 

@@ -414,7 +414,7 @@ export function GameShell({
         {session.notice}
       </div>
       <footer className="footer">
-        <span>EXPERIMENTAL · UNAUDITED · UNDEPLOYED</span>
+        <span>EXPERIMENTAL · UNAUDITED · TESTNET CANARY</span>
         <span>BUILT ON SUI · POWERED BY SOULIDITY</span>
       </footer>
     </div>
