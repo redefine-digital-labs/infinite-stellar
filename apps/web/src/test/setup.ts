@@ -19,6 +19,11 @@ Object.defineProperty(window, 'localStorage', {
   value: memoryStorage,
 });
 
+Object.defineProperty(window, 'scrollTo', {
+  configurable: true,
+  value: () => undefined,
+});
+
 afterEach(() => {
   cleanup();
   window.localStorage.clear();

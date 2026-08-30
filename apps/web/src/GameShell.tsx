@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import type { InfiniteStellarDeployment } from '@infinite-stellar/game-sdk';
 import { usePlayerJourney } from './use-player-journey';
 import { TESTNET_DEPLOYMENT, TESTNET_DEPLOYMENT_EVIDENCE } from './deployment';
@@ -29,6 +29,10 @@ export function GameShell({
   const { session } = journey;
   const selectedSoul = session.souls.find((soul) => soul.id === session.selectedSoulId);
   const candidate = session.search.candidate;
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [session.stage]);
 
   return (
     <div className="app-frame">
