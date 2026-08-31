@@ -8,24 +8,11 @@ export interface KeyValueStorage {
   removeItem(key: string): void;
 }
 
-function storageKey(controllerAddress: string): string {
+export function playerSessionStorageKey(controllerAddress: string): string {
   return `${SESSION_STORAGE_PREFIX}:${controllerAddress.toLowerCase()}`;
 }
 
-export function savePlayerSession(
-  storage: KeyValueStorage,
-  controllerAddress: string,
-  session: PlayerSession,
-): void {
-  storage.setItem(storageKey(controllerAddress), JSON.stringify(session));
-}
-
-export function loadPlayerSession(
-  storage: KeyValueStorage,
-  controllerAddress: string,
-): PlayerSession | null {
-  const raw = storage.getItem(storageKey(controllerAddress));
-  if (!raw) return null;
+export function parsePlayerSession(raw: string): PlayerSession | null {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (
@@ -38,15 +25,46 @@ export function loadPlayerSession(
     ) {
       return null;
     }
+    if (
+      'strategy' in parsed &&
+      parsed.strategy !== undefined &&
+      (
+        typeof parsed.strategy !== 'object' ||
+        parsed.strategy === null ||
+        !('schemaVersion' in parsed.strategy) ||
+        parsed.strategy.schemaVersion !== 5 ||
+        !('artifacts' in parsed.strategy) ||
+        !Array.isArray(parsed.strategy.artifacts)
+      )
+    ) {
+      return null;
+    }
     return parsed as PlayerSession;
   } catch {
     return null;
   }
 }
 
+export function savePlayerSession(
+  storage: KeyValueStorage,
+  controllerAddress: string,
+  session: PlayerSession,
+): void {
+  storage.setItem(playerSessionStorageKey(controllerAddress), JSON.stringify(session));
+}
+
+export function loadPlayerSession(
+  storage: KeyValueStorage,
+  controllerAddress: string,
+): PlayerSession | null {
+  const raw = storage.getItem(playerSessionStorageKey(controllerAddress));
+  if (!raw) return null;
+  return parsePlayerSession(raw);
+}
+
 export function clearPlayerSession(
   storage: KeyValueStorage,
   controllerAddress: string,
 ): void {
-  storage.removeItem(storageKey(controllerAddress));
+  storage.removeItem(playerSessionStorageKey(controllerAddress));
 }

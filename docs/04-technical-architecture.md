@@ -220,7 +220,7 @@ For a movement action, the prover should establish that it knows source and dest
 - The destination lies within the declared world geometry.
 - The squared distance is within the public or committed maximum allowed by the action.
 - Any deterministic spatial property required by the rules is correctly derived.
-- The proof is bound to the exact action intent and cannot be replayed for another sender, season, amount, or destination.
+- The proof is bound to the exact action intent and cannot be replayed for another sender, season, action-specific proof amount, or destination. In interface v1, the `move` proof amount is the maximum route distance; energy and silver remain separate live-state transaction arguments.
 
 Static geometry belongs in the circuit. Current energy, ownership, time, queue capacity, combat, and scoring belong in Move.
 
@@ -232,7 +232,8 @@ The new circuit should compress the action into a domain-separated commitment. T
 
 ```text
 domain
-circuit_version
+proof_interface_version
+network
 season_id
 league
 seat_id
@@ -243,30 +244,30 @@ amount
 action_kind
 source_planet_nonce
 deadline
-rules_hash
+rules_geometry_commitment
 ```
 
 These logical fields do not each need a public signal. They can be canonically encoded and hashed into one or more field elements, provided the design specifies length prefixes, integer widths, endianness, field reduction, and collision resistance. Inside the circuit, `source_location_hash` and `destination_location_hash` are derived from the private coordinates, and `action_commitment` is constrained to equal the domain-separated hash of the entire canonical tuple above. Move independently recomputes that same commitment from transaction arguments before verifying the proof.
 
 `source_planet_nonce` is stored and incremented on each source planet. It prevents replay without a Seat-global nonce that would invalidate proofs for unrelated source planets. Current destination state is deliberately not proven; Move reads and serializes it at execution.
 
-A candidate public schema might use:
+Proof interface v1 freezes this public schema:
 
 ```text
 source_location_hash
 destination_location_hash
 action_commitment
-season_geometry_commitment
+rules_geometry_commitment
 ```
 
-`season_geometry_commitment` must be either derived inside the circuit from fully constrained geometry parameters or replaced by constants embedded in the versioned circuit. An unconstrained configuration hash is not acceptable. The exact public-signal order, field encoding, and relation are frozen before trusted setup. The schema above remains a candidate until the Phase 0 circuit review proves it complete.
+`rules_geometry_commitment` must be derived inside the circuit from fully constrained geometry parameters or equal constants embedded in the versioned circuit. An unconstrained configuration hash is not acceptable. The exact 16-field Poseidon action tuple, identifier limbs, four-signal order, BN254 limits, little-endian serialization, and mainnet golden vector are normative in [`16-proof-interface-and-artifact-preflight.md`](16-proof-interface-and-artifact-preflight.md) and [`config/proof-interface-v1.json`](../config/proof-interface-v1.json). TypeScript and Move agree on that interface. The checked-in `claim_home` and `move` candidates exercise this encoding with development-only artifacts, but they do not yet constrain every production relation. Production artifacts, the verifying key, setup ceremony, Sui serialization bridge, and audit remain unavailable before any ranked write.
 
 ### Circuit stack
 
-- Circom 2.x source.
+- Circom 2.2.3 source for the current development candidates.
 - BN254 Groth16 unless benchmarks justify BLS12-381.
 - A circuit-friendly hash such as Poseidon for coordinate and action commitments.
-- `snarkjs` or a compatible prover compiled for browser use.
+- Pinned `snarkjs` 0.7.6 for current browser proof generation and self-verification.
 - Sui `groth16` Move API for verification.
 - Reproducible build containers and pinned toolchain versions.
 
@@ -297,7 +298,7 @@ The client treats browser storage loss as a major risk and warns before formal s
 
 ### Miner and prover
 
-Mining and witness generation run in Web Workers to keep rendering responsive. The worker protocol accepts narrowly typed messages and never receives wallet signing authority. Proof artifacts are content-addressed and checked against the active manifest before use.
+Mining and witness generation run in Web Workers to keep rendering responsive. The worker protocol accepts narrowly typed messages and never receives wallet signing authority. Proof artifacts are content-addressed and checked against the active manifest before use. The implemented preflight verifies the manifest hash, network, ruleset, circuit/version, production setup provenance, role uniqueness, HTTPS/same-origin policy, media type, byte length, per-artifact SHA-256, aggregate memory budget, cancellation, and stale request IDs. Successful preflight leaves bytes inside the Worker; it does not make a circuit audited or enable the production verifier.
 
 Performance targets for the go/no-go build:
 

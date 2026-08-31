@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "status": "development-circuit-candidates-only",
+  "curve": "bn254",
+  "productionNetwork": "sui:mainnet",
+  "domain": {
+    "label": "INFINITE_STELLAR_PROOF_INTENT_V1",
+    "derivation": "sha256(utf8(label)) mod bn254_scalar_field",
+    "field": "13909138997969785233372616111572825994268025797777928597047068964955765571998"
+  },
+  "bn254ScalarField": "21888242871839275222246405745257275088548364400416034343698204186575808495617",
+  "networkFields": {
+    "sui:mainnet": "135562284393187496412304656295821855871151406243072554287673956922558459083",
+    "sui:testnet": "12597337022539968384113403541422236107320375547824898886637436062384730239134"
+  },
+  "actionKinds": {
+    "claim_home": 1,
+    "move": 2,
+    "reveal": 3,
+    "capture": 4
+  },
+  "actionCommitment": {
+    "hash": "sui_poseidon_bn254",
+    "identifierEncoding": "32-byte big-endian Sui address interpreted as u256, split low-128 limb then high-128 limb",
+    "fields": [
+      "domain_field",
+      "interface_version",
+      "action_kind",
+      "poseidon(network_field, league_u8)",
+      "season_id_low_128",
+      "season_id_high_128",
+      "seat_id_low_128",
+      "seat_id_high_128",
+      "sender_low_128",
+      "sender_high_128",
+      "source_location_hash",
+      "destination_location_hash",
+      "amount_u64",
+      "source_planet_nonce_u64",
+      "deadline_ms_u64",
+      "rules_geometry_commitment"
+    ]
+  },
+  "publicSignals": {
+    "encoding": "four canonical BN254 scalar elements concatenated as 32-byte little-endian values",
+    "order": [
+      "source_location_hash",
+      "destination_location_hash",
+      "action_commitment",
+      "rules_geometry_commitment"
+    ],
+    "byteLength": 128
+  },
+  "rulesGeometry": {
+    "source": "config/dark-forest-v06-round5.json",
+    "sourceSha256": "a01f97cc2657de4fe7a3e415654a895e54544045387b6bc252b4e4d8c51d1372",
+    "field": "6761147084378425910415724448274404356606413803680297929056799117911141148911"
+  },
+  "developmentCandidates": {
+    "claimHome": "circuits/src/claim_home_v1.circom",
+    "move": "circuits/src/move_v1.circom",
+    "compiler": "circom-v2.2.3",
+    "prover": "snarkjs-v0.7.6",
+    "productionEligible": false,
+    "remainingRequiredRelations": [
+      "round5_perlin",
+      "home_perlin_band",
+      "dynamic_season_world_radius"
+    ]
+  },
+  "goldenVector": {
+    "network": "sui:mainnet",
+    "league": 1,
+    "actionKind": "claim_home",
+    "seasonId": "0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff0000",
+    "seatId": "0x22223333444455556666777788889999aaaabbbbccccddddeeeeffff00001111",
+    "sender": "0xa11ce",
+    "sourceLocationHash": "0",
+    "destinationLocationHash": "1234567890123456789012345678901234567890",
+    "amount": "0",
+    "sourcePlanetNonce": "0",
+    "deadlineMs": "1800000000000",
+    "contextField": "6961760459381713882819346659547257964740718346557136328160522324577965813159",
+    "actionCommitment": "2712343140332930239315986322713648633368676698543859947156743257637574144809",
+    "publicInputSha256": "ccbde92bf6182e3b15f33967cd832477e8938c676fba05828cb658a228848725"
+  }
+}

@@ -1,14 +1,19 @@
 # Infinite Stellar Current Phase
 
 - **Status:** Complete
-- **Phase:** Production-grade experimental testnet release
-- **Outcome:** The experimental Move foundation and sealed non-player canary are verified on Sui testnet. GitHub `main` and `codex/testnet-release` contain the tested English full stack, and the existing Vercel production project serves the fail-closed player client at <https://infinite-stellar.vercel.app>.
-- **Final source commit:** `3d2bcf1e3fc17effe9a7df4751e415214a674b0b`
-- **Move package:** `0x1199adc93f61acd99d6d7889c82650b79c90e51ed3816c8c40d0544f9e2c9665` on Sui testnet.
-- **Production gates:** Soul enrollment and proof-backed home claims remain intentionally unavailable until exact production dependencies are frozen and audited.
-- **Risk:** Name clearance remains incomplete. Mainnet, custom domain, promotion, and commercial-announcement work remain blocked by D-023. GitHub Actions activation awaits an authorized credential with `workflow` scope.
-- **Exact next action:** Freeze the Soulidity Soul ABI and proof verifier interface, then start a new bounded compatibility and security-integration phase.
-- **Latest handoff:** `docs/codex/handoffs/2026-08-30-production-testnet-release.md`
+- **Phase:** Circuit candidate and real-multiplayer rehearsal
+- **Goal:** Implement audit-ready candidate `claim_home` and `move` Circom relations against proof interface v1, generate development-only Groth16 artifacts, connect proof execution and verification without opening production gates, and rehearse two-controller shared-season transactions.
+- **Reference:** Official Dark Forest v0.6 posts and the pinned post-Round-5 snapshot `darkforest-eth/darkforest-v0.6@d1e25ead311697ecaa27ff648dac16a0d8cea15c`. The reference is GPL-3.0; this repository uses an independently written compatibility implementation and original presentation.
+- **Branch:** `codex/dark-forest-parity` from release-record commit `75fe712e4d2349b2e6b57dfa3751dade7921a48d`.
+- **In scope:** `claim_home` and `move` Circom source; constrained coordinate/location/action/rules relations; adversarial witness tests; reproducible development-only Groth16 artifacts; browser/local proving and verification; test-only or rehearsal verifier integration; two-controller shared-state transaction rehearsal; performance and memory evidence; documentation and full validation.
+- **Non-goals:** No production Phase 2 ceremony, production proving/verifying key, claim of circuit audit, production verifier activation, mainnet publish/write, public launch, or Vercel deployment in this phase. The validated implementation will be committed and pushed to the development branch as explicitly authorized by the user.
+- **Production boundary:** Development `claim_home` and `move` proofs can be generated and self-verified in the browser Worker, but they are not production relations or keys. Round-5 Perlin/home bands, manifest-dynamic geometry, Arkworks-to-Sui proof serialization, an audited Move verifier wrapper, a production ceremony, the canonical Soul ABI, and independent audits remain fail-closed. Wallet-owned Sui artifact custody and signed ranked transaction builders are also absent.
+- **Acceptance:** Complete. Circom proves the exact four-signal v1 candidates; adversarial coordinates, distance, intent, and action mutations fail; generated development artifacts are content-addressed and production-ineligible; local proof generation/self-verification passes; TypeScript and Move share golden commitments and public-input digests; two controllers mutate one shared rehearsal season without cross-control; all TypeScript, Move, circuit, lint, build, documentation, dependency, diff, and browser gates pass.
+- **Deployment:** The validated phase is recorded on `origin/codex/dark-forest-parity`. No Vercel deployment or onchain write occurred. The earlier sealed testnet canary remains unchanged. The wallet client targets mainnet, but ranked construction/signing and production verification remain fail-closed.
+- **Exact next action:** Complete Perlin/home-band and manifest-dynamic geometry constraints, implement the audited Arkworks-to-Sui proof bridge and verifier wrapper, then run signed two-wallet testnet transactions before a production setup ceremony is considered.
+- **Current handoff:** `docs/codex/handoffs/2026-08-31-circuit-candidate-multiplayer-rehearsal.md`
+- **Previous handoff:** `docs/codex/handoffs/2026-08-31-worker-mining-encrypted-vault.md`
 
-Read only the linked handoff when resuming. Do not enable player writes from the
-testnet canary or describe the local simulation as ranked onchain gameplay.
+The prior production-testnet release handoff remains the recovery point for the
+sealed canary. Do not modify or enable it until the production Soul, proof, and
+artifact-custody adapters are frozen, audited, and separately authorized.

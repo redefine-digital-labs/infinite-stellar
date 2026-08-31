@@ -2,7 +2,7 @@
 module infinite_stellar::protocol_tests;
 
 use infinite_stellar::identity::{Self as identity, CivilizationState, CommanderProjection, EnrollmentRegistry, ScoreCard, SeasonSeat};
-use infinite_stellar::planet::{Self as planet, Planet, PlanetRegistry};
+use infinite_stellar::planet::{Self as planet, PlanetRegistry};
 use infinite_stellar::season::{Self as season, SeasonAdminCap, SeasonManifest, SeasonRuntime};
 use infinite_stellar::soul_adapter;
 
@@ -305,6 +305,39 @@ fun exact_gate_claim_activates_seat_without_live_soul_recheck() {
     assert!(identity::projection_epoch(&projection) == 7);
     planet::destroy_planet_for_testing(home);
     destroy_enrollment(seat, projection, civilization, score);
+    destroy_world(manifest, runtime, enrollment_registry, planet_registry, admin_cap);
+}
+
+#[test]
+fun verified_natural_planet_initializes_at_derived_address() {
+    let mut ctx = new_ctx(ALICE, 29);
+    let (manifest, runtime, enrollment_registry, mut planet_registry, admin_cap) =
+        new_world(1, &mut ctx);
+    let mut commitment = bytes32(255);
+    *commitment.borrow_mut(4) = 0;
+    *commitment.borrow_mut(5) = 0;
+    *commitment.borrow_mut(6) = 0;
+    *commitment.borrow_mut(8) = 255;
+    *commitment.borrow_mut(9) = 0;
+    *commitment.borrow_mut(14) = 0;
+    let expected = planet::derive_planet_address(&manifest, &planet_registry, commitment);
+    let natural = planet::initialize_planet_fixture_for_testing(
+        &manifest,
+        &mut planet_registry,
+        commitment,
+        bytes32(7),
+        19,
+        250,
+    );
+    assert!(object::id(&natural).to_address() == expected);
+    assert!(planet::is_neutral(&natural));
+    assert!(!planet::is_founding_planet(&natural));
+    assert!(planet::level(&natural) == 9);
+    assert!(planet::planet_type(&natural) == 0);
+    assert!(planet::space_type(&natural) == 3);
+    assert!(planet::energy_capacity(&natural) == 3200000000);
+    assert!(planet::space_junk(&natural) == 32);
+    planet::destroy_planet_for_testing(natural);
     destroy_world(manifest, runtime, enrollment_registry, planet_registry, admin_cap);
 }
 

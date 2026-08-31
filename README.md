@@ -4,7 +4,7 @@
 
 **Infinite Stellar is a Soul-centered, zero-knowledge, fully onchain seasonal strategy game built on Sui.**
 
-> **Status:** Experimental pre-production testnet canary. The P0 Move foundation and a sealed interface canary are deployed on Sui testnet; the repository also contains a typed game SDK and runnable English player client. Ranked Soul enrollment, production ZK verification, movement/combat, and all player-changing onchain actions remain unavailable and fail closed.
+> **Status:** Experimental pre-production testnet canary plus a playable local Round 5 rules sandbox. The repository now contains Sui Move state machines, a mainnet-bound proof-intent interface, development-only `claim_home`/`move` Groth16 circuit candidates, content-addressed Prover Worker preflight and local self-verification, and an English client for private discovery, exact Worker-based MiMC/Perlin frontier mining, an authenticated encrypted device vault, planet defaults, energy/silver, voyages/combat, upgrades, artifacts, five ships, junk/abandonment, reveal/capture, score, and Last Light settlement. Ranked Soul enrollment and proof-backed production writes remain unavailable and fail closed.
 
 The name describes an endless succession of bounded stellar worlds, not one season that runs forever. A player's civilization disappears when its universe closes; the Soul remains as the persistent actor and carries only verifiable history, relationships, and expression into the next world.
 
@@ -87,9 +87,15 @@ Mainnet is gated by circuit, contract, performance, privacy, indexer-rebuild, op
 | [Onboarding and narrative flow](docs/11-onboarding-and-narrative-flow.md) | Address-to-Soul entry, screen routing, lifecycle, Founding Planet, transfer, vault, and accessibility contracts |
 | [Soul adapter contract](docs/12-soul-adapter-contract.md) | Replaceable Soulidity boundary, frozen game-core inputs, production gates, and current Move evidence |
 | [Player vertical slice](docs/13-player-vertical-slice.md) | Runnable client journey, SDK boundary, persistence, real-versus-demo capability matrix, and validation |
-| [`apps/web`](apps/web) | Responsive React player client with Sui wallet connection and a clearly labeled local First Light simulation |
-| [`packages/game-sdk`](packages/game-sdk) | Typed player state machine, deterministic demo fixtures, persistence, routing, and fail-closed Sui transaction gateway |
-| [`move/infinite_stellar`](move/infinite_stellar) | Sui Move package for season, identity, Soul adapter, Planet, and bootstrap invariants |
+| [Round 5 parity contract](docs/14-dark-forest-v06-parity.md) | Source-linked behavioral target, formulas, compatibility quirks, and acceptance vectors |
+| [Round 5 Sui architecture](docs/15-round5-sui-architecture.md) | Object topology, proof intents, concurrency, state machines, and release gates |
+| [Proof interface and artifact preflight](docs/16-proof-interface-and-artifact-preflight.md) | Exact BN254/Poseidon encoding, golden vector, manifest contract, Worker lifecycle, and mainnet gates |
+| [`apps/web`](apps/web) | Responsive React player client with Sui wallet connection and a clearly labeled local strategy sandbox |
+| [`packages/game-sdk`](packages/game-sdk) | Typed journey, exact MiMC/Perlin vectors, Round 5 rules simulator, persistence, and fail-closed Sui gateway |
+| [`packages/prover`](packages/prover) | Cross-language proof intent, Sui-compatible public inputs, content-addressed artifact loader, and Worker protocol |
+| [`move/infinite_stellar`](move/infinite_stellar) | Sui Move season, identity, Planet, voyage, artifact, reveal, capture, score, and settlement state machines |
+| [Round 5 rules manifest](config/dark-forest-v06-round5.json) | Machine-readable constants, enumerations, ship effects, and preserved contract quirks |
+| [Proof interface v1](config/proof-interface-v1.json) | Machine-readable field order, constants, mainnet domain, serialization, and golden vector |
 | [Sui testnet deployment](ops/deployments/sui-testnet-v0.1.0.json) | Immutable package, transaction, capability, canary-object, source-commit, and readiness evidence |
 
 ## Run the player vertical slice
@@ -101,7 +107,9 @@ npm ci
 npm run dev
 ```
 
-Open `http://127.0.0.1:4173`. The client can connect a Sui wallet and inspect the pinned testnet package, but all ranked writes remain disabled because the production Soul and proof adapters are not pinned. Choose **Explore local demo** to run the complete implemented journey: choose a demo Soul, create a fixed Season Seat, wait for simulated finality, open the universe, search privately for a Founding Planet, claim it, and reach the Active civilization dashboard.
+Open `http://127.0.0.1:4173`. The wallet client targets Sui mainnet while the readiness screen links the existing testnet canary evidence; all ranked writes remain disabled because the production Soul, circuit, setup, and verifier are not pinned. Choose **Explore local demo** to enter the full local loop: activate a Soul-bound commander, claim a valid founding location, and enter a full-viewport private star map. Desktop commands live in draggable, keyboard-movable windows with persisted safe positions and a minimize/reopen dock; mobile commands become one dock-selected bottom sheet. Drag empty map space or use the arrow keys to pan; use the wheel, camera buttons, `H`, and `0` to zoom, return Home, and fit resolved space. Voyage routes use aspect-ratio-safe SVG endpoints, so they remain attached to both Planet centers through pan and zoom. The map can mine deterministic square-spiral frontier batches in a cancellable browser Worker while the main interface stays responsive. From there, launch and settle energy/silver fleets, conquer and upgrade planets, operate artifacts and all five ships, route eligible artifacts through controlled Spacetime Rips, manage junk, reveal/capture, score, and finalize Last Light. Rip custody is simulated locally; a production wallet-owned Sui artifact wrapper remains fail-closed.
+
+The controller session is authenticated and encrypted with AES-GCM under a non-extractable device key stored beside ciphertext in IndexedDB. Valid legacy plaintext sessions migrate once and are removed from `localStorage`. This improves at-rest handling but is not an XSS boundary: a compromised same-origin script, browser extension, or device can still use the unlocked browser context. Portable key wrapping, user export/restore, recovery UX, and an independent client security review remain production release gates.
 
 Run all TypeScript checks with:
 
@@ -141,8 +149,8 @@ Implemented directories are shown above. The remaining entries are roadmap targe
 
 - **Phase:** Experimental testnet interface canary plus player-facing full-stack vertical slice
 - **Network:** Sui testnet package and sealed canary deployed; no mainnet deployment
-- **Implementation:** Core season, deterministic enrollment, home-window, and Founding Planet transitions are implemented in Move; a typed SDK and responsive player client implement the address/Soul/Seat/Planet activation journey using local demo fixtures
+- **Implementation:** Round 5 gameplay state machines are implemented in Move under typed fixture proofs; TypeScript and Move share a locked mainnet proof-intent golden vector; the Prover Worker rejects unpinned artifacts; the SDK and responsive client provide a playable local compatibility sandbox backed by canonical universe and rules vectors
 - **License:** [MIT](LICENSE)
-- **Next gate:** Freeze the Soulidity adapter ABI and proof-verifier interface, then replace the local enrollment/claim simulation with audited signed Sui transactions
+- **Next gate:** Freeze the Soulidity adapter ABI, implement and audit the Groth16 circuits, complete Phase 2 setup and independent contract/client review, soak real multiplayer writes, then publish a legally cleared mainnet season
 
 Dark Forest v0.6 is GPL-3.0 licensed. Infinite Stellar requires original fiction, art direction, writing, Move code, and circuits unless the team deliberately accepts the obligations of incorporating GPL-licensed material. See [research notes](docs/09-research-notes.md).

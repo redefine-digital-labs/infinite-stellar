@@ -4,6 +4,7 @@ import {
   demoDigest,
   findDemoHomeCandidate,
 } from './demo';
+import { createStrategyGame } from './strategy';
 import type { JourneyStage, PlayerSession } from './types';
 
 export class JourneyTransitionError extends Error {
@@ -224,9 +225,15 @@ export function finalizeHomeClaim(session: PlayerSession): PlayerSession {
     status: 'Active' as const,
     foundingPlanetId: candidate.id,
   };
+  const strategy = createStrategyGame({
+    universeSeed: session.runtime.universeSeed ?? candidate.commitment,
+    homeId: candidate.id,
+    homeName: candidate.sectorCode,
+  });
   return {
     ...session,
     seat,
+    strategy,
     stage: 'active',
     lastStableStage: 'active',
     transaction: {

@@ -1,7 +1,9 @@
 module infinite_stellar::identity;
 
-use infinite_stellar::season::{Self as season, SeasonManifest};
+use infinite_stellar::season::{Self as season, SeasonManifest, SeasonRuntime};
+use infinite_stellar::round5_rules as rules;
 use sui::derived_object;
+use sui::clock::{Self as clock, Clock};
 use sui::event;
 
 const ADAPTER_INTERFACE_VERSION: u64 = 1;
@@ -25,6 +27,9 @@ const EWrongLifecycle: u64 = 10;
 const EHomeAlreadyClaimed: u64 = 11;
 const EHomeNotClaimed: u64 = 12;
 const EHomeWindowResolutionPending: u64 = 13;
+const EShipsAlreadyClaimed: u64 = 14;
+const ERevealCooldown: u64 = 15;
+const EPendingVoyages: u64 = 16;
 
 /// Shared only during enrollment. It is intentionally absent from ordinary
 /// play transactions.
@@ -92,6 +97,11 @@ public struct CivilizationState has key {
     seat_id: ID,
     status: u8,
     controlled_planet_count: u64,
+    pending_voyage_count: u64,
+    space_junk: u64,
+    space_junk_limit: u64,
+    ships_claimed: bool,
+    last_reveal_at_seconds: Option<u64>,
     initial_home_planet_id: Option<ID>,
     home_claim_consumed: bool,
     activated_once: bool,
@@ -105,12 +115,32 @@ public struct ScoreCard has key {
     pending_scored_arrival_count: u64,
 }
 
+public struct FinalScoreReceipt has key {
+    id: UID,
+    season_id: ID,
+    seat_id: ID,
+    controller: address,
+    soul_id: ID,
+    final_score: u64,
+    final_planet_count: u64,
+    final_space_junk: u64,
+    settled_at_ms: u64,
+}
+
 public struct SeatEnrolled has copy, drop {
     season_id: ID,
     seat_id: ID,
     controller: address,
     soul_id: ID,
     projection_id: ID,
+}
+
+public struct FinalScoreSettled has copy, drop {
+    season_id: ID,
+    seat_id: ID,
+    controller: address,
+    final_score: u64,
+    receipt_id: ID,
 }
 
 public(package) fun new_registry(
@@ -233,6 +263,11 @@ public(package) fun enroll_verified(
         seat_id,
         status: STATUS_AWAITING_HOME,
         controlled_planet_count: 0,
+        pending_voyage_count: 0,
+        space_junk: 0,
+        space_junk_limit: rules::space_junk_limit(),
+        ships_claimed: false,
+        last_reveal_at_seconds: option::none(),
         initial_home_planet_id: option::none(),
         home_claim_consumed: false,
         activated_once: false,
@@ -303,6 +338,124 @@ public(package) fun activate_home(
     civilization.activated_once = true;
 }
 
+public(package) fun assert_active_controller(
+    seat: &SeasonSeat,
+    civilization: &CivilizationState,
+    sender: address,
+) {
+    assert!(civilization.seat_id == object::id(seat), ESeatMismatch);
+    assert!(object::id(civilization) == seat.civilization_id, ESeatMismatch);
+    assert!(seat.controller == sender, ENotSeatController);
+    assert!(civilization.status == STATUS_ACTIVE, EWrongLifecycle);
+}
+
+public(package) fun increment_controlled_planets(
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+) {
+    assert!(civilization.seat_id == object::id(seat), ESeatMismatch);
+    assert!(civilization.status == STATUS_ACTIVE, EWrongLifecycle);
+    civilization.controlled_planet_count = civilization.controlled_planet_count + 1;
+}
+
+public(package) fun decrement_controlled_planets(
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+) {
+    assert!(civilization.seat_id == object::id(seat), ESeatMismatch);
+    assert!(civilization.status == STATUS_ACTIVE, EWrongLifecycle);
+    assert!(civilization.controlled_planet_count > 0, EWrongLifecycle);
+    civilization.controlled_planet_count = civilization.controlled_planet_count - 1;
+}
+
+public(package) fun increment_pending_voyages(
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+) {
+    assert!(civilization.seat_id == object::id(seat), ESeatMismatch);
+    assert!(civilization.status == STATUS_ACTIVE, EWrongLifecycle);
+    civilization.pending_voyage_count = civilization.pending_voyage_count + 1;
+}
+
+public(package) fun decrement_pending_voyages(
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+) {
+    assert!(civilization.seat_id == object::id(seat), ESeatMismatch);
+    assert!(civilization.pending_voyage_count > 0, EWrongLifecycle);
+    civilization.pending_voyage_count = civilization.pending_voyage_count - 1;
+}
+
+public(package) fun take_space_junk(
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+    amount: u64,
+) {
+    assert!(civilization.seat_id == object::id(seat), ESeatMismatch);
+    assert!(civilization.status == STATUS_ACTIVE, EWrongLifecycle);
+    assert!(amount <= civilization.space_junk_limit - civilization.space_junk, EWrongLifecycle);
+    civilization.space_junk = civilization.space_junk + amount;
+}
+
+public(package) fun return_space_junk(
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+    amount: u64,
+) {
+    assert!(civilization.seat_id == object::id(seat), ESeatMismatch);
+    assert!(civilization.status == STATUS_ACTIVE, EWrongLifecycle);
+    assert!(civilization.space_junk >= amount, EWrongLifecycle);
+    civilization.space_junk = civilization.space_junk - amount;
+}
+
+public(package) fun return_space_junk_flooring_zero(
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+    amount: u64,
+) {
+    assert!(civilization.seat_id == object::id(seat), ESeatMismatch);
+    assert!(civilization.status == STATUS_ACTIVE, EWrongLifecycle);
+    civilization.space_junk = if (amount >= civilization.space_junk) {
+        0
+    } else {
+        civilization.space_junk - amount
+    };
+}
+
+public(package) fun add_score(
+    seat: &SeasonSeat,
+    score: &mut ScoreCard,
+    amount: u64,
+) {
+    assert!(score.seat_id == object::id(seat), ESeatMismatch);
+    assert!(object::id(score) == seat.score_card_id, ESeatMismatch);
+    score.score = score.score + amount;
+}
+
+public(package) fun consume_starting_ship_claim(
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+) {
+    assert!(civilization.seat_id == object::id(seat), ESeatMismatch);
+    assert!(civilization.status == STATUS_ACTIVE, EWrongLifecycle);
+    assert!(!civilization.ships_claimed, EShipsAlreadyClaimed);
+    civilization.ships_claimed = true;
+}
+
+public(package) fun consume_reveal_cooldown(
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+    now_seconds: u64,
+) {
+    assert!(civilization.seat_id == object::id(seat), ESeatMismatch);
+    assert!(civilization.status == STATUS_ACTIVE, EWrongLifecycle);
+    if (civilization.last_reveal_at_seconds.is_some()) {
+        let last = *civilization.last_reveal_at_seconds.borrow();
+        assert!(now_seconds > last && now_seconds - last > 10800, ERevealCooldown);
+    };
+    civilization.last_reveal_at_seconds = option::some(now_seconds);
+}
+
 public(package) fun assert_can_settle(
     seat: &SeasonSeat,
     civilization: &CivilizationState,
@@ -313,6 +466,76 @@ public(package) fun assert_can_settle(
     if (civilization.status == STATUS_AWAITING_HOME) {
         assert!(home_window_resolution == season::resolution_closed_available(), EHomeNotClaimed);
     };
+}
+
+public fun settle_score(
+    manifest: &SeasonManifest,
+    runtime: &SeasonRuntime,
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+    score: &ScoreCard,
+    clock_obj: &Clock,
+    ctx: &mut TxContext,
+) {
+    settle_score_at(
+        manifest,
+        runtime,
+        seat,
+        civilization,
+        score,
+        clock::timestamp_ms(clock_obj),
+        ctx.sender(),
+        ctx,
+    )
+}
+
+fun settle_score_at(
+    manifest: &SeasonManifest,
+    runtime: &SeasonRuntime,
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+    score: &ScoreCard,
+    now_ms: u64,
+    sender: address,
+    ctx: &mut TxContext,
+) {
+    let season_id = season::season_id(manifest);
+    let seat_id = object::id(seat);
+    assert!(season::settlement_started(runtime), EHomeWindowResolutionPending);
+    assert!(seat.season_id == season_id, ESeasonMismatch);
+    assert!(civilization.season_id == season_id && score.season_id == season_id, ESeasonMismatch);
+    assert!(civilization.seat_id == seat_id && score.seat_id == seat_id, ESeatMismatch);
+    assert!(object::id(civilization) == seat.civilization_id, ESeatMismatch);
+    assert!(object::id(score) == seat.score_card_id, ESeatMismatch);
+    assert!(seat.controller == sender, ENotSeatController);
+    assert!(
+        civilization.status == STATUS_ACTIVE || civilization.status == STATUS_ELIMINATED,
+        EWrongLifecycle,
+    );
+    assert!(civilization.pending_voyage_count == 0, EPendingVoyages);
+    assert!(score.pending_scored_arrival_count == 0, EPendingVoyages);
+    civilization.status = STATUS_SETTLED;
+    let uid = object::new(ctx);
+    let receipt_id = uid.to_inner();
+    let receipt = FinalScoreReceipt {
+        id: uid,
+        season_id,
+        seat_id,
+        controller: sender,
+        soul_id: seat.soul_id,
+        final_score: score.score,
+        final_planet_count: civilization.controlled_planet_count,
+        final_space_junk: civilization.space_junk,
+        settled_at_ms: now_ms,
+    };
+    event::emit(FinalScoreSettled {
+        season_id,
+        seat_id,
+        controller: sender,
+        final_score: score.score,
+        receipt_id,
+    });
+    transfer::transfer(receipt, sender);
 }
 
 fun assert_registry(manifest: &SeasonManifest, registry: &EnrollmentRegistry) {
@@ -346,12 +569,19 @@ public fun projection_epoch(self: &CommanderProjection): u64 { self.ownership_ep
 public fun projection_soul_id(self: &CommanderProjection): ID { self.soul_id }
 public fun civilization_status(self: &CivilizationState): u8 { self.status }
 public fun civilization_planet_count(self: &CivilizationState): u64 { self.controlled_planet_count }
+public fun civilization_pending_voyage_count(self: &CivilizationState): u64 { self.pending_voyage_count }
+public fun civilization_space_junk(self: &CivilizationState): u64 { self.space_junk }
+public fun civilization_space_junk_limit(self: &CivilizationState): u64 { self.space_junk_limit }
+public fun civilization_ships_claimed(self: &CivilizationState): bool { self.ships_claimed }
+public fun score(self: &ScoreCard): u64 { self.score }
 public fun civilization_home_id(self: &CivilizationState): &Option<ID> { &self.initial_home_planet_id }
 public fun status_awaiting_home(): u8 { STATUS_AWAITING_HOME }
 public fun status_active(): u8 { STATUS_ACTIVE }
 public fun status_eliminated(): u8 { STATUS_ELIMINATED }
 public fun status_settled(): u8 { STATUS_SETTLED }
 public fun status_cancelled(): u8 { STATUS_CANCELLED }
+public fun receipt_score(self: &FinalScoreReceipt): u64 { self.final_score }
+public fun receipt_planet_count(self: &FinalScoreReceipt): u64 { self.final_planet_count }
 
 #[test_only]
 public fun new_registry_for_testing(
@@ -381,8 +611,32 @@ public fun destroy_enrollment_for_testing(
     object::delete(id);
     let CommanderProjection { id, season_id: _, seat_id: _, soulidity_package_id: _, soul_state_id: _, soul_id: _, controller_at_enrollment: _, ownership_epoch_at_enrollment: _, projection_commitment: _ } = projection;
     object::delete(id);
-    let CivilizationState { id, season_id: _, seat_id: _, status: _, controlled_planet_count: _, initial_home_planet_id: _, home_claim_consumed: _, activated_once: _ } = civilization;
+    let CivilizationState { id, season_id: _, seat_id: _, status: _, controlled_planet_count: _, pending_voyage_count: _, space_junk: _, space_junk_limit: _, ships_claimed: _, last_reveal_at_seconds: _, initial_home_planet_id: _, home_claim_consumed: _, activated_once: _ } = civilization;
     object::delete(id);
     let ScoreCard { id, season_id: _, seat_id: _, score: _, pending_scored_arrival_count: _ } = score;
     object::delete(id);
+}
+
+
+#[test_only]
+public fun settle_score_at_for_testing(
+    manifest: &SeasonManifest,
+    runtime: &SeasonRuntime,
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+    score: &ScoreCard,
+    now_ms: u64,
+    sender: address,
+    ctx: &mut TxContext,
+) {
+    settle_score_at(
+        manifest,
+        runtime,
+        seat,
+        civilization,
+        score,
+        now_ms,
+        sender,
+        ctx,
+    )
 }

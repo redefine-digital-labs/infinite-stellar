@@ -221,7 +221,7 @@ Exact doctrine names and constants remain a season-rules decision. The game may 
 | ID | Priority | Requirement | Acceptance evidence |
 | --- | --- | --- | --- |
 | ZK-001 | P0 | Hidden-geometry actions prove valid endpoints, bounds, and route constraints without revealing coordinates | Valid vectors pass; coordinate preimages are absent from public inputs |
-| ZK-002 | P0 | Proof intent binds season, rules, Seat/controller, action kind, endpoints, amount, nonce, and deadline | Mutating any bound field makes verification or action validation fail |
+| ZK-002 | P0 | Proof intent binds season, rules, Seat/controller, action kind, endpoints, action-specific proof amount, nonce, and deadline; for interface-v1 `move`, that amount is maximum route distance while energy/silver remain live-state arguments | Mutating any bound field makes verification or action validation fail |
 | ZK-003 | P0 | The production circuit fits the active Sui Groth16 public-signal limit | Pinned Sui version and integration test prove supported verification |
 | ZK-004 | P0 | Client and contract reject unpinned proving artifacts and verifying keys | Artifact mutation and wrong-circuit tests fail closed |
 | ACT-001 | P0 | From `AwaitingHome`, the user can claim one Seat-owned Founding Planet and become `Active`, then create/target a Planet, dispatch energy, reinforce, attack, and settle arrivals | End-to-end tests cover every lifecycle state, unique home claim, `owner_seat_id`, and exact boundary |

@@ -1,6 +1,10 @@
 export * from './demo';
 export * from './journey';
+export * from './miner';
 export * from './persistence';
 export * from './routing';
+export * from './round5-rules';
+export * from './round5-universe';
+export * from './strategy';
 export * from './sui-gateway';
 export type * from './types';

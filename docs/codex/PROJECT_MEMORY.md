@@ -18,6 +18,7 @@ This file contains stable facts that should survive individual implementation ph
 - The typed game SDK and English React client implement the activation journey with deterministic local demo fixtures, checkpoint-shaped finality UX, controller-scoped persistence, and existing-Seat-first resume. Demo screens cannot produce a Sui or Soulidity write; production enrollment and claim builders fail closed.
 - Infinite Flow Engine may host a separate Soul-bound prologue or PvE Scene with independent history; it is neither the guest tutorial nor the asynchronous multiplayer universe authority.
 - Private coordinates and map secrets remain local. Outcome-changing rules and settlement are authoritative on Sui.
+- Proof interface v1 has exactly four BN254 public signals and binds a sixteen-field Sui Poseidon action tuple. For `move`, `amount_u64` means maximum route distance; transferred energy and silver remain live-state arguments. Checked-in Circom 2.2.3 `claim_home` and `move` relations and snarkjs 0.7.6 artifacts are development candidates only. Production stays fail-closed until complete geometry relations, Sui proof serialization/verifier integration, setup ceremony, and independent audit pass.
 - The initial release has no fungible token, land sale, yield loop, or paid ranked power.
 
 ## Brand and repository

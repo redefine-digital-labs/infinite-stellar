@@ -1,3 +1,5 @@
+import type { StrategyGame } from './strategy';
+
 export type JourneyMode = 'demo' | 'onchain';
 
 export type JourneyStage =
@@ -95,6 +97,7 @@ export interface PlayerSession {
   transaction: JourneyTransaction;
   lastStableStage: JourneyStage;
   notice?: string;
+  strategy?: StrategyGame;
 }
 
 export interface PlayerRouteInput {

@@ -2,9 +2,34 @@
 
 ## Purpose
 
-This vertical slice turns the P0 Move foundation into a runnable player journey. It proves the product flow from an address and Soul selection to an Active civilization without pretending that unresolved Soulidity or ZK interfaces exist.
+This document records the original P0 player-journey slice. The repository has
+since expanded beyond this milestone with the local Round 5 strategy sandbox
+defined by the [parity contract](14-dark-forest-v06-parity.md) and
+[Sui gameplay architecture](15-round5-sui-architecture.md). Production
+Soulidity and ZK interfaces remain deliberately fail-closed.
 
-The slice is a product and integration baseline, not a complete Dark Forest-style season. It deliberately stops after the Founding Planet is established.
+The milestone described below stops after the Founding Planet is established;
+the current local client continues into discovery, voyages, combat, upgrades,
+artifacts, ships, junk, capture, reveal, score, and Last Light settlement.
+
+## Current map-first strategy shell
+
+After activation, the star map owns the full gameplay viewport. Commander
+status, Planet and fleet controls, artifacts and ships, pending voyages, and
+the command log are independent windows rather than fixed columns.
+
+- Desktop windows can be focused, dragged, moved with arrow keys, minimized,
+  reopened from the dock, and reset to safe defaults. Positions persist locally
+  and clamp back inside the current viewport after resize.
+- Compact map viewports start with every window docked so the universe fills the
+  screen; selecting a Planet opens the Planet and fleet window on demand.
+- The Planet and fleet window uses energy and silver sliders with live arrival
+  energy and travel-time previews.
+- At mobile widths, only one command window is mounted as a bottom sheet. The
+  same dock switches sheets, so hidden overlapping panels do not remain in the
+  screen-reader tree.
+- This layout changes presentation only. Every action still calls the same SDK
+  transition and remains a clearly labeled local simulation.
 
 ## What a player can do
 
@@ -21,7 +46,7 @@ The English web client supports this complete implemented journey:
 9. Approve a simulated claim, wait for finality, and activate the Civilization.
 10. Inspect the Active dashboard, fixed Seat authority, local vault status, and explicitly locked movement system.
 
-The journey persists by controller address in browser storage. Reloading resumes an existing local Seat before offering Soul selection. Restarting clears only that controller-scoped simulation.
+The journey persists by controller address as AES-GCM-authenticated ciphertext in IndexedDB. Reloading resumes an existing local Seat before offering Soul selection. A valid legacy plaintext session migrates once and is removed from `localStorage`; restarting clears only that controller-scoped simulation.
 
 ## Capability matrix
 
@@ -33,9 +58,10 @@ The journey persists by controller address in browser storage. Reloading resumes
 | Enrollment | Approval and finality UX | Typed state transitions | Atomic Seat/binding/capacity invariants | Demo available; signed production builder unavailable |
 | Universe opening | Simulated keeper action | Real transaction builder seam | Permissionless Sui Random transition | Builder and canary objects pinned; canary sealed until 2030 |
 | Founding Planet search | Local browser operation | Deterministic fixture search | No private coordinates stored | Demo fixture only |
-| Home claim | Approval and finality UX | Fail-closed production builder | Proof-bound atomic activation | Demo available; production verifier unavailable |
+| Strategy frontier mining | Cancellable browser Worker with visible progress | Exact MiMC/Perlin coordinate evaluation and deterministic square-spiral chunks | No strategic write required | Local sandbox integrated; development proof candidates connected; production artifacts unavailable |
+| Home claim | Approval, artifact preflight, proof generation, and finality UX | Fail-closed production builder | Proof-bound atomic activation | Development candidate available; production relation/verifier unavailable |
 | Active dashboard | Real client projection of local session | Typed Active snapshot | Canonical state exists in Move | Demo projection; production chain read not implemented |
-| Movement, combat, recovery, Last Light | Explicitly locked | Not implemented | Not implemented | Out of slice |
+| Movement, combat, upgrades, artifacts, ships, junk, capture, reveal, score, Last Light | Playable local strategy console | Deterministic compatibility simulator | Typed fixture-proof state machines | Local sandbox integrated; signed production builders unavailable |
 
 ## Architecture
 
@@ -43,7 +69,7 @@ The journey persists by controller address in browser storage. Reloading resumes
 Sui wallet
     │ address/network only
     ▼
-React player client ───── controller-scoped browser persistence
+React player client ───── controller-scoped encrypted IndexedDB vault
     │
     ▼
 @infinite-stellar/game-sdk
@@ -107,7 +133,7 @@ sui move lint
 
 - The local demo creates no wallet signature, Sui digest, Soul history, or public game record.
 - Demo transaction digests are deterministic fixtures and are never shown as explorer links.
-- Exact candidate coordinates and salt stay in controller-scoped browser storage for this prototype. This storage is not encrypted and is labeled as demo-only; a production encrypted vault, export, and recovery design remains a release gate.
+- Exact candidate coordinates, salt, and local strategy state are AES-GCM encrypted and authenticated under a non-extractable controller-scoped device key in IndexedDB. The current prototype does not resist same-origin XSS, a compromised browser extension/device, or loss of local storage; portable wrapping, export, restore, and recovery UX remain release gates.
 - Production enrollment throws `SOUL_ADAPTER_UNAVAILABLE` until the exact manifest-pinned Soulidity adapter is compatible.
 - Production home claiming throws `PROOF_VERIFIER_UNAVAILABLE` until the circuit and verifier are pinned.
 - Public keeper builders require complete package and object IDs; the client pins the sealed testnet canary while unconfigured deployments still throw `DEPLOYMENT_UNAVAILABLE`.

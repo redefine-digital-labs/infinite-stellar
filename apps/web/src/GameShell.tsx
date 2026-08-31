@@ -11,6 +11,8 @@ import {
   StatusPill,
   StepRail,
 } from './components';
+import { StrategyConsole } from './StrategyConsole';
+import { useProofReadiness } from './use-proof-readiness';
 
 export interface GameShellProps {
   walletAddress?: string;
@@ -21,7 +23,7 @@ export interface GameShellProps {
 
 export function GameShell({
   walletAddress,
-  network = 'testnet',
+  network = 'mainnet',
   walletControl,
   deployment = TESTNET_DEPLOYMENT,
 }: GameShellProps) {
@@ -29,13 +31,14 @@ export function GameShell({
   const { session } = journey;
   const selectedSoul = session.souls.find((soul) => soul.id === session.selectedSoulId);
   const candidate = session.search.candidate;
+  const proofReadiness = useProofReadiness();
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [session.stage]);
 
   return (
-    <div className="app-frame">
+    <div className={`app-frame ${session.stage === 'active' ? 'is-strategy-active' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to mission control</a>
       <div className="stellar-noise" aria-hidden="true" />
       <header className="topbar">
@@ -90,7 +93,7 @@ export function GameShell({
                   Explore local demo <span aria-hidden="true">↗</span>
                 </button>
                 <button className="button button-secondary" type="button" onClick={journey.enterOnchain}>
-                  Check live testnet
+                  Check mainnet readiness
                 </button>
               </div>
               <p className="truth-note">
@@ -117,19 +120,19 @@ export function GameShell({
         {session.stage === 'unavailable' && (
           <section className="center-panel narrow-panel" aria-labelledby="unavailable-title">
             <StatusPill tone="warn">FAIL-CLOSED</StatusPill>
-            <Eyebrow>LIVE TESTNET GATE</Eyebrow>
+            <Eyebrow>SUI MAINNET PRODUCTION GATE</Eyebrow>
             <h1 id="unavailable-title">The bridge to Soulidity is not pinned yet.</h1>
             <p>
-              The Move foundation and a sealed interface canary are pinned on Sui testnet. Wallet
-              connection is available, but ranked enrollment cannot be built or signed until the
-              exact Soul package, ownership epoch rules, and proof verifier are frozen.
+              The existing Move foundation and sealed interface canary remain inspectable on Sui
+              testnet. The client now targets mainnet, but ranked enrollment stays disabled until
+              the exact Soul package, audited verifier, production circuit, and setup are pinned.
             </p>
             <div className="gate-list">
               <span className="gate-ok">✓ Move foundation verified</span>
               <span className="gate-ok">✓ Testnet package deployed</span>
               <span className="gate-ok">✓ Sealed interface canary created</span>
               <span className="gate-wait">○ Production Soul adapter pending</span>
-              <span className="gate-wait">○ Production proof verifier pending</span>
+              <span className="gate-wait">○ {proofReadiness.label}</span>
               <a
                 className="gate-proof"
                 href={TESTNET_DEPLOYMENT_EVIDENCE.packageExplorerUrl}
@@ -283,7 +286,15 @@ export function GameShell({
               <button className="button button-primary" type="button" onClick={journey.search}>
                 Run local search
               </button>
-              <small className="fine-print">Private material is stored only in the controller-scoped local session.</small>
+              <small className="fine-print">
+                {journey.vault.status === 'sealed'
+                  ? 'Private material is AES-GCM encrypted in this device’s IndexedDB vault.'
+                  : journey.vault.status === 'ephemeral'
+                    ? 'Persistent browser storage is unavailable; private material lasts only for this tab.'
+                    : journey.vault.status === 'error'
+                      ? `Private vault unavailable: ${journey.vault.error}`
+                      : 'Preparing the controller-scoped encrypted device vault…'}
+              </small>
             </div>
             <div className="radar-panel" aria-label="Private local search visualization">
               <div className="radar-grid" aria-hidden="true">
@@ -295,7 +306,8 @@ export function GameShell({
               </div>
               <div className="radar-footer">
                 <span>LOCAL WORKER</span>
-                <strong>Seed finalized · proof artifacts warmed</strong>
+                <strong>Seed finalized · exact miner ready</strong>
+                <small>{proofReadiness.label}</small>
                 <small>NETWORK EGRESS: NONE</small>
               </div>
             </div>
@@ -361,47 +373,38 @@ export function GameShell({
           </section>
         )}
 
-        {session.stage === 'active' && candidate && (
-          <section className="active-layout" aria-labelledby="active-title">
-            <div className="active-hero">
-              <div className="active-copy">
-                <StatusPill tone="live">CIVILIZATION ACTIVE</StatusPill>
-                <Eyebrow>04 · FIRST LIGHT ESTABLISHED</Eyebrow>
-                <h1 id="active-title">The dark has<br />an address now.</h1>
-                <p>
-                  {session.seat?.soulName} commands a new civilization from {candidate.sectorCode}.
-                  The Soul carries the story; the fixed Season Seat carries control.
-                </p>
-              </div>
-              <PlanetVisual candidate={candidate} active />
-            </div>
-            <div className="dashboard-grid">
-              <article className="dashboard-card primary-card">
-                <span>FOUNDING PLANET</span>
-                <h2>{candidate.sectorCode}</h2>
-                <div className="energy-meter"><span style={{ width: `${Math.min(100, candidate.energy / 6)}%` }} /></div>
-                <div className="card-stats"><span>ENERGY <strong>{candidate.energy}</strong></span><span>PLANETS <strong>1</strong></span></div>
-              </article>
-              <article className="dashboard-card">
-                <span>COMMAND AUTHORITY</span>
-                <h3>Fixed Season Seat</h3>
-                <p><ShortAddress address={session.controllerAddress} /></p>
-                <small>Soul transfer cannot move this authority.</small>
-              </article>
-              <article className="dashboard-card">
-                <span>PRIVATE VAULT</span>
-                <h3>Local and controller-scoped</h3>
-                <p className="green-text">● Candidate material secured</p>
-                <small>Demo storage only; encrypted export is a later gate.</small>
-              </article>
-              <article className="dashboard-card locked-card">
-                <span>NEXT SYSTEM</span>
-                <h3>Movement and arrivals</h3>
-                <p>Not implemented in this vertical slice.</p>
-                <small>Requires proof-bound energy and queue settlement.</small>
-              </article>
-            </div>
-          </section>
+        {session.stage === 'active' && session.strategy && (
+          <StrategyConsole
+            game={session.strategy}
+            commanderName={session.seat?.soulName}
+            onChoosePlanet={journey.chooseStrategyPlanet}
+            onSetTarget={journey.setStrategyTarget}
+            onScan={journey.scanStrategy}
+            onCancelScan={journey.cancelStrategyScan}
+            mining={journey.mining}
+            vault={journey.vault}
+            proofReadiness={proofReadiness}
+            onDispatch={journey.dispatchStrategy}
+            onAdvanceArrival={journey.advanceStrategyArrival}
+            onAdvanceTime={journey.advanceStrategyTime}
+            onUpgrade={journey.upgradeStrategy}
+            onClaimShips={journey.claimStrategyShips}
+            onDispatchShip={journey.dispatchStrategyShip}
+            onDispatchArtifact={journey.dispatchStrategyArtifact}
+            onActivateCrescent={journey.activateStrategyCrescent}
+            onActivateArtifact={journey.activateStrategyArtifact}
+            onDeactivateArtifact={journey.deactivateStrategyArtifact}
+            onWithdrawArtifact={journey.withdrawStrategyArtifact}
+            onDepositArtifact={journey.depositStrategyArtifact}
+            onProspect={journey.prospectStrategy}
+            onFindArtifact={journey.findStrategyArtifact}
+            onInvade={journey.invadeStrategy}
+            onCapture={journey.captureStrategy}
+            onReveal={journey.revealStrategy}
+            onWithdrawSilver={journey.withdrawStrategySilver}
+            onAbandon={journey.abandonStrategy}
+            onSettle={journey.settleStrategy}
+          />
         )}
 
         {session.stage === 'error' && (
@@ -417,10 +420,12 @@ export function GameShell({
       <div className="live-region" role="status" aria-live="polite" aria-atomic="true">
         {session.notice}
       </div>
-      <footer className="footer">
-        <span>EXPERIMENTAL · UNAUDITED · TESTNET CANARY</span>
-        <span>BUILT ON SUI · POWERED BY SOULIDITY</span>
-      </footer>
+      {session.stage !== 'active' && (
+        <footer className="footer">
+          <span>MAINNET TARGET · RANKED WRITES FAIL-CLOSED</span>
+          <span>BUILT ON SUI · POWERED BY SOULIDITY</span>
+        </footer>
+      )}
     </div>
   );
 }

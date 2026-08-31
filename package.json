@@ -13,13 +13,16 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace @infinite-stellar/web",
-    "build": "npm run build --workspace @infinite-stellar/game-sdk && npm run build --workspace @infinite-stellar/web",
+    "build": "npm run build --workspace @infinite-stellar/game-sdk && npm run build --workspace @infinite-stellar/prover && npm run build --workspace @infinite-stellar/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "eslint apps packages --max-warnings=0",
     "lint:docs": "markdownlint-cli2 README.md CONTRIBUTING.md SECURITY.md 'docs/**/*.md' 'apps/**/*.md' 'packages/**/*.md' 'ops/**/*.md' move/infinite_stellar/README.md",
     "validate:web": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "verify:deployment": "node ops/verify-sui-deployment.mjs"
+    "verify:deployment": "node ops/verify-sui-deployment.mjs",
+    "circuits:fixtures": "node --experimental-strip-types circuits/scripts/create-fixtures.mjs",
+    "circuits:build:dev": "node circuits/scripts/build-development-artifacts.mjs",
+    "circuits:test:dev": "node circuits/scripts/test-development-proofs.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -30,6 +33,9 @@
     "markdownlint-cli2": "0.23.2",
     "typescript": "5.9.3",
     "typescript-eslint": "8.68.0"
+  },
+  "overrides": {
+    "bfj": "9.1.3"
   },
   "allowScripts": {
     "@swc/core@1.16.1": true,

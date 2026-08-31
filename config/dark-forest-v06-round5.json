@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "rulesetId": "infinite-stellar.dark-forest-v06-round5",
+  "rulesetVersion": 1,
+  "reference": {
+    "game": "Dark Forest v0.6 Round 5",
+    "contractRepository": "https://github.com/darkforest-eth/eth",
+    "contractCommit": "76c28ccb48a7900d6071212c9c4b1d5a9fce074b",
+    "snapshotRepository": "https://github.com/darkforest-eth/darkforest-v0.6",
+    "snapshotCommit": "d1e25ead311697ecaa27ff648dac16a0d8cea15c",
+    "license": "GPL-3.0",
+    "implementationPolicy": "behavioral-clean-room"
+  },
+  "universe": {
+    "worldRadiusMin": 12000,
+    "worldRadiusLocked": false,
+    "planetRarity": 12000,
+    "maxNaturalPlanetLevel": 9,
+    "timeFactorHundredths": 100,
+    "locationHashKey": 115,
+    "spaceTypeKey": 116,
+    "biomebaseKey": 117,
+    "perlinLengthScale": 16384,
+    "perlinMirrorX": false,
+    "perlinMirrorY": false,
+    "spaceTypePerlinThresholds": [14, 15, 19],
+    "biomebasePerlinThresholds": [14, 17],
+    "homePerlinMinInclusive": 13,
+    "homePerlinMaxExclusive": 14,
+    "spawnRimArea": 0,
+    "planetTypeNames": ["Regular", "SilverMine", "Ruins", "SpacetimeRip", "SilverBank"],
+    "planetLevelThresholds": [
+      16777216,
+      4194292,
+      1048561,
+      262128,
+      65520,
+      16368,
+      4080,
+      1008,
+      240,
+      48
+    ],
+    "planetTypeWeights": [
+      [[1, 0, 0, 0, 0], [13, 2, 0, 1, 0], [13, 2, 0, 1, 0], [13, 2, 0, 0, 1], [13, 2, 0, 0, 1], [13, 2, 0, 0, 1], [13, 2, 0, 0, 1], [13, 2, 0, 0, 1], [13, 2, 0, 0, 1], [13, 2, 0, 0, 1]],
+      [[1, 0, 0, 0, 0], [13, 2, 1, 0, 0], [12, 2, 1, 1, 0], [11, 2, 1, 1, 1], [12, 2, 1, 0, 1], [12, 2, 1, 0, 1], [12, 2, 1, 0, 1], [12, 2, 1, 0, 1], [12, 2, 1, 0, 1], [12, 2, 1, 0, 1]],
+      [[1, 0, 0, 0, 0], [10, 4, 2, 0, 0], [10, 4, 1, 1, 0], [8, 4, 1, 2, 1], [8, 4, 1, 2, 1], [8, 4, 1, 2, 1], [8, 4, 1, 2, 1], [8, 4, 1, 2, 1], [8, 4, 1, 2, 1], [8, 4, 1, 2, 1]],
+      [[1, 0, 0, 0, 0], [11, 4, 1, 0, 0], [11, 4, 1, 0, 0], [7, 4, 2, 2, 1], [7, 4, 2, 2, 1], [7, 4, 2, 2, 1], [7, 4, 2, 2, 1], [7, 4, 2, 2, 1], [7, 4, 2, 2, 1], [7, 4, 2, 2, 1]]
+    ]
+  },
+  "planetDefaults": [
+    {"level": 0, "energyCapacity": 100000, "energyGrowth": 417, "range": 99, "speed": 75, "defense": 400, "silverGrowth": 0, "silverCapacity": 0, "barbarianPercentage": 0},
+    {"level": 1, "energyCapacity": 400000, "energyGrowth": 833, "range": 177, "speed": 75, "defense": 400, "silverGrowth": 56, "silverCapacity": 100000, "barbarianPercentage": 1},
+    {"level": 2, "energyCapacity": 1600000, "energyGrowth": 1250, "range": 315, "speed": 75, "defense": 300, "silverGrowth": 167, "silverCapacity": 500000, "barbarianPercentage": 2},
+    {"level": 3, "energyCapacity": 6000000, "energyGrowth": 1667, "range": 591, "speed": 75, "defense": 300, "silverGrowth": 417, "silverCapacity": 2500000, "barbarianPercentage": 3},
+    {"level": 4, "energyCapacity": 25000000, "energyGrowth": 2083, "range": 1025, "speed": 75, "defense": 300, "silverGrowth": 833, "silverCapacity": 12000000, "barbarianPercentage": 4},
+    {"level": 5, "energyCapacity": 100000000, "energyGrowth": 2500, "range": 1734, "speed": 75, "defense": 200, "silverGrowth": 1667, "silverCapacity": 50000000, "barbarianPercentage": 5},
+    {"level": 6, "energyCapacity": 300000000, "energyGrowth": 2917, "range": 2838, "speed": 75, "defense": 200, "silverGrowth": 2778, "silverCapacity": 100000000, "barbarianPercentage": 7},
+    {"level": 7, "energyCapacity": 500000000, "energyGrowth": 3333, "range": 4414, "speed": 75, "defense": 200, "silverGrowth": 2778, "silverCapacity": 200000000, "barbarianPercentage": 10},
+    {"level": 8, "energyCapacity": 700000000, "energyGrowth": 3750, "range": 6306, "speed": 75, "defense": 200, "silverGrowth": 2778, "silverCapacity": 300000000, "barbarianPercentage": 20},
+    {"level": 9, "energyCapacity": 800000000, "energyGrowth": 4167, "range": 8829, "speed": 75, "defense": 200, "silverGrowth": 2778, "silverCapacity": 400000000, "barbarianPercentage": 25}
+  ],
+  "spaceMultipliersHundredths": {
+    "nebula": {"productive": 100, "defense": 100},
+    "space": {"productive": 125, "defense": 50},
+    "deepSpace": {"productive": 150, "defense": 25},
+    "deadSpace": {"productive": 200, "defense": 15}
+  },
+  "upgrades": {
+    "branchLevels": 4,
+    "costPercentagePerTotalLevel": 20,
+    "totalLevelsBySpaceType": [3, 4, 5, 5],
+    "branchesHundredths": {
+      "defense": {"energyCapacity": 120, "energyGrowth": 120, "range": 100, "speed": 100, "defense": 120},
+      "range": {"energyCapacity": 120, "energyGrowth": 120, "range": 125, "speed": 100, "defense": 100},
+      "speed": {"energyCapacity": 120, "energyGrowth": 120, "range": 100, "speed": 175, "defense": 100}
+    }
+  },
+  "voyages": {
+    "maxPendingPerControllerClass": 6,
+    "arrivalEnergyFlatCostCapacityDivisor": 20,
+    "minimumTravelTimeSeconds": 1,
+    "abandonSpeedPercentage": 150,
+    "abandonRangePercentage": 150
+  },
+  "spaceJunk": {
+    "enabled": true,
+    "playerLimit": 2000,
+    "planetLevelJunk": [20, 25, 30, 35, 40, 45, 50, 55, 60, 65],
+    "halfJunkBonusDenominator": 16
+  },
+  "artifacts": {
+    "pointValues": [0, 100000, 200000, 500000, 20000000, 50000000],
+    "activationDelaySeconds": 10800,
+    "prospectBlockhashWindow": 256,
+    "maxPerPlanet": 5,
+    "cooldownHoursByType": [0, 0, 0, 0, 0, 4, 4, 24, 24, 24, 0, 0, 0, 0, 0],
+    "wormholeDistanceDivisorsByRarity": [1, 2, 4, 8, 16, 32],
+    "photoidRangePercentByRarity": [100, 200, 200, 200, 200, 200],
+    "photoidSpeedPercentByRarity": [100, 500, 1000, 1500, 2000, 2500],
+    "photoidDefensePercentByRarity": [100, 50, 40, 30, 20, 10],
+    "startingShips": [
+      {"code": 10, "name": "Mothership", "effect": "double-non-home-energy-growth"},
+      {"code": 11, "name": "Crescent", "effect": "one-shot-neutral-level-one-plus-silver-mine-conversion"},
+      {"code": 12, "name": "Whale", "effect": "double-non-home-silver-growth"},
+      {"code": 13, "name": "Gear", "effect": "gate-prospect-and-find"},
+      {"code": 14, "name": "Titan", "effect": "pause-positive-energy-growth"}
+    ]
+  },
+  "captureZones": {
+    "enabled": true,
+    "changeBlockInterval": 255,
+    "radius": 1000,
+    "holdBlocksRequired": 2048,
+    "zonesPer5000WorldRadius": 3,
+    "planetLevelScore": [0, 0, 250000, 500000, 750000, 1000000, 10000000, 20000000, 50000000, 100000000],
+    "energyPredicateDivisor": 78
+  },
+  "reveal": {
+    "cooldownSeconds": 10800
+  },
+  "scoring": {
+    "silverUnit": 1000,
+    "silverScoreValue": 10,
+    "contractPrecisionDivisor": 100
+  },
+  "compatibilityQuirks": [
+    "titan-does-not-pause-silver-growth",
+    "capture-energy-threshold-divides-by-78",
+    "final-biome-artifact-bucket-overwrites-to-photoid",
+    "capture-zone-interval-is-255",
+    "target-junk-transfers-at-dispatch-before-arrival",
+    "destination-owner-and-all-outsiders-have-separate-six-arrival-limits",
+    "hostile-wormhole-arrival-transfers-no-energy-unless-photoid-overrides-arrival-type"
+  ]
+}

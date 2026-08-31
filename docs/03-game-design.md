@@ -124,7 +124,7 @@ Exact Season 0 doctrine names and constants remain a ruleset decision. If testin
 
 ## Movement and arrivals
 
-A move specifies a source commitment, destination commitment, energy amount, source-planet nonce, deadline, and action kind. A zero-knowledge proof establishes the static geometry and binds the action. Move validates live ownership, available energy, range rules, action freshness, and the currently pinned circuit version.
+A move specifies a source commitment, destination commitment, energy amount, source-planet nonce, deadline, and action kind. In proof interface v1, the proof-intent `amount` field canonically means the maximum route distance for `move`; the transferred energy remains a separate live-state transaction argument. A zero-knowledge proof establishes the static geometry and binds the action. Move validates live ownership, available energy, range rules, action freshness, and the currently pinned circuit version.
 
 The move creates or appends a bounded arrival record. On settlement:
 

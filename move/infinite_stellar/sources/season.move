@@ -1,6 +1,5 @@
 module infinite_stellar::season;
 
-use std::vector;
 use sui::clock::{Self as clock, Clock};
 use sui::event;
 use sui::random::{Self as random, Random};
@@ -25,6 +24,7 @@ const EHomeWindowClosed: u64 = 11;
 const ESettlementAlreadyStarted: u64 = 12;
 const ESettlementTooEarly: u64 = 13;
 const EClockOverflow: u64 = 14;
+const ESeasonEnded: u64 = 15;
 
 public struct SeasonAdminCap has key, store {
     id: UID,
@@ -325,6 +325,7 @@ public(package) fun assert_action_allowed_after_home_close(
         assert!(runtime.home_window_resolution != RESOLUTION_PENDING, EHomeWindowResolutionPending);
     };
     assert!(!runtime.cancelled, ESeasonCancelled);
+    assert!(now_ms < manifest.season_end_at_ms, ESeasonEnded);
 }
 
 fun assert_open_preconditions(
