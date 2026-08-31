@@ -5,17 +5,16 @@ include "circomlib/circuits/comparators.circom";
 include "circomlib/circuits/mimcsponge.circom";
 include "./signed_coordinate.circom";
 
-/// Exact Round-5 MiMC location relation, canonical signed coordinates, fixed
-/// world radius and rarity predicate. Perlin is intentionally outside this
-/// development candidate and remains a production release blocker.
-template Round5LocationV1(coordinateBits, worldRadius) {
-    var ROUND5_LOCATION_HASH_KEY = 115;
-    var ROUND5_PLANET_HASH_THRESHOLD =
-        1824020239319939601853867145438106257379030366701336195308183682214650707;
+/// Exact Round-5 MiMC location relation, canonical signed coordinates, and
+/// manifest-committed radius/rarity predicates.
+template Round5LocationV1(coordinateBits) {
     signal input x_magnitude;
     signal input x_sign;
     signal input y_magnitude;
     signal input y_sign;
+    signal input world_radius;
+    signal input planet_hash_threshold;
+    signal input location_hash_key;
     signal output x_value;
     signal output y_value;
     signal output location_hash;
@@ -29,10 +28,14 @@ template Round5LocationV1(coordinateBits, worldRadius) {
     x_value <== x.value;
     y_value <== y.value;
 
-    component xBound = BoundedMagnitude(coordinateBits, worldRadius);
-    component yBound = BoundedMagnitude(coordinateBits, worldRadius);
-    xBound.magnitude <== x_magnitude;
-    yBound.magnitude <== y_magnitude;
+    component xBound = LessEqThan(coordinateBits);
+    component yBound = LessEqThan(coordinateBits);
+    xBound.in[0] <== x_magnitude;
+    xBound.in[1] <== world_radius;
+    yBound.in[0] <== y_magnitude;
+    yBound.in[1] <== world_radius;
+    xBound.out === 1;
+    yBound.out === 1;
 
     signal x_squared;
     signal y_squared;
@@ -42,13 +45,13 @@ template Round5LocationV1(coordinateBits, worldRadius) {
     radius_squared <== x_squared + y_squared;
     component radiusBound = LessEqThan(coordinateBits * 2);
     radiusBound.in[0] <== radius_squared;
-    radiusBound.in[1] <== worldRadius * worldRadius;
+    radiusBound.in[1] <== world_radius * world_radius;
     radiusBound.out === 1;
 
     component mimc = MiMCSponge(2, 220, 1);
     mimc.ins[0] <== x.value;
     mimc.ins[1] <== y.value;
-    mimc.k <== ROUND5_LOCATION_HASH_KEY;
+    mimc.k <== location_hash_key;
     location_hash <== mimc.outs[0];
 
     // Every valid planet hash is below 2^252, which makes the circomlib
@@ -57,6 +60,6 @@ template Round5LocationV1(coordinateBits, worldRadius) {
     hashBits.in <== location_hash;
     component rare = LessThan(252);
     rare.in[0] <== location_hash;
-    rare.in[1] <== ROUND5_PLANET_HASH_THRESHOLD;
+    rare.in[1] <== planet_hash_threshold;
     rare.out === 1;
 }

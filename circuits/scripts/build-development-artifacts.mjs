@@ -10,6 +10,7 @@ const out = resolve(root, 'circuits/build/dev');
 const circom = process.env.CIRCOM_BIN ?? 'circom';
 const snarkjs = resolve(root, 'node_modules/.bin/snarkjs');
 const circuits = ['claim_home_v1', 'move_v1'];
+const testCircuits = ['round5_perlin_test'];
 
 function run(command, args) {
   const result = spawnSync(command, args, { cwd: root, stdio: 'inherit' });
@@ -34,6 +35,8 @@ async function circuitSourceDigest() {
     'circuits/src/move_v1.circom',
     'circuits/src/lib/action_intent_v1.circom',
     'circuits/src/lib/round5_location.circom',
+    'circuits/src/lib/round5_perlin.circom',
+    'circuits/src/lib/rules_geometry_v1.circom',
     'circuits/src/lib/signed_coordinate.circom',
   ];
   const hash = createHash('sha256');
@@ -62,6 +65,14 @@ for (const circuit of circuits) {
   run(circom, [
     `circuits/src/${circuit}.circom`,
     '--r1cs', '--wasm', '--sym', '--O2', '--inspect',
+    '-l', 'node_modules', '-o', 'circuits/build/dev',
+  ]);
+}
+
+for (const circuit of testCircuits) {
+  run(circom, [
+    `circuits/src/test/${circuit}.circom`,
+    '--wasm', '--O2', '--inspect',
     '-l', 'node_modules', '-o', 'circuits/build/dev',
   ]);
 }

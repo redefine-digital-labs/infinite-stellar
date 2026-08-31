@@ -4,10 +4,11 @@
 
 This document freezes Infinite Stellar proof interface v1 for cross-language
 implementation. The repository includes development-only `claim_home` and
-`move` circuit candidates, but it does **not** claim that a complete production
-circuit, production verifying key, production trusted setup, or audited verifier
-exists. Ranked writes remain fail-closed until every production gate in this
-document passes.
+`move` relations that cover the intended v1 geometry and action predicates,
+plus a deterministic Sui serialization bridge. They remain unaudited
+development circuits; no production verifying key, production trusted setup,
+or audited verifier exists. Ranked writes remain fail-closed until every
+production gate in this document passes.
 
 The machine-readable authority is
 [`config/proof-interface-v1.json`](../config/proof-interface-v1.json). The
@@ -142,22 +143,24 @@ The independently written candidates in [`circuits/`](../circuits/) now
 exercise the exact four-signal interface with real Groth16 proofs:
 
 - `claim_home_v1` constrains the action intent, canonical signed coordinates,
-  exact Round-5 MiMC location hash, fixed radius, and planet rarity;
+  exact Round-5 MiMC location hash, dynamic manifest radius, planet rarity,
+  three-octave Perlin, and the configured home band;
 - `move_v1` constrains both location preimages and the squared route-distance
   bound; for action kind `move`, proof-intent `amount_u64` canonically means
   the route's maximum distance, while sent energy and silver remain Move state
   transition inputs;
 - TypeScript generates the fixtures, Circom generates the witness, snarkjs
-  proves and self-verifies, and Move locks the same action commitment and
-  128-byte public-input digest;
-- wrong coordinate preimages, negative-zero encodings, out-of-range routes,
-  and mutated action commitments are rejected in the development suite.
+  proves and self-verifies, and TypeScript serializes the proof/VK into
+  Arkworks canonical-compressed bytes accepted by Sui's native verifier;
+- wrong coordinate preimages, negative-zero encodings, non-home planets,
+  inconsistent geometry, non-power-of-two Perlin scales, rarity mutations,
+  out-of-range routes, public-input mutation, and action mutation are rejected.
 
-These are deliberately not production circuits. The independent Round-5
-Perlin/home-band relation, dynamic season radius, Sui Arkworks serialization,
-independent review/audit, reproducible container build, and production Phase 2
-ceremony remain blocking gates. Development artifacts use public deterministic
-entropy, are Git-ignored, and are rejected by production manifest selection.
+These are deliberately not production circuits. Independent review/audit,
+expanded differential/property testing, performance evidence, a reproducible
+container build, production Phase 2 ceremony, and immutable key pinning remain
+blocking gates. Development artifacts use public deterministic entropy, are
+Git-ignored, and are rejected by production manifest selection.
 
 ## Artifact manifest v1
 

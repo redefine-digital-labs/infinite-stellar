@@ -54,7 +54,26 @@
   "rulesGeometry": {
     "source": "config/dark-forest-v06-round5.json",
     "sourceSha256": "a01f97cc2657de4fe7a3e415654a895e54544045387b6bc252b4e4d8c51d1372",
-    "field": "6761147084378425910415724448274404356606413803680297929056799117911141148911"
+    "hash": "sui_poseidon_bn254",
+    "domain": {
+      "label": "INFINITE_STELLAR_RULES_GEOMETRY_V1",
+      "field": "6053036279538949956273599243158082485469979069117808157047738621272655476926"
+    },
+    "schemaVersion": 1,
+    "fields": [
+      "domain_field",
+      "geometry_schema_version",
+      "world_radius_u32",
+      "planet_hash_threshold_u252",
+      "location_hash_key_u64",
+      "space_type_key_u64",
+      "perlin_scale_power_of_two_lte_16384",
+      "perlin_mirror_x_bool",
+      "perlin_mirror_y_bool",
+      "home_perlin_min_u5_inclusive",
+      "home_perlin_max_u6_exclusive"
+    ],
+    "field": "18458232501308633390557626324462719473351388298275374257305522239595784888932"
   },
   "developmentCandidates": {
     "claimHome": "circuits/src/claim_home_v1.circom",
@@ -62,11 +81,7 @@
     "compiler": "circom-v2.2.3",
     "prover": "snarkjs-v0.7.6",
     "productionEligible": false,
-    "remainingRequiredRelations": [
-      "round5_perlin",
-      "home_perlin_band",
-      "dynamic_season_world_radius"
-    ]
+    "remainingRequiredRelations": []
   },
   "goldenVector": {
     "network": "sui:mainnet",
@@ -81,7 +96,7 @@
     "sourcePlanetNonce": "0",
     "deadlineMs": "1800000000000",
     "contextField": "6961760459381713882819346659547257964740718346557136328160522324577965813159",
-    "actionCommitment": "2712343140332930239315986322713648633368676698543859947156743257637574144809",
-    "publicInputSha256": "ccbde92bf6182e3b15f33967cd832477e8938c676fba05828cb658a228848725"
+    "actionCommitment": "1381185597265463982013002656334667872910775239321664969824848212529506565370",
+    "publicInputSha256": "e0ff0fb23b823242ea25172b54a36aaec4bb40aad7009e420b6ea4a1072da77b"
   }
 }

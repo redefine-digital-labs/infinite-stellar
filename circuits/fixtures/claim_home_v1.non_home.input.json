@@ -1,7 +1,7 @@
 {
-  "source_location_hash": "441595625074136767652070888593187681073630156209416385716195429441716114",
+  "source_location_hash": "0",
   "destination_location_hash": "1759259153186726942209343294499159540235552521067839175742163671329318918",
-  "action_commitment": "5944891567764051431126369871904075300148615979378029950410975332507680934758",
+  "action_commitment": "9406720810379744987973342940339320469295064558977908810613411700678217157803",
   "rules_geometry_commitment": "18458232501308633390557626324462719473351388298275374257305522239595784888932",
   "network_field": "135562284393187496412304656295821855871151406243072554287673956922558459083",
   "league": "1",
@@ -11,8 +11,6 @@
   "seat_id_high_128": "45371328414530988880860581542371039641",
   "sender_low_128": "659918",
   "sender_high_128": "0",
-  "max_distance": "198",
-  "source_planet_nonce": "7",
   "deadline_ms": "1800000000000",
   "geometry_schema_version": "1",
   "world_radius": "12000",
@@ -24,12 +22,8 @@
   "perlin_mirror_y": "0",
   "home_perlin_min": "13",
   "home_perlin_max": "14",
-  "source_x_magnitude": "73",
-  "source_x_sign": "0",
-  "source_y_magnitude": "6421",
-  "source_y_sign": "0",
-  "destination_x_magnitude": "269",
-  "destination_x_sign": "0",
-  "destination_y_magnitude": "6442",
-  "destination_y_sign": "0"
+  "x_magnitude": "269",
+  "x_sign": "0",
+  "y_magnitude": "6442",
+  "y_sign": "0"
 }

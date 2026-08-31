@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { round5WorldLocation } from '../../packages/game-sdk/src/round5-universe.ts';
 import {
   createProofIntentCommitment,
+  ROUND5_PLANET_HASH_THRESHOLD,
   ROUND5_RULES_GEOMETRY_COMMITMENT,
   splitSuiIdentifier,
 } from '../../packages/prover/src/proof-intent.ts';
@@ -56,6 +57,21 @@ function publicWitness(commitment) {
   };
 }
 
+function geometryWitness() {
+  return {
+    geometry_schema_version: '1',
+    world_radius: '12000',
+    planet_hash_threshold: ROUND5_PLANET_HASH_THRESHOLD.toString(),
+    location_hash_key: '115',
+    space_type_key: '116',
+    perlin_scale: '16384',
+    perlin_mirror_x: '0',
+    perlin_mirror_y: '0',
+    home_perlin_min: '13',
+    home_perlin_max: '14',
+  };
+}
+
 const homeCoordinates = { x: 73, y: 6421 };
 const destinationCoordinates = { x: 269, y: 6442 };
 const home = round5WorldLocation(homeCoordinates);
@@ -95,11 +111,27 @@ const moveCommitment = createProofIntentCommitment({
   rulesGeometryCommitment: ROUND5_RULES_GEOMETRY_COMMITMENT,
 });
 
+const nonHomeCommitment = createProofIntentCommitment({
+  network,
+  league,
+  actionKind: 'claim_home',
+  seasonId,
+  seatId,
+  sender,
+  sourceLocationHash: 0n,
+  destinationLocationHash: destination.hash,
+  amount: 0n,
+  sourcePlanetNonce: 0n,
+  deadlineMs,
+  rulesGeometryCommitment: ROUND5_RULES_GEOMETRY_COMMITMENT,
+});
+
 const claimFixture = {
   ...publicWitness(claimCommitment),
   network_field: claimCommitment.networkField.toString(),
   ...contextWitness(),
   deadline_ms: deadlineMs.toString(),
+  ...geometryWitness(),
   ...coordinateWitness('', homeCoordinates),
 };
 
@@ -110,14 +142,25 @@ const moveFixture = {
   max_distance: maxDistance.toString(),
   source_planet_nonce: '7',
   deadline_ms: deadlineMs.toString(),
+  ...geometryWitness(),
   ...coordinateWitness('source_', homeCoordinates),
   ...coordinateWitness('destination_', destinationCoordinates),
+};
+
+const nonHomeFixture = {
+  ...publicWitness(nonHomeCommitment),
+  network_field: nonHomeCommitment.networkField.toString(),
+  ...contextWitness(),
+  deadline_ms: deadlineMs.toString(),
+  ...geometryWitness(),
+  ...coordinateWitness('', destinationCoordinates),
 };
 
 await mkdir(fixtureDir, { recursive: true });
 await Promise.all([
   writeFile(resolve(fixtureDir, 'claim_home_v1.input.json'), stringify(claimFixture)),
   writeFile(resolve(fixtureDir, 'move_v1.input.json'), stringify(moveFixture)),
+  writeFile(resolve(fixtureDir, 'claim_home_v1.non_home.input.json'), stringify(nonHomeFixture)),
   writeFile(resolve(fixtureDir, 'expected-public-signals.json'), stringify({
     order: [
       'source_location_hash',

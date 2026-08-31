@@ -4,10 +4,13 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
 import {
   BN254_SCALAR_FIELD,
+  createRulesGeometryCommitment,
   createProofIntentCommitment,
   PROOF_INTENT_DOMAIN_FIELD,
   proofNetworkField,
   ROUND5_RULES_GEOMETRY_COMMITMENT,
+  ROUND5_RULES_GEOMETRY,
+  RULES_GEOMETRY_DOMAIN_FIELD,
   serializeProofPublicSignals,
   splitSuiIdentifier,
   type ProofIntentV1,
@@ -29,6 +32,28 @@ const GOLDEN_INTENT: ProofIntentV1 = {
 };
 
 describe('proof intent v1', () => {
+  it('derives the Round-5 geometry commitment from every circuit parameter', () => {
+    expect(RULES_GEOMETRY_DOMAIN_FIELD).toBe(
+      6_053_036_279_538_949_956_273_599_243_158_082_485_469_979_069_117_808_157_047_738_621_272_655_476_926n,
+    );
+    expect(createRulesGeometryCommitment(ROUND5_RULES_GEOMETRY)).toBe(
+      ROUND5_RULES_GEOMETRY_COMMITMENT,
+    );
+    for (const mutation of [
+      { ...ROUND5_RULES_GEOMETRY, worldRadius: 12_001 },
+      { ...ROUND5_RULES_GEOMETRY, planetHashThreshold: 1n },
+      { ...ROUND5_RULES_GEOMETRY, locationHashKey: 114 },
+      { ...ROUND5_RULES_GEOMETRY, spaceTypeKey: 117 },
+      { ...ROUND5_RULES_GEOMETRY, perlinScale: 8192 },
+      { ...ROUND5_RULES_GEOMETRY, perlinMirrorX: true },
+      { ...ROUND5_RULES_GEOMETRY, perlinMirrorY: true },
+      { ...ROUND5_RULES_GEOMETRY, homePerlinMinInclusive: 12 },
+      { ...ROUND5_RULES_GEOMETRY, homePerlinMaxExclusive: 15 },
+    ]) {
+      expect(createRulesGeometryCommitment(mutation)).not.toBe(ROUND5_RULES_GEOMETRY_COMMITMENT);
+    }
+  });
+
   it('matches the machine-readable interface and pinned rules source', () => {
     const specification = JSON.parse(readFileSync(
       new URL('../../../config/proof-interface-v1.json', import.meta.url),
@@ -72,11 +97,11 @@ describe('proof intent v1', () => {
     expect(result.publicSignals).toEqual([
       0n,
       GOLDEN_INTENT.destinationLocationHash,
-      2_712_343_140_332_930_239_315_986_322_713_648_633_368_676_698_543_859_947_156_743_257_637_574_144_809n,
+      1_381_185_597_265_463_982_013_002_656_334_667_872_910_775_239_321_664_969_824_848_212_529_506_565_370n,
       ROUND5_RULES_GEOMETRY_COMMITMENT,
     ]);
     expect(result.publicInputBytes).toHaveLength(128);
-    expect(result.publicInputDigest).toBe('ccbde92bf6182e3b15f33967cd832477e8938c676fba05828cb658a228848725');
+    expect(result.publicInputDigest).toBe('e0ff0fb23b823242ea25172b54a36aaec4bb40aad7009e420b6ea4a1072da77b');
   });
 
   it('changes the commitment when any bound action field changes', () => {
@@ -123,6 +148,10 @@ describe('proof intent v1', () => {
       destinationLocationHash: BN254_SCALAR_FIELD,
     })).toThrow(/destinationLocationHash/);
     expect(() => serializeProofPublicSignals([1n, 2n, 3n])).toThrow(/exactly 4/);
+    expect(() => createRulesGeometryCommitment({
+      ...ROUND5_RULES_GEOMETRY,
+      planetHashThreshold: 0n,
+    })).toThrow(/positive/);
   });
 
   it('pins the supported network domain fields', () => {

@@ -24,7 +24,7 @@ verifier production gates.
 
 ## Immutable season rule authority
 
-The production `SeasonManifest` extension must freeze:
+The production `SeasonManifest` freezes or must extend its frozen authority to include:
 
 - `ruleset_id` and `ruleset_version`;
 - a canonical BCS rules-manifest digest;
@@ -119,6 +119,11 @@ Globally unique season and Seat object IDs bind an intent to that deployed
 object graph. Sui's Groth16 native accepts at most eight public field elements;
 v1 uses four. Native inputs are exactly 128 bytes: four canonical BN254 scalar
 elements concatenated as 32-byte little-endian values.
+The checked-in serializer additionally emits Arkworks canonical-compressed
+BN254 proof points (`128` bytes) and verifying keys (`232 + 32 * IC.length`
+bytes; `392` bytes for four public inputs). A tracked vector is verified by the
+Sui Move native in tests. Production code must use a ceremony key pinned by the
+immutable circuit configuration, never transaction-supplied key bytes.
 
 Fixtures construct package-internal witnesses under `#[test_only]`; no public
 function can turn a fixture digest into a production witness.

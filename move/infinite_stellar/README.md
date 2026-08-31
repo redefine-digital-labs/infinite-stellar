@@ -9,11 +9,16 @@ Implemented modules:
 
 - `bootstrap`: creates one manifest and its bounded shared roots.
 - `season`: one-way universe opening, observation timing, capped availability,
-  global home-window resolution, pause accounting, and settlement guards.
+  global home-window resolution, pause accounting, settlement guards, and
+  immutable circuit geometry.
+- `rules_geometry`: the cross-language Poseidon commitment to radius, rarity,
+  MiMC/Perlin parameters, and the home band.
 - `identity`: deterministic Seats, controller/Soul uniqueness, atomic capacity,
   Commander Projections, Civilizations, and ScoreCards.
 - `soul_adapter`: closed production seam for the unfinished Soulidity ABI.
 - `planet`: closed verifier seam and atomic Founding Planet activation.
+- `zk_verifier`: Sui-native Groth16 byte bridge under test and fail-closed
+  production readiness probes.
 
 The production Soul adapter and ZK verifier are intentionally unavailable.
 Their fixture constructors exist only under `#[test_only]`; this package cannot

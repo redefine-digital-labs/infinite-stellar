@@ -67,3 +67,36 @@ jobs:
           sui move build --warnings-are-errors
           sui move test --threads 1 --warnings-are-errors
           sui move lint
+
+  circuits:
+    name: Circom relations and Groth16 vectors
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build pinned Circom 2.2.3 compiler
+        run: |
+          cargo install circom \
+            --git https://github.com/iden3/circom.git \
+            --tag v2.2.3 \
+            --locked \
+            --root "${RUNNER_TEMP}/circom"
+          echo "${RUNNER_TEMP}/circom/bin" >> "${GITHUB_PATH}"
+
+      - name: Build and test development proof relations
+        env:
+          CIRCOM_BIN: ${{ runner.temp }}/circom/bin/circom
+        run: |
+          npm run circuits:build:dev
+          npm run circuits:test:dev

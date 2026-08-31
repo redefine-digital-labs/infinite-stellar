@@ -3,13 +3,13 @@ pragma circom 2.2.3;
 include "circomlib/circuits/comparators.circom";
 include "./lib/action_intent_v1.circom";
 include "./lib/round5_location.circom";
+include "./lib/round5_perlin.circom";
+include "./lib/rules_geometry_v1.circom";
 
 /// Development candidate for one normal Round-5 movement statement. For the
 /// move action, proof-intent `amount` is canonically the route's max distance;
 /// sent energy and silver remain independently checked by the Move transition.
 template MoveV1() {
-    var ROUND5_RULES_GEOMETRY_COMMITMENT =
-        6761147084378425910415724448274404356606413803680297929056799117911141148911;
     signal input source_location_hash;
     signal input destination_location_hash;
     signal input action_commitment;
@@ -26,6 +26,16 @@ template MoveV1() {
     signal input max_distance;
     signal input source_planet_nonce;
     signal input deadline_ms;
+    signal input geometry_schema_version;
+    signal input world_radius;
+    signal input planet_hash_threshold;
+    signal input location_hash_key;
+    signal input space_type_key;
+    signal input perlin_scale;
+    signal input perlin_mirror_x;
+    signal input perlin_mirror_y;
+    signal input home_perlin_min;
+    signal input home_perlin_max;
     signal input source_x_magnitude;
     signal input source_x_sign;
     signal input source_y_magnitude;
@@ -35,26 +45,58 @@ template MoveV1() {
     signal input destination_y_magnitude;
     signal input destination_y_sign;
 
-    rules_geometry_commitment === ROUND5_RULES_GEOMETRY_COMMITMENT;
+    component geometry = RulesGeometryV1();
+    geometry.schema_version <== geometry_schema_version;
+    geometry.world_radius <== world_radius;
+    geometry.planet_hash_threshold <== planet_hash_threshold;
+    geometry.location_hash_key <== location_hash_key;
+    geometry.space_type_key <== space_type_key;
+    geometry.perlin_scale <== perlin_scale;
+    geometry.perlin_mirror_x <== perlin_mirror_x;
+    geometry.perlin_mirror_y <== perlin_mirror_y;
+    geometry.home_perlin_min <== home_perlin_min;
+    geometry.home_perlin_max <== home_perlin_max;
+    rules_geometry_commitment === geometry.commitment;
 
-    component source = Round5LocationV1(32, 12000);
+    component source = Round5LocationV1(32);
     source.x_magnitude <== source_x_magnitude;
     source.x_sign <== source_x_sign;
     source.y_magnitude <== source_y_magnitude;
     source.y_sign <== source_y_sign;
+    source.world_radius <== world_radius;
+    source.planet_hash_threshold <== planet_hash_threshold;
+    source.location_hash_key <== location_hash_key;
     source_location_hash === source.location_hash;
 
-    component destination = Round5LocationV1(32, 12000);
+    component destination = Round5LocationV1(32);
     destination.x_magnitude <== destination_x_magnitude;
     destination.x_sign <== destination_x_sign;
     destination.y_magnitude <== destination_y_magnitude;
     destination.y_sign <== destination_y_sign;
+    destination.world_radius <== world_radius;
+    destination.planet_hash_threshold <== planet_hash_threshold;
+    destination.location_hash_key <== location_hash_key;
     destination_location_hash === destination.location_hash;
 
-    // A route within a radius-12,000 world can never exceed 24,000. This bound
-    // keeps every square in a non-wrapping integer domain.
-    component maxDistanceBound = BoundedMagnitude(32, 24000);
-    maxDistanceBound.magnitude <== max_distance;
+    // Interface v1 moves only to an already materialized Planet. Recomputing
+    // destination Perlin here keeps the private geometry relation complete;
+    // onchain Planet initialization remains a separate proof-gated action.
+    component destinationPerlin = Round5PerlinV1();
+    destinationPerlin.x_magnitude <== destination_x_magnitude;
+    destinationPerlin.x_sign <== destination_x_sign;
+    destinationPerlin.y_magnitude <== destination_y_magnitude;
+    destinationPerlin.y_sign <== destination_y_sign;
+    destinationPerlin.key <== space_type_key;
+    destinationPerlin.scale <== perlin_scale;
+    destinationPerlin.mirror_x <== perlin_mirror_x;
+    destinationPerlin.mirror_y <== perlin_mirror_y;
+
+    component maxDistanceBits = Num2Bits(33);
+    maxDistanceBits.in <== max_distance;
+    component maxDistanceBound = LessEqThan(33);
+    maxDistanceBound.in[0] <== max_distance;
+    maxDistanceBound.in[1] <== 2 * world_radius;
+    maxDistanceBound.out === 1;
 
     signal delta_x;
     signal delta_y;
@@ -70,7 +112,9 @@ template MoveV1() {
     signal max_distance_squared;
     max_distance_squared <== max_distance * max_distance;
 
-    component routeBound = LessEqThan(64);
+    // Two u32 coordinates can differ by almost 2^33, so squared distance uses
+    // the full non-wrapping 66-bit domain rather than the old fixed-radius 64.
+    component routeBound = LessEqThan(66);
     routeBound.in[0] <== distance_squared;
     routeBound.in[1] <== max_distance_squared;
     routeBound.out === 1;

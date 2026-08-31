@@ -8,8 +8,14 @@ export const PROOF_INTERFACE_VERSION = 1 as const;
 export const PROOF_INTENT_DOMAIN = 'INFINITE_STELLAR_PROOF_INTENT_V1';
 export const PROOF_INTENT_DOMAIN_FIELD =
   13_909_138_997_969_785_233_372_616_111_572_825_994_268_025_797_777_928_597_047_068_964_955_765_571_998n;
+export const RULES_GEOMETRY_DOMAIN = 'INFINITE_STELLAR_RULES_GEOMETRY_V1';
+export const RULES_GEOMETRY_DOMAIN_FIELD =
+  6_053_036_279_538_949_956_273_599_243_158_082_485_469_979_069_117_808_157_047_738_621_272_655_476_926n;
+export const RULES_GEOMETRY_SCHEMA_VERSION = 1 as const;
+export const ROUND5_PLANET_HASH_THRESHOLD =
+  1_824_020_239_319_939_601_853_867_145_438_106_257_379_030_366_701_336_195_308_183_682_214_650_707n;
 export const ROUND5_RULES_GEOMETRY_COMMITMENT =
-  6_761_147_084_378_425_910_415_724_448_274_404_356_606_413_803_680_297_929_056_799_117_911_141_148_911n;
+  18_458_232_501_308_633_390_557_626_324_462_719_473_351_388_298_275_374_257_305_522_239_595_784_888_932n;
 
 export const PROOF_PUBLIC_SIGNAL_ORDER = [
   'source_location_hash',
@@ -54,6 +60,30 @@ export interface ProofIntentCommitmentV1 {
   publicInputDigest: string;
 }
 
+export interface RulesGeometryV1 {
+  worldRadius: number | bigint;
+  planetHashThreshold: string | bigint;
+  locationHashKey: number | bigint;
+  spaceTypeKey: number | bigint;
+  perlinScale: number | bigint;
+  perlinMirrorX: boolean;
+  perlinMirrorY: boolean;
+  homePerlinMinInclusive: number | bigint;
+  homePerlinMaxExclusive: number | bigint;
+}
+
+export const ROUND5_RULES_GEOMETRY: Readonly<RulesGeometryV1> = {
+  worldRadius: 12_000,
+  planetHashThreshold: ROUND5_PLANET_HASH_THRESHOLD,
+  locationHashKey: 115,
+  spaceTypeKey: 116,
+  perlinScale: 16_384,
+  perlinMirrorX: false,
+  perlinMirrorY: false,
+  homePerlinMinInclusive: 13,
+  homePerlinMaxExclusive: 14,
+};
+
 function domainField(label: string): bigint {
   const digest = sha256(new TextEncoder().encode(label));
   return BigInt(`0x${bytesToHex(digest)}`) % BN254_SCALAR_FIELD;
@@ -80,6 +110,44 @@ function boundedU64(value: number | bigint, name: string): bigint {
     throw new RangeError(`${name} must fit an unsigned 64-bit integer.`);
   }
   return parsed;
+}
+
+function bounded(value: number | bigint, maximum: bigint, name: string): bigint {
+  const parsed = BigInt(value);
+  if (parsed < 0n || parsed > maximum) {
+    throw new RangeError(`${name} must be between 0 and ${maximum}.`);
+  }
+  return parsed;
+}
+
+export function createRulesGeometryCommitment(geometry: RulesGeometryV1): bigint {
+  const worldRadius = bounded(geometry.worldRadius, 0xffff_ffffn, 'worldRadius');
+  if (worldRadius < 12_000n) throw new RangeError('worldRadius must be at least 12000.');
+  const threshold = field(geometry.planetHashThreshold, 'planetHashThreshold');
+  if (threshold === 0n) throw new RangeError('planetHashThreshold must be positive.');
+  if (threshold >= (1n << 252n)) throw new RangeError('planetHashThreshold must fit 252 bits.');
+  const locationHashKey = bounded(geometry.locationHashKey, 0xffff_ffff_ffff_ffffn, 'locationHashKey');
+  const spaceTypeKey = bounded(geometry.spaceTypeKey, 0xffff_ffff_ffff_ffffn, 'spaceTypeKey');
+  const perlinScale = bounded(geometry.perlinScale, 16_384n, 'perlinScale');
+  if (perlinScale === 0n || (perlinScale & (perlinScale - 1n)) !== 0n) {
+    throw new RangeError('perlinScale must be a power of two no greater than 16384.');
+  }
+  const homeMin = bounded(geometry.homePerlinMinInclusive, 31n, 'homePerlinMinInclusive');
+  const homeMax = bounded(geometry.homePerlinMaxExclusive, 32n, 'homePerlinMaxExclusive');
+  if (homeMin >= homeMax) throw new RangeError('The home Perlin interval must be non-empty.');
+  return poseidonHash([
+    RULES_GEOMETRY_DOMAIN_FIELD,
+    BigInt(RULES_GEOMETRY_SCHEMA_VERSION),
+    worldRadius,
+    threshold,
+    locationHashKey,
+    spaceTypeKey,
+    perlinScale,
+    geometry.perlinMirrorX ? 1n : 0n,
+    geometry.perlinMirrorY ? 1n : 0n,
+    homeMin,
+    homeMax,
+  ]);
 }
 
 function hex256(value: string, name: string): bigint {

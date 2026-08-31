@@ -260,11 +260,11 @@ action_commitment
 rules_geometry_commitment
 ```
 
-`rules_geometry_commitment` must be derived inside the circuit from fully constrained geometry parameters or equal constants embedded in the versioned circuit. An unconstrained configuration hash is not acceptable. The exact 16-field Poseidon action tuple, identifier limbs, four-signal order, BN254 limits, little-endian serialization, and mainnet golden vector are normative in [`16-proof-interface-and-artifact-preflight.md`](16-proof-interface-and-artifact-preflight.md) and [`config/proof-interface-v1.json`](../config/proof-interface-v1.json). TypeScript and Move agree on that interface. The checked-in `claim_home` and `move` candidates exercise this encoding with development-only artifacts, but they do not yet constrain every production relation. Production artifacts, the verifying key, setup ceremony, Sui serialization bridge, and audit remain unavailable before any ranked write.
+`rules_geometry_commitment` is derived inside the circuit from the schema/domain, world radius, exact planet-hash threshold, location/space keys, Perlin scale and mirrors, and the inclusive/exclusive home band. Move recomputes the same Poseidon value from immutable `SeasonManifest` fields; an unconstrained configuration hash is not acceptable. The exact 16-field Poseidon action tuple, identifier limbs, four-signal order, BN254 limits, little-endian scalar serialization, Arkworks point serialization, and mainnet golden vector are normative in [`16-proof-interface-and-artifact-preflight.md`](16-proof-interface-and-artifact-preflight.md) and [`config/proof-interface-v1.json`](../config/proof-interface-v1.json). TypeScript, Circom, and Move agree on that interface, and a tracked development vector verifies in Sui's native Groth16 implementation. Production artifacts, ceremony keys, independent audit, and key pinning remain unavailable before any ranked write.
 
 ### Circuit stack
 
-- Circom 2.2.3 source for the current development candidates.
+- Circom 2.2.3 source for the complete but unaudited development relations.
 - BN254 Groth16 unless benchmarks justify BLS12-381.
 - A circuit-friendly hash such as Poseidon for coordinate and action commitments.
 - Pinned `snarkjs` 0.7.6 for current browser proof generation and self-verification.

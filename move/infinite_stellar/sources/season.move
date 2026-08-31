@@ -3,6 +3,7 @@ module infinite_stellar::season;
 use sui::clock::{Self as clock, Clock};
 use sui::event;
 use sui::random::{Self as random, Random};
+use infinite_stellar::rules_geometry;
 
 const VERSION: u64 = 1;
 
@@ -46,6 +47,16 @@ public struct SeasonManifest has key {
     minimum_home_claim_window_ms: u64,
     max_home_availability_tick_gap_ms: u64,
     max_ranked_seats: u64,
+    world_radius: u64,
+    planet_hash_threshold: u256,
+    location_hash_key: u64,
+    space_type_key: u64,
+    perlin_scale: u64,
+    perlin_mirror_x: bool,
+    perlin_mirror_y: bool,
+    home_perlin_min: u8,
+    home_perlin_max: u8,
+    rules_geometry_commitment: u256,
     enrollment_registry_id: ID,
     runtime_id: ID,
     planet_registry_id: ID,
@@ -74,6 +85,8 @@ public struct SeasonCreated has copy, drop {
     runtime_id: ID,
     planet_registry_id: ID,
     max_ranked_seats: u64,
+    world_radius: u64,
+    rules_geometry_commitment: u256,
 }
 
 public struct UniverseOpened has copy, drop {
@@ -99,6 +112,15 @@ public(package) fun new_season(
     minimum_home_claim_window_ms: u64,
     max_home_availability_tick_gap_ms: u64,
     max_ranked_seats: u64,
+    world_radius: u64,
+    planet_hash_threshold: u256,
+    location_hash_key: u64,
+    space_type_key: u64,
+    perlin_scale: u64,
+    perlin_mirror_x: bool,
+    perlin_mirror_y: bool,
+    home_perlin_min: u8,
+    home_perlin_max: u8,
     ctx: &mut TxContext,
 ): (SeasonManifest, SeasonRuntime, SeasonAdminCap) {
     assert!(max_ranked_seats > 0, EInvalidManifest);
@@ -122,6 +144,17 @@ public(package) fun new_season(
         home_claim_close_at_ms - scheduled_not_before_at_ms >= minimum_home_claim_window_ms,
         EInvalidManifest,
     );
+    let geometry_commitment = rules_geometry::commitment(
+        world_radius,
+        planet_hash_threshold,
+        location_hash_key,
+        space_type_key,
+        perlin_scale,
+        perlin_mirror_x,
+        perlin_mirror_y,
+        home_perlin_min,
+        home_perlin_max,
+    );
 
     let manifest_uid = object::new(ctx);
     let season_id = manifest_uid.to_inner();
@@ -139,6 +172,16 @@ public(package) fun new_season(
         minimum_home_claim_window_ms,
         max_home_availability_tick_gap_ms,
         max_ranked_seats,
+        world_radius,
+        planet_hash_threshold,
+        location_hash_key,
+        space_type_key,
+        perlin_scale,
+        perlin_mirror_x,
+        perlin_mirror_y,
+        home_perlin_min,
+        home_perlin_max,
+        rules_geometry_commitment: geometry_commitment,
         enrollment_registry_id: @0x0.to_id(),
         runtime_id: runtime_uid.to_inner(),
         planet_registry_id: @0x0.to_id(),
@@ -189,6 +232,8 @@ public(package) fun emit_season_created(
         runtime_id: manifest.runtime_id,
         planet_registry_id: manifest.planet_registry_id,
         max_ranked_seats,
+        world_radius: manifest.world_radius,
+        rules_geometry_commitment: manifest.rules_geometry_commitment,
     });
 }
 
@@ -418,6 +463,16 @@ public fun league(self: &SeasonManifest): u8 { self.league }
 public fun enrollment_close_at_ms(self: &SeasonManifest): u64 { self.enrollment_close_at_ms }
 public fun home_claim_close_at_ms(self: &SeasonManifest): u64 { self.home_claim_close_at_ms }
 public fun max_ranked_seats(self: &SeasonManifest): u64 { self.max_ranked_seats }
+public fun world_radius(self: &SeasonManifest): u64 { self.world_radius }
+public fun planet_hash_threshold(self: &SeasonManifest): u256 { self.planet_hash_threshold }
+public fun location_hash_key(self: &SeasonManifest): u64 { self.location_hash_key }
+public fun space_type_key(self: &SeasonManifest): u64 { self.space_type_key }
+public fun perlin_scale(self: &SeasonManifest): u64 { self.perlin_scale }
+public fun perlin_mirror_x(self: &SeasonManifest): bool { self.perlin_mirror_x }
+public fun perlin_mirror_y(self: &SeasonManifest): bool { self.perlin_mirror_y }
+public fun home_perlin_min(self: &SeasonManifest): u8 { self.home_perlin_min }
+public fun home_perlin_max(self: &SeasonManifest): u8 { self.home_perlin_max }
+public fun rules_geometry_commitment(self: &SeasonManifest): u256 { self.rules_geometry_commitment }
 public fun enrollment_registry_id(self: &SeasonManifest): ID { self.enrollment_registry_id }
 public fun planet_registry_id(self: &SeasonManifest): ID { self.planet_registry_id }
 public fun universe_opened(self: &SeasonRuntime): bool { self.universe_opened }
@@ -456,6 +511,15 @@ public fun new_season_for_testing(
         minimum_home_claim_window_ms,
         max_home_availability_tick_gap_ms,
         max_ranked_seats,
+        12000,
+        rules_geometry::round5_planet_hash_threshold(),
+        115,
+        116,
+        16384,
+        false,
+        false,
+        13,
+        14,
         ctx,
     )
 }
@@ -563,7 +627,7 @@ public fun destroy_for_testing(
     runtime: SeasonRuntime,
     admin_cap: SeasonAdminCap,
 ) {
-    let SeasonManifest { id, version: _, league: _, enrollment_close_at_ms: _, universe_open_at_ms: _, home_claim_open_at_ms: _, home_claim_close_at_ms: _, season_end_at_ms: _, seed_observation_delay_ms: _, minimum_home_claim_window_ms: _, max_home_availability_tick_gap_ms: _, max_ranked_seats: _, enrollment_registry_id: _, runtime_id: _, planet_registry_id: _ } = manifest;
+    let SeasonManifest { id, version: _, league: _, enrollment_close_at_ms: _, universe_open_at_ms: _, home_claim_open_at_ms: _, home_claim_close_at_ms: _, season_end_at_ms: _, seed_observation_delay_ms: _, minimum_home_claim_window_ms: _, max_home_availability_tick_gap_ms: _, max_ranked_seats: _, world_radius: _, planet_hash_threshold: _, location_hash_key: _, space_type_key: _, perlin_scale: _, perlin_mirror_x: _, perlin_mirror_y: _, home_perlin_min: _, home_perlin_max: _, rules_geometry_commitment: _, enrollment_registry_id: _, runtime_id: _, planet_registry_id: _ } = manifest;
     object::delete(id);
     let SeasonRuntime { id, season_id: _, universe_opened: _, universe_opened_at_ms: _, universe_seed: _, home_claim_not_before_at_ms: _, paused: _, home_availability_last_tick_at_ms: _, accumulated_home_claimable_ms: _, home_window_resolution: _, cancelled: _, settlement_started: _ } = runtime;
     object::delete(id);
