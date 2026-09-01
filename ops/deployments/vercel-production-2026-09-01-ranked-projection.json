@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "surface": "vercel",
+  "environment": "production",
+  "project": "infinite-stellar",
+  "deployedAt": "2026-09-01T07:34:46.726Z",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "branch": "codex/dark-forest-parity",
+    "commit": "b0d19c8a44de8edf923387383508235918a23ebc"
+  },
+  "deployment": {
+    "id": "dpl_GSRSGUXz9FwXhTHuZg8nGsnQBuHC",
+    "status": "READY",
+    "immutableUrl": "https://infinite-stellar-h9nwpa8sd-soulidity-ai.vercel.app",
+    "productionAlias": "https://infinite-stellar.vercel.app"
+  },
+  "capability": {
+    "localRound5Simulation": true,
+    "canonicalSoulidityMainnetRead": true,
+    "deterministicSeatFirstRoute": true,
+    "boundedRankedUniverseProjection": true,
+    "submittedDigestRecovery": true,
+    "rankedMainnetWrites": false,
+    "suiTransactionOrSoulHistoryFromDemo": false
+  },
+  "verification": {
+    "nodeVersion": "24.x",
+    "typecheck": "passed",
+    "lint": "passed",
+    "typescriptTests": 133,
+    "moveTests": 72,
+    "productionBuild": "passed",
+    "dependencyVulnerabilities": 0,
+    "httpStatus": 200,
+    "securityHeaders": "passed",
+    "mainnetRpcAllowedByCsp": true,
+    "projectionAdversarialCoverage": [
+      "bounded partial history rejection",
+      "missing checkpoint rejection",
+      "cross-season object rejection",
+      "core version race rejection",
+      "dispatch and settlement binding",
+      "stale Seat response suppression",
+      "projection retry",
+      "exact submitted-digest recovery"
+    ],
+    "browserSmoke": [
+      "load production alias",
+      "open or restore mainnet readiness route",
+      "show canonical Soulidity pin",
+      "show missing game package and production release gates",
+      "expose no ranked signing action"
+    ]
+  },
+  "mainnetReleaseGate": {
+    "canonicalSoulidityAbi": "verified",
+    "publishDryRun": "passed",
+    "moduleCount": 15,
+    "simulatedNetGasMist": "544308000",
+    "productionProofVerifiersReady": false,
+    "independentAuditComplete": false,
+    "multisigPolicyPinned": false,
+    "gameTransactionSubmitted": false,
+    "decision": "blocked_fail_closed"
+  }
+}
