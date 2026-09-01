@@ -1,13 +1,12 @@
 # Infinite Stellar Current Phase
 
-- **Status:** Complete (web canary live; player-facing mainnet launch remains blocked)
-- **Phase:** Vercel playable-canary deployment and mainnet release-gate execution
-- **Goal:** Deploy and verify the current validated gameplay client on the existing Vercel project, then execute the production mainnet release gates and submit only if the production verifier, audits, custody, and configuration are genuinely ready.
+- **Status:** Complete (player-facing mainnet launch remains blocked)
+- **Phase:** Chain-backed ranked route and canonical Soul discovery
+- **Goal:** Connect the React wallet path to canonical Soulidity mainnet Soul discovery and the deterministic Infinite Stellar Seat read model, then wire the tested player gateway behind exact deployment/verifier/audit gates without enabling unavailable writes.
 - **Authorization:** GitHub delivery and production-valid Sui mainnet engineering are authorized. Development keys, missing audits, unfinished services, or absent signer approvals cannot be substituted.
-- **Delivered:** Vercel production deployment `dpl_9mqhtJ3krUJkPMszA3rSKRxxAjoH` at `https://infinite-stellar.vercel.app`; Sui mainnet RPC CSP allowance; public deployment evidence; complete browser journey smoke; rerun canonical Soulidity and mainnet publish dry-run gates.
-- **Verification:** 105 TypeScript tests and production build; zero dependency vulnerabilities; public HTTP 200 and security headers; browser Soul-to-full-map journey and zoom; 15-module mainnet publish dry-run at 544,308,000 MIST simulated net gas; canonical Soulidity live ABI verification.
+- **Outcome:** The Vercel route now discovers canonical shared Soulidity state on mainnet, resolves an existing deterministic Seat first, and connects checked enrollment simulation/finality to the wallet path. Exact production release evidence is mandatory before signing can appear.
+- **Acceptance checks:** Shared `SoulState` discovery never relies on wallet-owned-object semantics; canonical type/original/callable IDs and BCS fields are validated; existing deterministic Seat is resolved before Soul selection; React shows evidence-backed wallet/chain/deployment state; signing is unreachable unless the complete mainnet deployment and production gates are true; retry, stale response, no-Soul, existing-Seat, and malformed-chain fixtures pass.
 - **Mainnet status:** No transaction was signed or submitted. Production verifier readiness remains false.
-- **Remaining blockers:** Production ceremony and audits; production config activation; ranked React integration; checkpoint-derived Planet/Voyage projections; indexer/sponsor/monitoring; two-wallet soak; reveal/capture/external Artifact adapters; multisig/capability custody; release and rights clearance.
-- **Exact next action:** Complete production ceremony/audit and reviewed verifier-key pinning while wiring the tested gateway and checkpoint-derived read model into the ranked React route; then run the two-wallet rehearsal and rerun every release gate before signing mainnet.
-- **Current handoff:** `docs/codex/handoffs/2026-09-01-vercel-production-and-mainnet-gate.md`
-- **Previous handoff:** `docs/codex/handoffs/2026-09-01-production-player-gateway.md`
+- **Remaining blockers:** Production ceremony and audits; production config activation; checkpoint-derived Planet/Voyage projections; indexer/sponsor/monitoring; two-wallet soak; reveal/capture/external Artifact adapters; multisig/capability custody; release and rights clearance.
+- **Exact next action:** Begin the checkpoint-derived Manifest/Runtime/Planet/Voyage projection phase without relaxing the mainnet gates.
+- **Current handoff:** `docs/codex/handoffs/2026-09-01-chain-backed-ranked-route.md`

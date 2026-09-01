@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "surface": "vercel",
+  "environment": "production",
+  "project": "infinite-stellar",
+  "deployedAt": "2026-09-01T07:06:44.696Z",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "branch": "codex/dark-forest-parity",
+    "commit": "956715a01ef922d01c13255ef2d21bdb2d97b480"
+  },
+  "deployment": {
+    "id": "dpl_EEjTNS9JwMZFzkimFBhkHCPopz9m",
+    "status": "READY",
+    "immutableUrl": "https://infinite-stellar-kdfgserst-soulidity-ai.vercel.app",
+    "productionAlias": "https://infinite-stellar.vercel.app"
+  },
+  "capability": {
+    "localRound5Simulation": true,
+    "walletDiscovery": true,
+    "canonicalSoulidityMainnetRead": true,
+    "deterministicSeatFirstRoute": true,
+    "rankedEnrollmentTransactionPath": "implemented_fail_closed",
+    "rankedMainnetWrites": false,
+    "suiTransactionOrSoulHistoryFromDemo": false
+  },
+  "verification": {
+    "nodeVersion": "24.x",
+    "typecheck": "passed",
+    "lint": "passed",
+    "typescriptTests": 121,
+    "moveTests": 72,
+    "productionBuild": "passed",
+    "dependencyVulnerabilities": 0,
+    "httpStatus": 200,
+    "securityHeaders": "passed",
+    "mainnetRpcAllowedByCsp": true,
+    "liveSoulDiscovery": {
+      "complete": true,
+      "scannedSoulCreatedEvents": 0,
+      "discoveredStateIds": 0,
+      "transactionSubmitted": false
+    },
+    "browserSmoke": [
+      "load production alias",
+      "restore full-screen local strategy session",
+      "return to home",
+      "open mainnet readiness route",
+      "show canonical Soulidity pin",
+      "show wallet, package, proof, audit, operations, and multisig blockers",
+      "expose no ranked signing action"
+    ]
+  },
+  "mainnetReleaseGate": {
+    "canonicalSoulidityAbi": "verified",
+    "publishDryRun": "passed",
+    "moduleCount": 15,
+    "simulatedNetGasMist": "544308000",
+    "productionProofVerifiersReady": false,
+    "independentAuditComplete": false,
+    "multisigPolicyPinned": false,
+    "gameTransactionSubmitted": false,
+    "decision": "blocked_fail_closed"
+  }
+}
