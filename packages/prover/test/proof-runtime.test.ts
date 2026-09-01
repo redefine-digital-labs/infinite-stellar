@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { groth16 } from 'snarkjs';
 import type { LoadedProofArtifacts, ProofArtifactManifestV1 } from '../src/artifact-manifest';
-import { generateAndVerifyGroth16Proof } from '../src/proof-runtime';
+import {
+  generateAndVerifyGroth16Proof,
+  prepareSuiProofSubmission,
+} from '../src/proof-runtime';
 
 vi.mock('snarkjs', () => ({
   groth16: {
@@ -55,6 +58,22 @@ function loaded(): LoadedProofArtifacts {
   };
 }
 
+function loadedWithSerializableVerificationKey(): LoadedProofArtifacts {
+  const value = loaded();
+  const artifacts = new Map(value.artifacts);
+  artifacts.set('verification-key', encoder.encode(JSON.stringify({
+    protocol: 'groth16',
+    curve: 'bn128',
+    nPublic: 4,
+    vk_alpha_1: ['1', '2', '1'],
+    vk_beta_2: [['1', '2'], ['3', '4'], ['1', '0']],
+    vk_gamma_2: [['5', '6'], ['7', '8'], ['1', '0']],
+    vk_delta_2: [['9', '10'], ['11', '12'], ['1', '0']],
+    IC: Array.from({ length: 5 }, (_, index) => [String(index + 13), String(index + 23), '1']),
+  })));
+  return { ...value, artifacts };
+}
+
 describe('Groth16 proof runtime', () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -104,5 +123,34 @@ describe('Groth16 proof runtime', () => {
     await expect(generateAndVerifyGroth16Proof(moveNew, {})).resolves.toMatchObject({
       publicSignals: ['1', '2', '14', '3', '4'],
     });
+  });
+
+  it('prepares exact Sui proof bytes only for the independently expected statement', async () => {
+    const artifacts = loadedWithSerializableVerificationKey();
+    const generated = {
+      proof: validProof,
+      publicSignals: ['1', '2', '3', '4'],
+      circuitId: artifacts.manifest.circuitId,
+      circuitVersion: artifacts.manifest.circuitVersion,
+      manifestSha256: artifacts.manifestSha256,
+    };
+    await expect(prepareSuiProofSubmission(
+      artifacts,
+      generated,
+      ['1', '2', '3', '4'],
+    )).resolves.toMatchObject({
+      network: 'sui:mainnet',
+      rulesetId: 'dark-forest-v06-round5',
+      circuitId: 'round5-move',
+      publicSignals: ['1', '2', '3', '4'],
+      proofBytes: expect.objectContaining({ length: 128 }),
+      publicInputs: expect.objectContaining({ length: 128 }),
+    });
+
+    await expect(prepareSuiProofSubmission(
+      artifacts,
+      generated,
+      ['1', '2', '3', '5'],
+    )).rejects.toMatchObject({ code: 'PUBLIC_SIGNAL_MISMATCH' });
   });
 });

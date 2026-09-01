@@ -28,6 +28,13 @@ export interface GeneratedProofResult {
   manifestSha256: string;
   proof: Groth16ProofJson;
   publicSignals: string[];
+  network: string;
+  rulesetId: string;
+  artifactManifestSha256: string;
+  verifyingKeyDigest: string;
+  publicInputs: Uint8Array;
+  publicInputDigest: string;
+  proofBytes: Uint8Array;
 }
 
 export interface ProofGenerationOperation {
@@ -113,7 +120,11 @@ export class ProverWorkerClient {
     return { requestId, result, cancel: () => this.cancel(requestId) };
   }
 
-  prove(manifestSha256: string, witness: Record<string, string>): ProofGenerationOperation {
+  prove(
+    manifestSha256: string,
+    witness: Record<string, string>,
+    expectedPublicSignals: string[],
+  ): ProofGenerationOperation {
     if (this.destroyed) throw new ProofPreflightError('WORKER_DESTROYED', 'The Prover Worker client is closed.');
     if (this.activeRequestId) this.cancel(this.activeRequestId);
     const requestId = nextRequestId();
@@ -136,6 +147,7 @@ export class ProverWorkerClient {
       requestId,
       manifestSha256,
       witness,
+      expectedPublicSignals,
     });
     return { requestId, result, cancel: () => this.cancel(requestId) };
   }
@@ -192,6 +204,13 @@ export class ProverWorkerClient {
         manifestSha256: message.manifestSha256,
         proof: message.proof,
         publicSignals: message.publicSignals,
+        network: message.network,
+        rulesetId: message.rulesetId,
+        artifactManifestSha256: message.artifactManifestSha256,
+        verifyingKeyDigest: message.verifyingKeyDigest,
+        publicInputs: message.publicInputs,
+        publicInputDigest: message.publicInputDigest,
+        proofBytes: message.proofBytes,
       }));
     } else if (message.type === 'cancelled') {
       this.settle(message.requestId, (entry) => {

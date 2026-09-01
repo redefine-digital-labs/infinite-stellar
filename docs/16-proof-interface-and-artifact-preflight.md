@@ -253,5 +253,7 @@ Mainnet ranked writes remain disabled until all of the following are evidenced:
   are complete.
 
 Until then the official client may run the local rules sandbox, but it must show
-`PROVER GATED` or `PROVER FAIL-CLOSED` and must not construct or sign a ranked
-transaction.
+`PROVER GATED` or `PROVER FAIL-CLOSED` and must not ask a wallet to sign a
+ranked transaction. The SDK may construct proof-bound transactions in tests and
+release rehearsals only after exact deployment/config/statement checks; runtime
+construction remains fail-closed while production-verifier readiness is false.

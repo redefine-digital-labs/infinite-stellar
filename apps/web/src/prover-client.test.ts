@@ -139,11 +139,17 @@ describe('ProverWorkerClient', () => {
     });
     await preflight.result;
 
-    const proof = client.prove(selection.manifestSha256, { source_location_hash: '1' });
+    const expectedPublicSignals = ['1', '2', '3', '4'];
+    const proof = client.prove(
+      selection.manifestSha256,
+      { source_location_hash: '1' },
+      expectedPublicSignals,
+    );
     expect(worker.posted.at(-1)).toMatchObject({
       type: 'prove',
       manifestSha256: selection.manifestSha256,
       witness: { source_location_hash: '1' },
+      expectedPublicSignals,
     });
     worker.emit({
       type: 'proved',
@@ -160,10 +166,18 @@ describe('ProverWorkerClient', () => {
         curve: 'bn128',
       },
       publicSignals: ['1', '2', '3', '4'],
+      network: 'sui:mainnet',
+      rulesetId: 'dark-forest-v06-round5',
+      artifactManifestSha256: selection.manifestSha256,
+      verifyingKeyDigest: 'b'.repeat(64),
+      publicInputs: new Uint8Array(128),
+      publicInputDigest: 'c'.repeat(64),
+      proofBytes: new Uint8Array(128),
     });
     await expect(proof.result).resolves.toMatchObject({
       publicSignals: ['1', '2', '3', '4'],
       manifestSha256: selection.manifestSha256,
+      verifyingKeyDigest: 'b'.repeat(64),
     });
   });
 });

@@ -276,7 +276,11 @@ The following are independent gates:
    adapters — integrated and tested; production setup remains blocked.
 5. Canonical Soulidity mainnet adapter ABI — integrated, live-verified, and
    publish-simulated; production deployment remains gated by the other items.
-6. External Move/circuit/client security review and testnet soak.
+6. Proof-bound player PTBs, exact proof-byte preparation, checked simulation,
+   indexed-finality/event reconciliation, and deterministic Seat-bundle BCS
+   reads — integrated and tested in the SDK; the ranked React route is not yet
+   wired to them.
+7. External Move/circuit/client security review and testnet soak.
 
 The Soul ABI no longer blocks engineering. Ranked gameplay still stays
 fail-closed until the production proof, client, review, and operations gates

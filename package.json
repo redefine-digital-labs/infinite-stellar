@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace @infinite-stellar/web",
-    "build": "npm run build --workspace @infinite-stellar/game-sdk && npm run build --workspace @infinite-stellar/prover && npm run build --workspace @infinite-stellar/web",
+    "build": "npm run build --workspace @infinite-stellar/prover && npm run build --workspace @infinite-stellar/game-sdk && npm run build --workspace @infinite-stellar/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "eslint apps packages --max-warnings=0",

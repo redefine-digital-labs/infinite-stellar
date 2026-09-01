@@ -3,6 +3,7 @@
 import {
   loadProofArtifacts,
   generateAndVerifyGroth16Proof,
+  prepareSuiProofSubmission,
   PROOF_ARTIFACT_WORKER_VERSION,
   ProofArtifactError,
   type LoadedProofArtifacts,
@@ -34,11 +35,17 @@ async function prove(request: ProofGenerateRequest): Promise<void> {
   }
   try {
     const generated = await generateAndVerifyGroth16Proof(loadedCache, request.witness);
+    const submission = await prepareSuiProofSubmission(
+      loadedCache,
+      generated,
+      request.expectedPublicSignals,
+    );
     emit({
       type: 'proved',
       version: PROOF_ARTIFACT_WORKER_VERSION,
       requestId: request.requestId,
       ...generated,
+      ...submission,
     });
   } catch (error) {
     emit({

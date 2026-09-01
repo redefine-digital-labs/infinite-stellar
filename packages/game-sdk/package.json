@@ -16,6 +16,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@infinite-stellar/prover": "*",
     "@mysten/sui": "2.27.1",
     "@noble/hashes": "^2.4.0"
   },

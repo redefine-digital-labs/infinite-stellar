@@ -134,8 +134,9 @@ sui move lint
 - The local demo creates no wallet signature, Sui digest, Soul history, or public game record.
 - Demo transaction digests are deterministic fixtures and are never shown as explorer links.
 - Exact candidate coordinates, salt, and local strategy state are AES-GCM encrypted and authenticated under a non-extractable controller-scoped device key in IndexedDB. The current prototype does not resist same-origin XSS, a compromised browser extension/device, or loss of local storage; portable wrapping, export, restore, and recovery UX remain release gates.
-- Production enrollment throws `SOUL_ADAPTER_UNAVAILABLE` for deployment records that do not explicitly pin and enable the compatible canonical Soulidity adapter; a complete mainnet record can now construct the typed transaction.
-- Production home claiming throws `PROOF_VERIFIER_UNAVAILABLE` until the circuit and verifier are pinned.
+- Production enrollment throws `SOUL_ADAPTER_UNAVAILABLE` for deployment records that do not explicitly pin and enable the compatible canonical Soulidity adapter; a complete mainnet record can construct a sender-bound typed transaction.
+- Production home/move/move-new construction throws `PROOF_VERIFIER_UNAVAILABLE` until exact production circuits and verifiers are pinned. When enabled in a reviewed release record, the SDK re-derives the full action statement, checks prepared proof/public-input bytes, simulates with validation enabled, waits for indexed finality, and reconciles exact BCS events/effects before reporting success.
+- Existing controller state is point-read by deriving the Season Seat from the exact Move key/type-origin encoding, then BCS-validating its Projection, Civilization, and Score bindings. This read path exists in the SDK but is not yet the rendered web authority.
 - Public keeper builders require complete package and object IDs; the client pins the sealed testnet canary while unconfigured deployments still throw `DEPLOYMENT_UNAVAILABLE`.
 - A Soul transfer never transfers the fixed Season Seat, Planet authority, or local controller-scoped vault.
 

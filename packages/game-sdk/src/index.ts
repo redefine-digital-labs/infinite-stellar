@@ -7,4 +7,5 @@ export * from './round5-rules';
 export * from './round5-universe';
 export * from './strategy';
 export * from './sui-gateway';
+export * from './sui-player-runtime';
 export type * from './types';

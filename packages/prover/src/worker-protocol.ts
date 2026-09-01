@@ -24,6 +24,7 @@ export interface ProofGenerateRequest {
   requestId: string;
   manifestSha256: string;
   witness: Record<string, string>;
+  expectedPublicSignals: string[];
 }
 
 export interface Groth16ProofJson {
@@ -76,6 +77,13 @@ export interface ProofGeneratedMessage {
   manifestSha256: string;
   proof: Groth16ProofJson;
   publicSignals: string[];
+  network: string;
+  rulesetId: string;
+  artifactManifestSha256: string;
+  verifyingKeyDigest: string;
+  publicInputs: Uint8Array;
+  publicInputDigest: string;
+  proofBytes: Uint8Array;
 }
 
 export type ProofArtifactWorkerMessage =

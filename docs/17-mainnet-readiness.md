@@ -18,7 +18,10 @@ configurations and verifying keys are intentionally unavailable.
 | Canonical Soul format | `soulidity::soul::SoulState` v1; owner, epoch, Soul ID, State ID, and listing accessors verified live | Ready |
 | Soulidity package identity | Callable package `0x60bf…2ecd`; original/type-origin package `0xa43c…e5d5d`; exact source commit pinned | Ready |
 | Ranked enrollment adapter | Move reads the canonical shared `SoulState` in the enrollment transaction and creates no Soul custody | Ready in source, undeployed |
-| Enrollment transaction builder | SDK constructs `soul_adapter::enroll` from pinned Manifest, registry, SoulState, Clock, and projection commitment | Ready in source, undeployed |
+| Player transaction builders | SDK constructs sender-bound `soul_adapter::enroll` and exact proof-bound `claim_home`, `dispatch_move`, and `dispatch_move_new` PTBs from pinned deployment/config inputs | Ready in source; proof builders remain runtime-gated by unavailable production configs |
+| Proof submission boundary | Worker output is converted to exact Arkworks/Sui proof bytes and rejected unless manifest, key digest, public signals, serialized inputs, and action intent all match | Ready in source against development fixtures |
+| Simulation and finality | Gateway simulates with checks enabled, treats resolved `FailedTransaction` results as failures, waits for indexed finality, and verifies exact BCS event/effect bindings | Ready in source, not yet wired to the ranked React route |
+| Existing-Seat read model | SDK derives the controller Seat from the exact Move `ControllerSeatKey` BCS/type origin and cross-checks Seat, Projection, Civilization, and Score BCS identities | Ready in source, not yet wired to the ranked React route |
 | Sui protocol limits | `SeasonManifest` and `Planet` are below the mainnet 32-field struct limit without changing gameplay accessors | Ready |
 | Bytecode verification | Mainnet build and bytecode meter pass | Ready |
 | Publish simulation | Full mainnet dry-run succeeds; observed simulated gas was 544,308,000 MIST | Ready at the tested source revision |
@@ -46,8 +49,8 @@ does not sign, publish, or spend gas.
 | Production claim/move/move-new circuits | Complete development relations and real test proofs; production readiness is hardcoded false | Reproducible release build, public Phase 2 ceremony, pinned production artifacts, independent circuit review, production `CircuitConfig` constructor, and positive/adversarial vectors |
 | Reveal and capture privacy | Typed fail-closed adapters only | Complete and audit the action-specific relations, keys, Move verifier paths, and client builders |
 | External Artifact custody | Local Spacetime Rip behavior and fail-closed adapter | Define and audit the wallet-owned Sui artifact wrapper, extraction/deposit authority, and signed client paths |
-| Player transaction gateway | Enrollment builder exists; home, move, and move-new production builders still fail closed | Build all signed PTBs, preflight/simulation, finality/retry reconciliation, errors, and wallet tests |
-| Chain-backed web client | Full local deterministic sandbox | Replace demo authority with checkpoint-derived Season/Seat/Planet/Voyage state while preserving private local coordinates and proof generation |
+| Player transaction gateway | Proof-bound enrollment/home/move/move-new PTBs, proof serialization, checked simulation, finality waiting, BCS event/effect reconciliation, and adversarial SDK tests exist | Wire the gateway to supported wallets; add rejection/retry/crash UX and a real multi-wallet rehearsal against production-candidate configs |
+| Chain-backed web client | Deterministic Seat derivation and BCS-validated Seat bundle reads exist in the SDK; the rendered game remains a local deterministic sandbox | Replace demo authority with checkpoint-derived Manifest/Runtime/Seat/Planet/Voyage state while preserving private local coordinates and proof generation |
 | Multiplayer infrastructure | No production indexer, sponsor, or monitoring service in this repository | Rebuildable checkpoint indexer, rate-limited sponsor, health/incident telemetry, archive/full-node strategy, and failure-mode tests |
 | Season release | No production Manifest, production circuit objects, or immutable engine package | Freeze exact timings/rules/hashes, publish and verify objects, make the engine immutable, and record every transaction/object digest |
 | Operational control | Release authority is not yet a documented production ceremony | Establish signer/capability custody, separation of duties, incident actions, and auditable release approvals |
@@ -58,9 +61,9 @@ does not sign, publish, or spend gas.
 
 1. Finish and review production circuits and ceremony artifacts.
 2. Activate the production Move verifiers only against their exact pinned
-   digests and add the remaining SDK transaction builders.
+   digests and connect the tested SDK gateway to the wallet UI.
 3. Run a real multi-wallet rehearsal with a checkpoint-rebuildable indexer and
-   the production web path.
+   the production web path, including crash/retry and contention cases.
 4. Complete independent security, performance, operations, and release-rights
    gates.
 5. Publish the immutable engine and production objects, verify them from a
