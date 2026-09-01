@@ -174,6 +174,7 @@ export interface SubmitPlayerTransactionInput {
   ) => Promise<SuiClientTypes.TransactionResult>;
   deployment: InfiniteStellarDeployment;
   expectation: PlayerActionExpectation;
+  onPhase?: (phase: 'simulating' | 'awaiting-signature' | 'finalizing') => void;
   timeoutMs?: number;
   pollScheduleMs?: number[];
 }
@@ -436,9 +437,11 @@ function assertExpectedEvent(
 export async function submitAndFinalizePlayerTransaction(
   input: SubmitPlayerTransactionInput,
 ): Promise<FinalizedPlayerTransaction> {
+  input.onPhase?.('simulating');
   const simulation = await simulatePlayerTransaction(input.client, input.transaction);
   let submitted: SuiClientTypes.TransactionResult;
   try {
+    input.onPhase?.('awaiting-signature');
     submitted = await input.execute(input.transaction);
   } catch (error) {
     throw new PlayerTransactionExecutionError(
@@ -452,6 +455,7 @@ export async function submitAndFinalizePlayerTransaction(
   }
 
   const submittedDigest = submitted.Transaction.digest;
+  input.onPhase?.('finalizing');
   let finalized;
   try {
     finalized = await input.client.waitForTransaction({

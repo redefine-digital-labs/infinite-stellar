@@ -387,6 +387,7 @@ describe('production Sui player runtime', () => {
       waitForTransaction: vi.fn().mockResolvedValue(finalizedResult),
     } as unknown as PlayerSuiClient;
     const execute = vi.fn().mockResolvedValue(successfulTransaction([PLANET_ID]));
+    const onPhase = vi.fn();
 
     const result = await submitAndFinalizePlayerTransaction({
       client,
@@ -398,6 +399,7 @@ describe('production Sui player runtime', () => {
         seasonId: MANIFEST_ID,
         seatId,
       },
+      onPhase,
     });
 
     expect(result).toMatchObject({
@@ -410,6 +412,11 @@ describe('production Sui player runtime', () => {
       digest: DIGEST,
       include: { effects: true, events: true, objectTypes: true },
     }));
+    expect(onPhase.mock.calls.map(([phase]) => phase)).toEqual([
+      'simulating',
+      'awaiting-signature',
+      'finalizing',
+    ]);
   });
 
   it('does not treat wallet resolution, wrong events, or missing changed objects as success', async () => {

@@ -29,6 +29,16 @@ export interface SeatRoutingPin {
   league: number;
 }
 
+export interface ProductionReleaseEvidencePin {
+  schemaVersion: 1;
+  ceremonyTranscriptSha256: string;
+  circuitAuditSha256: string;
+  moveAuditSha256: string;
+  clientAuditSha256: string;
+  operationsApprovalSha256: string;
+  multisigPolicySha256: string;
+}
+
 export interface InfiniteStellarDeployment {
   network: 'localnet' | 'devnet' | 'testnet' | 'mainnet';
   packageId?: string;
@@ -45,6 +55,7 @@ export interface InfiniteStellarDeployment {
   moveNewCircuitConfig?: CircuitConfigPin;
   proofIntent?: ProofIntentDeploymentPin;
   seatRouting?: SeatRoutingPin;
+  productionReleaseEvidence?: ProductionReleaseEvidencePin;
   productionSoulAdapterReady: boolean;
   productionProofVerifierReady: boolean;
 }
@@ -128,6 +139,27 @@ function requireCircuitConfigPin(
   return pin;
 }
 
+function requireProductionReleaseEvidence(
+  deployment: InfiniteStellarDeployment,
+): ProductionReleaseEvidencePin {
+  const evidence = deployment.productionReleaseEvidence;
+  if (
+    !evidence || evidence.schemaVersion !== 1 ||
+    !HEX_DIGEST.test(evidence.ceremonyTranscriptSha256) ||
+    !HEX_DIGEST.test(evidence.circuitAuditSha256) ||
+    !HEX_DIGEST.test(evidence.moveAuditSha256) ||
+    !HEX_DIGEST.test(evidence.clientAuditSha256) ||
+    !HEX_DIGEST.test(evidence.operationsApprovalSha256) ||
+    !HEX_DIGEST.test(evidence.multisigPolicySha256)
+  ) {
+    throw new IntegrationUnavailableError(
+      'DEPLOYMENT_UNAVAILABLE',
+      'Ranked player writes require exact ceremony, audit, operations, and multisig evidence digests.',
+    );
+  }
+  return evidence;
+}
+
 export class IntegrationUnavailableError extends Error {
   readonly code:
     | 'DEPLOYMENT_UNAVAILABLE'
@@ -180,6 +212,63 @@ function requireProductionProofIntent(deployment: InfiniteStellarDeployment): Pr
     );
   }
   return pin;
+}
+
+export function assertRankedReleaseDeploymentReady(
+  deployment: InfiniteStellarDeployment,
+): void {
+  if (!deployment.productionSoulAdapterReady) {
+    throw new IntegrationUnavailableError(
+      'SOUL_ADAPTER_UNAVAILABLE',
+      'Ranked enrollment is disabled until the manifest-pinned Soulidity adapter is ready.',
+    );
+  }
+  if (!deployment.productionProofVerifierReady) {
+    throw new IntegrationUnavailableError(
+      'PROOF_VERIFIER_UNAVAILABLE',
+      'Ranked enrollment is disabled until every production proof verifier is ready.',
+    );
+  }
+  if (deployment.network !== 'mainnet') {
+    throw new IntegrationUnavailableError(
+      'DEPLOYMENT_UNAVAILABLE',
+      'A ranked production release requires an explicit mainnet deployment record.',
+    );
+  }
+  const objectPins = [
+    deployment.packageId,
+    deployment.manifestId,
+    deployment.runtimeId,
+    deployment.enrollmentRegistryId,
+    deployment.planetRegistryId,
+    deployment.randomObjectId,
+    deployment.clockObjectId,
+    deployment.soulidityCallablePackageId,
+    deployment.soulidityOriginalPackageId,
+  ];
+  if (objectPins.some((value) => !value || !CANONICAL_OBJECT_ID.test(value))) {
+    throw new IntegrationUnavailableError(
+      'DEPLOYMENT_UNAVAILABLE',
+      'The ranked release requires every game, registry, system, and Soulidity object pin.',
+    );
+  }
+  requireCircuitConfigPin(deployment.claimHomeCircuitConfig, 'claim_home');
+  requireCircuitConfigPin(deployment.moveCircuitConfig, 'move');
+  requireCircuitConfigPin(deployment.moveNewCircuitConfig, 'move_new');
+  const intent = requireProductionProofIntent(deployment);
+  const routing = deployment.seatRouting;
+  if (
+    !routing || !CANONICAL_OBJECT_ID.test(routing.keyTypeOriginPackageId) ||
+    !Number.isSafeInteger(routing.keyEncodingVersion) || routing.keyEncodingVersion !== 1 ||
+    !Number.isSafeInteger(routing.league) || routing.league < 0 || routing.league > 255 ||
+    routing.league !== intent.league
+  ) {
+    throw new IntegrationUnavailableError(
+      'DEPLOYMENT_UNAVAILABLE',
+      'The ranked release requires the exact v1 deterministic Seat-routing pin.',
+    );
+  }
+  requireProductionReleaseEvidence(deployment);
 }
 
 function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
@@ -319,31 +408,7 @@ export function buildEnrollmentTransaction(
   deployment: InfiniteStellarDeployment,
   input: EnrollmentTransactionInput,
 ): Transaction {
-  if (!deployment.productionSoulAdapterReady) {
-    throw new IntegrationUnavailableError(
-      'SOUL_ADAPTER_UNAVAILABLE',
-      'Ranked enrollment is disabled until the manifest-pinned Soulidity adapter is ready.',
-    );
-  }
-  if (
-    !deployment.packageId || !CANONICAL_OBJECT_ID.test(deployment.packageId) ||
-    !deployment.manifestId || !CANONICAL_OBJECT_ID.test(deployment.manifestId) ||
-    !deployment.enrollmentRegistryId || !CANONICAL_OBJECT_ID.test(deployment.enrollmentRegistryId) ||
-    !deployment.clockObjectId || !CANONICAL_OBJECT_ID.test(deployment.clockObjectId) ||
-    !deployment.soulidityCallablePackageId || !CANONICAL_OBJECT_ID.test(deployment.soulidityCallablePackageId) ||
-    !deployment.soulidityOriginalPackageId || !CANONICAL_OBJECT_ID.test(deployment.soulidityOriginalPackageId)
-  ) {
-    throw new IntegrationUnavailableError(
-      'DEPLOYMENT_UNAVAILABLE',
-      'Enrollment requires the game package, Manifest, EnrollmentRegistry, Clock, and both Soulidity package pins.',
-    );
-  }
-  if (deployment.network !== 'mainnet') {
-    throw new IntegrationUnavailableError(
-      'DEPLOYMENT_UNAVAILABLE',
-      'A production-ready Soul adapter may only be used with an explicit mainnet deployment record.',
-    );
-  }
+  assertRankedReleaseDeploymentReady(deployment);
   if (!(input.projectionCommitment instanceof Uint8Array) || input.projectionCommitment.length !== 32) {
     throw new IntegrationUnavailableError(
       'DEPLOYMENT_UNAVAILABLE',
@@ -352,17 +417,24 @@ export function buildEnrollmentTransaction(
   }
   const sender = requireCanonicalObjectId(input.sender, 'Sender address');
   const soulStateId = requireCanonicalObjectId(input.soulStateId, 'SoulState ID');
+  const packageId = requireCanonicalObjectId(deployment.packageId, 'Infinite Stellar package ID');
+  const manifestId = requireCanonicalObjectId(deployment.manifestId, 'Season Manifest ID');
+  const enrollmentRegistryId = requireCanonicalObjectId(
+    deployment.enrollmentRegistryId,
+    'EnrollmentRegistry ID',
+  );
+  const clockObjectId = requireCanonicalObjectId(deployment.clockObjectId, 'Clock ID');
 
   const transaction = new Transaction();
   transaction.setSender(sender);
   transaction.moveCall({
-    target: `${deployment.packageId}::soul_adapter::enroll`,
+    target: `${packageId}::soul_adapter::enroll`,
     arguments: [
-      transaction.object(deployment.manifestId),
-      transaction.object(deployment.enrollmentRegistryId),
+      transaction.object(manifestId),
+      transaction.object(enrollmentRegistryId),
       transaction.object(soulStateId),
       transaction.pure.vector('u8', Array.from(input.projectionCommitment)),
-      transaction.object(deployment.clockObjectId),
+      transaction.object(clockObjectId),
     ],
   });
   return transaction;
@@ -379,6 +451,7 @@ export function buildHomeClaimTransaction(
     );
   }
   requireObjectIds(deployment);
+  requireProductionReleaseEvidence(deployment);
   const config = requireCircuitConfigPin(deployment.claimHomeCircuitConfig, 'claim_home');
   const intentPin = requireProductionProofIntent(deployment);
   const registryId = requireCanonicalObjectId(deployment.planetRegistryId, 'PlanetRegistry ID');
@@ -444,6 +517,7 @@ export function buildMoveTransaction(
     );
   }
   requireObjectIds(deployment);
+  requireProductionReleaseEvidence(deployment);
   const config = requireCircuitConfigPin(deployment.moveCircuitConfig, 'move');
   const intentPin = requireProductionProofIntent(deployment);
   const clockId = requireCanonicalObjectId(deployment.clockObjectId, 'Clock ID');
@@ -518,6 +592,7 @@ export function buildMoveNewTransaction(
     );
   }
   requireObjectIds(deployment);
+  requireProductionReleaseEvidence(deployment);
   const config = requireCircuitConfigPin(deployment.moveNewCircuitConfig, 'move_new');
   const intentPin = requireProductionProofIntent(deployment);
   const registryId = requireCanonicalObjectId(deployment.planetRegistryId, 'PlanetRegistry ID');

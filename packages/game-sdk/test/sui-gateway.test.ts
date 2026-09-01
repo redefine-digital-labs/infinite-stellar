@@ -49,6 +49,7 @@ const PRODUCTION_DEPLOYMENT: InfiniteStellarDeployment = {
   runtimeId: id('12'),
   enrollmentRegistryId: id('13'),
   planetRegistryId: id('14'),
+  randomObjectId: id('08'),
   clockObjectId: id('06'),
   soulidityCallablePackageId: id('60'),
   soulidityOriginalPackageId: id('a4'),
@@ -60,6 +61,20 @@ const PRODUCTION_DEPLOYMENT: InfiniteStellarDeployment = {
     rulesetId: RULESET,
     league: 1,
     rulesGeometryCommitment: ROUND5_RULES_GEOMETRY_COMMITMENT.toString(),
+  },
+  seatRouting: {
+    keyTypeOriginPackageId: id('10'),
+    keyEncodingVersion: 1,
+    league: 1,
+  },
+  productionReleaseEvidence: {
+    schemaVersion: 1,
+    ceremonyTranscriptSha256: 'a1'.repeat(32),
+    circuitAuditSha256: 'a2'.repeat(32),
+    moveAuditSha256: 'a3'.repeat(32),
+    clientAuditSha256: 'a4'.repeat(32),
+    operationsApprovalSha256: 'a5'.repeat(32),
+    multisigPolicySha256: 'a6'.repeat(32),
   },
   productionSoulAdapterReady: true,
   productionProofVerifierReady: true,
@@ -163,6 +178,20 @@ describe('Sui gateway', () => {
     })).toThrowError(expect.objectContaining({
       code: 'DEPLOYMENT_UNAVAILABLE',
       message: expect.stringMatching(/32 bytes/),
+    }));
+  });
+
+  it('keeps enrollment closed without exact ceremony, audit, operations, and multisig evidence', () => {
+    expect(() => buildEnrollmentTransaction({
+      ...PRODUCTION_DEPLOYMENT,
+      productionReleaseEvidence: undefined,
+    }, {
+      soulStateId: id('15'),
+      sender: SENDER,
+      projectionCommitment: new Uint8Array(32),
+    })).toThrowError(expect.objectContaining({
+      code: 'DEPLOYMENT_UNAVAILABLE',
+      message: expect.stringMatching(/ceremony, audit, operations, and multisig evidence/i),
     }));
   });
 

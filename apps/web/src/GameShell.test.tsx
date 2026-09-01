@@ -1,7 +1,28 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { CanonicalSoul } from '@infinite-stellar/game-sdk';
 import { GameShell } from './GameShell';
+
+const id = (suffix: string) => `0x${suffix.padStart(64, '0')}`;
+const canonicalSoul: CanonicalSoul = {
+  soulId: id('11'),
+  stateId: id('12'),
+  name: 'Lyra Mainnet',
+  description: 'Canonical fixture',
+  imageUrl: '',
+  provenanceKind: 1,
+  originRef: null,
+  creator: id('13'),
+  currentOwner: id('14'),
+  currentKioskId: id('15'),
+  ownershipEpoch: 7n,
+  listed: false,
+  stateObjectVersion: '9',
+  stateObjectDigest: 'state-digest',
+  soulObjectVersion: '4',
+  soulObjectDigest: 'soul-digest',
+};
 
 describe('Infinite Stellar player shell', () => {
   it('runs the complete local First Light journey', async () => {
@@ -43,16 +64,38 @@ describe('Infinite Stellar player shell', () => {
     expect(screen.getAllByRole('button', { name: /level 0 regular, player/i })).toHaveLength(2);
   });
 
-  it('keeps the mainnet route visibly fail-closed while linking testnet canary evidence', async () => {
+  it('shows canonical mainnet identity evidence while keeping ranked writes fail-closed', async () => {
     const user = userEvent.setup();
-    render(<GameShell walletAddress="0xabc" network="mainnet" />);
+    render(<GameShell
+      walletAddress="0xabc"
+      network="mainnet"
+      rankedGateway={{
+        phase: 'loaded',
+        controller: '0xabc',
+        souls: [],
+        discoveryComplete: true,
+        scannedSoulEvents: 0,
+        blockers: [
+          'GAME_DEPLOYMENT_MISSING',
+          'SOUL_ADAPTER_CLOSED',
+          'PROOF_VERIFIER_CLOSED',
+          'RELEASE_EVIDENCE_MISSING',
+          'NO_ELIGIBLE_SOUL',
+        ],
+        writesReady: false,
+      }}
+    />);
     await user.click(screen.getByRole('button', { name: /check mainnet readiness/i }));
-    expect(screen.getByRole('heading', { name: /bridge to soulidity is not pinned/i })).toBeInTheDocument();
-    expect(screen.getByText(/testnet package deployed/i)).toBeInTheDocument();
-    expect(screen.getByText(/production soul adapter pending/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /mainnet season is not open/i })).toBeInTheDocument();
+    expect(screen.getByText(/canonical soulidity v1 package and abi pinned/i)).toBeInTheDocument();
+    expect(screen.getByText(/mainnet wallet connected/i)).toBeInTheDocument();
+    expect(screen.getByText(/0 eligible canonical souls found/i)).toBeInTheDocument();
+    expect(screen.getByText(/infinite stellar mainnet package not deployed/i)).toBeInTheDocument();
+    expect(screen.getByText(/ranked soul adapter activation pending/i)).toBeInTheDocument();
+    expect(screen.getByText(/ceremony, audits, operations, and multisig evidence pending/i)).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(/production soul adapter and proof verifier/i);
     expect(screen.getByText(/mainnet target · ranked writes fail-closed/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /inspect package/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /inspect sealed testnet package/i })).toHaveAttribute(
       'href',
       expect.stringContaining('0x1199adc93f61acd99d6d7889c82650b79c90e51ed3816c8c40d0544f9e2c9665'),
     );
@@ -65,6 +108,33 @@ describe('Infinite Stellar player shell', () => {
     await user.click(screen.getByRole('button', { name: /explore local demo/i }));
     expect(screen.getByText('LOCAL SIMULATION')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(/nothing here is submitted to sui/i);
+  });
+
+  it('only exposes ranked enrollment after every release gate is ready', async () => {
+    const user = userEvent.setup();
+    const enroll = vi.fn();
+    const { rerender } = render(<GameShell
+      walletAddress={canonicalSoul.currentOwner}
+      rankedGateway={{
+        phase: 'loaded', controller: canonicalSoul.currentOwner, souls: [canonicalSoul],
+        discoveryComplete: true, scannedSoulEvents: 1, blockers: ['GAME_DEPLOYMENT_MISSING'],
+        writesReady: false,
+      }}
+      onEnrollRanked={enroll}
+    />);
+    await user.click(screen.getByRole('button', { name: /check mainnet readiness/i }));
+    expect(screen.queryByRole('button', { name: /enroll this soul/i })).not.toBeInTheDocument();
+
+    rerender(<GameShell
+      walletAddress={canonicalSoul.currentOwner}
+      rankedGateway={{
+        phase: 'loaded', controller: canonicalSoul.currentOwner, souls: [canonicalSoul],
+        discoveryComplete: true, scannedSoulEvents: 1, blockers: [], writesReady: true,
+      }}
+      onEnrollRanked={enroll}
+    />);
+    await user.click(screen.getByRole('button', { name: /enroll this soul/i }));
+    expect(enroll).toHaveBeenCalledWith(canonicalSoul);
   });
 
   it('shows a recoverable transaction rejection state', async () => {

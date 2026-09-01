@@ -1,5 +1,27 @@
-import type { InfiniteStellarDeployment } from '@infinite-stellar/game-sdk';
+import type {
+  InfiniteStellarDeployment,
+  SoulidityMainnetPin,
+} from '@infinite-stellar/game-sdk';
 import deploymentRecord from '../../../ops/deployments/sui-testnet-v0.1.0.json';
+import soulidityRecord from '../../../config/soulidity-mainnet-v1.json';
+
+export const SOULIDITY_MAINNET_PIN: SoulidityMainnetPin = {
+  network: 'mainnet',
+  chainIdentifier: soulidityRecord.chainIdentifier,
+  callablePackageId: soulidityRecord.package.callablePackageId,
+  originalPackageId: soulidityRecord.package.originalPackageId,
+  soulStateType: soulidityRecord.package.soulStateType,
+  protocolVersion: Number(soulidityRecord.interface.protocolVersion),
+  stateVersion: Number(soulidityRecord.interface.stateVersion),
+};
+
+export const MAINNET_DEPLOYMENT: InfiniteStellarDeployment = {
+  network: 'mainnet',
+  soulidityCallablePackageId: SOULIDITY_MAINNET_PIN.callablePackageId,
+  soulidityOriginalPackageId: SOULIDITY_MAINNET_PIN.originalPackageId,
+  productionSoulAdapterReady: false,
+  productionProofVerifierReady: false,
+};
 
 export const TESTNET_DEPLOYMENT: InfiniteStellarDeployment = {
   network: 'testnet',

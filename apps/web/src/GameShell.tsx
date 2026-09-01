@@ -1,7 +1,11 @@
 import { useEffect, type ReactNode } from 'react';
 import type { InfiniteStellarDeployment } from '@infinite-stellar/game-sdk';
 import { usePlayerJourney } from './use-player-journey';
-import { TESTNET_DEPLOYMENT, TESTNET_DEPLOYMENT_EVIDENCE } from './deployment';
+import {
+  MAINNET_DEPLOYMENT,
+  TESTNET_DEPLOYMENT,
+  TESTNET_DEPLOYMENT_EVIDENCE,
+} from './deployment';
 import {
   BrandMark,
   Eyebrow,
@@ -13,19 +17,39 @@ import {
 } from './components';
 import { StrategyConsole } from './StrategyConsole';
 import { useProofReadiness } from './use-proof-readiness';
+import type { RankedGatewaySnapshot } from './use-ranked-gateway';
+import type { CanonicalSoul } from '@infinite-stellar/game-sdk';
+import type { RankedEnrollmentState } from './use-ranked-enrollment';
 
 export interface GameShellProps {
   walletAddress?: string;
   network?: string;
   walletControl?: ReactNode;
   deployment?: InfiniteStellarDeployment;
+  rankedGateway?: RankedGatewaySnapshot;
+  onRefreshRanked?: () => void;
+  rankedEnrollment?: RankedEnrollmentState;
+  onEnrollRanked?: (soul: CanonicalSoul) => void;
 }
+
+const DISCONNECTED_RANKED_GATEWAY: RankedGatewaySnapshot = {
+  phase: 'disconnected',
+  souls: [],
+  discoveryComplete: false,
+  scannedSoulEvents: 0,
+  blockers: [],
+  writesReady: false,
+};
 
 export function GameShell({
   walletAddress,
   network = 'mainnet',
   walletControl,
-  deployment = TESTNET_DEPLOYMENT,
+  deployment = MAINNET_DEPLOYMENT,
+  rankedGateway = DISCONNECTED_RANKED_GATEWAY,
+  onRefreshRanked,
+  rankedEnrollment = { status: 'idle' },
+  onEnrollRanked,
 }: GameShellProps) {
   const journey = usePlayerJourney(walletAddress);
   const { session } = journey;
@@ -121,29 +145,99 @@ export function GameShell({
           <section className="center-panel narrow-panel" aria-labelledby="unavailable-title">
             <StatusPill tone="warn">FAIL-CLOSED</StatusPill>
             <Eyebrow>SUI MAINNET PRODUCTION GATE</Eyebrow>
-            <h1 id="unavailable-title">The bridge to Soulidity is not pinned yet.</h1>
+            <h1 id="unavailable-title">
+              {rankedGateway.seat
+                ? 'Your Season Seat is visible, but writes remain sealed.'
+                : 'The mainnet season is not open yet.'}
+            </h1>
             <p>
-              The existing Move foundation and sealed interface canary remain inspectable on Sui
-              testnet. The client now targets mainnet, but ranked enrollment stays disabled until
-              the exact Soul package, audited verifier, production circuit, and setup are pinned.
+              The client reads canonical Soulidity v1 directly from Sui mainnet. Ranked signing
+              stays unreachable until the Infinite Stellar package, audited production keys,
+              operations approval, and multisig policy are all pinned together.
             </p>
             <div className="gate-list">
-              <span className="gate-ok">✓ Move foundation verified</span>
-              <span className="gate-ok">✓ Testnet package deployed</span>
-              <span className="gate-ok">✓ Sealed interface canary created</span>
-              <span className="gate-wait">○ Production Soul adapter pending</span>
-              <span className="gate-wait">○ {proofReadiness.label}</span>
+              <span className="gate-ok">✓ Canonical Soulidity v1 package and ABI pinned</span>
+              <span className={walletAddress ? 'gate-ok' : 'gate-wait'}>
+                {walletAddress ? '✓ Mainnet wallet connected' : '○ Connect a mainnet wallet to resolve Souls and Seat'}
+              </span>
+              {rankedGateway.phase === 'loading' && (
+                <span className="gate-wait">○ Reading deterministic Seat before Soul candidates…</span>
+              )}
+              {rankedGateway.phase === 'error' && (
+                <span className="gate-wait">○ Chain read failed: {rankedGateway.error}</span>
+              )}
+              {rankedGateway.phase === 'loaded' && rankedGateway.seat && (
+                <span className="gate-ok">
+                  ✓ Season Seat {rankedGateway.seat.seatId.slice(0, 10)}… verified from BCS
+                </span>
+              )}
+              {rankedGateway.phase === 'loaded' && !rankedGateway.seat && (
+                <span className={rankedGateway.discoveryComplete ? 'gate-ok' : 'gate-wait'}>
+                  {rankedGateway.discoveryComplete ? '✓' : '○'} {rankedGateway.souls.length} eligible
+                  {' '}canonical Soul{rankedGateway.souls.length === 1 ? '' : 's'} found for this address
+                </span>
+              )}
+              {rankedGateway.souls.map((soul) => (
+                <div className="gate-soul" key={soul.stateId}>
+                  <span className="gate-proof">
+                    {soul.name} · epoch {soul.ownershipEpoch.toString()} · state {soul.stateId.slice(0, 10)}…
+                  </span>
+                  {rankedGateway.writesReady && onEnrollRanked && (
+                    <button
+                      className="button button-secondary"
+                      type="button"
+                      disabled={rankedEnrollment.status === 'simulating'
+                        || rankedEnrollment.status === 'awaiting-signature'
+                        || rankedEnrollment.status === 'finalizing'}
+                      onClick={() => onEnrollRanked(soul)}
+                    >
+                      {rankedEnrollment.soulStateId === soul.stateId
+                        ? rankedEnrollment.status === 'simulating'
+                          ? 'Checking transaction…'
+                          : rankedEnrollment.status === 'awaiting-signature'
+                            ? 'Approve in wallet…'
+                            : rankedEnrollment.status === 'finalizing'
+                              ? 'Waiting for finality…'
+                              : 'Enroll this Soul'
+                        : 'Enroll this Soul'}
+                    </button>
+                  )}
+                </div>
+              ))}
+              {rankedEnrollment.status === 'error' && (
+                <span className="gate-wait">○ Enrollment failed: {rankedEnrollment.error}</span>
+              )}
+              {rankedEnrollment.status === 'finalized' && (
+                <span className="gate-ok">✓ Enrollment finalized: {rankedEnrollment.digest?.slice(0, 12)}…</span>
+              )}
+              <span className={deployment.packageId ? 'gate-ok' : 'gate-wait'}>
+                {deployment.packageId ? '✓ Infinite Stellar mainnet package pinned' : '○ Infinite Stellar mainnet package not deployed'}
+              </span>
+              <span className={deployment.productionSoulAdapterReady ? 'gate-ok' : 'gate-wait'}>
+                {deployment.productionSoulAdapterReady ? '✓ Ranked Soul adapter activated' : '○ Ranked Soul adapter activation pending'}
+              </span>
+              <span className={deployment.productionProofVerifierReady ? 'gate-ok' : 'gate-wait'}>
+                {deployment.productionProofVerifierReady ? '✓ Production proof verifiers activated' : `○ ${proofReadiness.label}`}
+              </span>
+              <span className={deployment.productionReleaseEvidence ? 'gate-ok' : 'gate-wait'}>
+                {deployment.productionReleaseEvidence
+                  ? '✓ Ceremony, audits, operations, and multisig evidence pinned'
+                  : '○ Ceremony, audits, operations, and multisig evidence pending'}
+              </span>
               <a
                 className="gate-proof"
                 href={TESTNET_DEPLOYMENT_EVIDENCE.packageExplorerUrl}
                 target="_blank"
                 rel="noreferrer"
               >
-                Inspect package {deployment.packageId?.slice(0, 10)}… on Sui Explorer ↗
+                Inspect sealed testnet package {TESTNET_DEPLOYMENT.packageId?.slice(0, 10)}… ↗
               </a>
             </div>
             <div className="hero-actions centered-actions">
               <button className="button button-primary" type="button" onClick={journey.enterDemo}>Run local demo</button>
+              {walletAddress && onRefreshRanked && (
+                <button className="button button-secondary" type="button" onClick={onRefreshRanked}>Refresh mainnet state</button>
+              )}
               <button className="button button-secondary" type="button" onClick={journey.restart}>Back</button>
             </div>
           </section>
