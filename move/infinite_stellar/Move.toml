@@ -2,5 +2,8 @@
 name = "infinite_stellar"
 edition = "2024.beta"
 
+[dependencies]
+soulidity = { git = "https://github.com/redefine-digital-labs/soulidity.git", subdir = "move/soulidity", rev = "a3a4a835e0298c3a4a0aba80943a05443770a9ef" }
+
 [addresses]
 infinite_stellar = "0x0"

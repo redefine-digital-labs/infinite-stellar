@@ -67,7 +67,7 @@ planet initialization always derive type from location byte `8`.
 | CAP-DF-001 | Capture zones | Zone schedule, geometry, invade/hold/capture, ownership transfer, and score match | Integrated under fixture proofs |
 | REV-DF-001 | Reveal | Proof-bound public coordinates, global deduplication, and three-hour cooldown match | Integrated under fixture proofs |
 | LIF-DF-001 | Round lifecycle | Pause, mint cutoff, round close, score finality, and settlement are one-way | Integrated under fixture proofs |
-| SOU-IS-001 | Soul commander | One Soul projection selects a fixed Season Seat without changing gameplay math | Integrated; production adapter blocked |
+| SOU-IS-001 | Soul commander | One Soul projection selects a fixed Season Seat without changing gameplay math | Canonical adapter integrated and undeployed; ranked release blocked by independent gates |
 | ZKP-IS-001 | Sui verifier | Config-bound BN254 Groth16 claim/move/move-new intents, proof-derived natural-Planet Perlin, and replay nonce; production stays fail-closed until audited ceremony activation | Development adapters integrated; production blocked |
 | UI-IS-001 | Player client | Discover, inspect, move, fight, upgrade, use artifacts, reveal, capture, score, and settle | Local rules sandbox integrated |
 

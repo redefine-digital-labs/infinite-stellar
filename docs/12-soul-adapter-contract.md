@@ -2,15 +2,17 @@
 
 ## Status and purpose
 
-This document defines the boundary that lets Infinite Stellar engineering begin
-before Soulidity freezes its final Soul representation. It describes the P0 Move
-implementation under `move/infinite_stellar`; it is not a claim that the
-production Soulidity integration is live.
+This document defines the canonical Soulidity boundary used by Infinite
+Stellar. The v1 source and Sui mainnet ABI are now pinned in the P0 Move
+implementation under `move/infinite_stellar`. The adapter is implemented but
+not deployed, and its readiness does not imply that proof-backed ranked play is
+ready.
 
 The implementation rule is:
 
-> The game core may trust a package-internal verified Soul binding. It may not
-> import, inspect, or guess a concrete unfinished Soul type.
+> The game core may trust only a package-internal verified Soul binding created
+> from the compile-time-pinned canonical `&SoulState`. It may not trust copied
+> owner, epoch, Soul ID, listing, or package facts supplied by a client.
 
 Sui Move does not provide a runtime interface or trait mechanism for swapping
 arbitrary package types. Infinite Stellar therefore uses a compile-time adapter
@@ -36,29 +38,35 @@ projection_commitment
 
 The binding has `drop` but not `store`. Its fields are private, and its
 constructor is `public(package)`. An external caller cannot manufacture or save
-one. The current `soul_adapter` exposes only its required interface version and
-`production_adapter_ready() == false`; fixture construction is compiled only in
-tests.
+one. `soul_adapter::enroll` receives the canonical shared `&SoulState`, reads
+all identity facts from Soulidity, creates the normalized binding, and consumes
+the enrollment claims in one transaction. Test fixture construction remains
+compiled only in tests.
 
-The current Soulidity worktree has conceptually matching reads for Soul ID,
-SoulState ID, current owner, ownership epoch, and listing state. Those reads are
-evidence that the seam is viable, not a frozen dependency declaration.
+The exact v1 record is [`config/soulidity-mainnet-v1.json`](../config/soulidity-mainnet-v1.json):
+
+- source `redefine-digital-labs/soulidity@a3a4a835e0298c3a4a0aba80943a05443770a9ef`;
+- callable package `0x60bf39455f90e2af94381f2434d2c013c4e38a12fd16873ac296a26660f92ecd`;
+- original/type-origin package `0xa43cc9a94caa904a97316d97c08804369ee8fbe3335d2ddae154022d7d6e5d5d`;
+- type `soulidity::soul::SoulState`, protocol/state version `1`.
+
+`npm run verify:soulidity-mainnet` verifies both package objects and every
+required function signature over Sui gRPC.
 
 ## Enrollment contract
 
-The future production adapter must receive the canonical Soul and SoulState
-objects accepted by the manifest-pinned Soulidity package and perform all of
-the following before constructing a binding:
+The canonical adapter performs the following before constructing a binding:
 
-1. Prove the Soul object and SoulState refer to each other.
-2. Prove the transaction sender is the canonical current owner.
-3. Read the current ownership epoch from canonical state.
-4. Reject a Soul in a listing or incompatible custody transition.
-5. Validate the accepted visual/provenance and display-license policy, or bind
-   the neutral fallback.
-6. Bind the exact package, interface version, object IDs, epoch, and projection
-   commitment.
-7. Call the package-internal enrollment core in the same transaction.
+1. Receive the canonical `SoulState`; its `soul_id` field is the canonical
+   Soul-to-State link.
+2. Read the SoulState ID, Soul ID, current owner, ownership epoch, and listing
+   state through the pinned Soulidity accessors.
+3. Require protocol and state version `1`.
+4. Bind the exact type-origin package, adapter version, object IDs, epoch, and
+   projection commitment.
+5. Call the package-internal enrollment core in the same transaction, which
+   derives the controller from `ctx.sender()`, checks owner equality, and
+   rejects listing or policy mismatch before consuming uniqueness or capacity.
 
 The core then atomically checks time and capacity, claims the deterministic
 controller-to-Seat address, consumes the Soul-season uniqueness claim, creates
@@ -99,20 +107,24 @@ The package currently implements:
   activation.
 - Post-close action and settlement guards that require global resolution first.
 
-The production Soul adapter and proof verifier remain deliberately closed. The
-test fixtures cannot be compiled into a publishable production entry point.
+The canonical Soul adapter is open in source and transaction-buildable. The
+production proof verifiers, reveal/capture proof paths, and other release gates
+remain deliberately closed. Test Soul fixtures cannot be compiled into a
+publishable production entry point.
 
 ## Compatibility gate
 
-The adapter may be marked production-ready only after all of these are fixed:
+The identity half of the adapter is production-shaped. A release still must
+freeze and test:
 
-- Soulidity package and type identities.
-- Canonical Soul-to-SoulState linkage.
-- Current-owner semantics under kiosk, listing, purchase, and transfer.
-- Ownership-epoch rotation semantics.
-- Listing/custody states that must block enrollment.
-- Animacraft output and display-license validation inputs.
-- Package upgrade and historical-read policy.
+- the exact reviewed Soulidity source/package record and compatibility policy;
+- supported purchase/transfer/listing transitions and ownership-epoch
+  rotation against live fixtures;
+- Commander Projection display-license validation or an explicit neutral-only
+  fallback policy;
+- package upgrade review and historical-read policy;
+- the exact mainnet Infinite Stellar package and Season Manifest that consume
+  this adapter.
 
 Required integration tests must cover the canonical happy path, mismatched
 Soul/State, spoofed owner, stale epoch, listed Soul, purchase in progress,
@@ -128,14 +140,16 @@ sui move build --warnings-are-errors
 sui move test
 ```
 
-The P0 suite currently covers deterministic and duplicate enrollment, owner and
-adapter spoofing, final-slot capacity contention, one-way opening, exact timing
+The P0 suite covers deterministic and duplicate enrollment, owner and adapter
+spoofing, final-slot capacity contention, one-way opening, exact timing
 boundaries, proof intent and Planet uniqueness, transfer detachment, capped
 availability, pauses, global cancellation, and active-first settlement guards.
+Mainnet compilation enforces the concrete external `SoulState` type, and a
+live ABI verifier catches package or signature drift.
 
 ## Explicit non-goals
 
-This seam does not define the final Soul data model. It does not provide a
-production ZK verifier, movement, combat, recovery, Last Light, receipts,
-Chronicle writes, client vault, indexer, deployment configuration, audit, or
-mainnet readiness. Those remain separate release gates.
+This seam does not provide a production ZK setup, chain-backed client, indexer,
+sponsor, deployment configuration, independent audit, or player-facing
+mainnet release. Those remain separate gates in
+[Mainnet Readiness](17-mainnet-readiness.md).

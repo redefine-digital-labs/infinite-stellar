@@ -9,7 +9,7 @@
 | Status | P0 engineering foundation plus player vertical slice / pre-production |
 | Target network | Sui testnet before any mainnet release |
 | Product authority | This document plus the accepted decision log |
-| Implementation status | Tested Move foundation, typed SDK, runnable local player vertical slice, and sealed Sui testnet interface canary; no production Soul/proof integration or live ranked flow |
+| Implementation status | Tested Move foundation, typed SDK, runnable local player vertical slice, sealed Sui testnet interface canary, and undeployed canonical Soulidity mainnet enrollment adapter; no production proof integration or live ranked flow |
 
 This PRD defines the first complete player product. [Onboarding and Narrative Flow](11-onboarding-and-narrative-flow.md) is normative for official-client routes, screens, copy boundaries, and interaction acceptance, but cannot override this PRD or an accepted decision. Detailed game constants belong in a versioned season rules specification; protocol and security details belong in the linked architecture documents.
 

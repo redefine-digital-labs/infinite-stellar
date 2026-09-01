@@ -36,7 +36,7 @@ the command log are independent windows rather than fixed columns.
 The English web client supports this complete implemented journey:
 
 1. Open Infinite Stellar and connect a Sui wallet on testnet if desired.
-2. Inspect the pinned testnet package and see that live ranked enrollment remains unavailable while production adapters are unpinned.
+2. Inspect the pinned testnet package and see that live ranked enrollment remains unavailable because the canary is sealed, even though the canonical mainnet Soul adapter now exists in undeployed source.
 3. Enter a clearly labeled local simulation with three deterministic demo Souls.
 4. Select a Soul and review the fixed-controller Season Seat consequences.
 5. Approve simulated enrollment and wait through a checkpoint-shaped finality state.
@@ -134,7 +134,7 @@ sui move lint
 - The local demo creates no wallet signature, Sui digest, Soul history, or public game record.
 - Demo transaction digests are deterministic fixtures and are never shown as explorer links.
 - Exact candidate coordinates, salt, and local strategy state are AES-GCM encrypted and authenticated under a non-extractable controller-scoped device key in IndexedDB. The current prototype does not resist same-origin XSS, a compromised browser extension/device, or loss of local storage; portable wrapping, export, restore, and recovery UX remain release gates.
-- Production enrollment throws `SOUL_ADAPTER_UNAVAILABLE` until the exact manifest-pinned Soulidity adapter is compatible.
+- Production enrollment throws `SOUL_ADAPTER_UNAVAILABLE` for deployment records that do not explicitly pin and enable the compatible canonical Soulidity adapter; a complete mainnet record can now construct the typed transaction.
 - Production home claiming throws `PROOF_VERIFIER_UNAVAILABLE` until the circuit and verifier are pinned.
 - Public keeper builders require complete package and object IDs; the client pins the sealed testnet canary while unconfigured deployments still throw `DEPLOYMENT_UNAVAILABLE`.
 - A Soul transfer never transfers the fixed Season Seat, Planet authority, or local controller-scoped vault.

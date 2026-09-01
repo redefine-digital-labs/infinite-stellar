@@ -4,13 +4,13 @@
 
 **Infinite Stellar is a Soul-centered, zero-knowledge, fully onchain seasonal strategy game built on Sui.**
 
-> **Status:** Experimental pre-production testnet canary plus a playable local Round 5 rules sandbox. The repository now contains Sui Move state machines, a mainnet-bound proof-intent interface, complete but unaudited development `claim_home`, `move`, and proof-derived `move_new` Groth16 relations, deterministic snarkjs-to-Sui Arkworks serialization, content-addressed Prover Worker preflight and local self-verification, and an English client for private discovery, exact Worker-based MiMC/Perlin frontier mining, an authenticated encrypted device vault, planet defaults, energy/silver, voyages/combat, upgrades, artifacts, five ships, junk/abandonment, reveal/capture, score, and Last Light settlement. Ranked Soul enrollment and proof-backed production writes remain unavailable and fail closed.
+> **Status:** Experimental pre-production testnet canary plus a playable local Round 5 rules sandbox. The canonical Soulidity mainnet `SoulState` ABI, typed ranked-enrollment adapter, live ABI verifier, and SDK enrollment transaction builder are now pinned in source, and the complete package passes a Sui mainnet publish dry-run. They are not deployed. The repository also contains complete but unaudited development `claim_home`, `move`, and proof-derived `move_new` Groth16 relations and the local gameplay loop. Proof-backed production writes, reveal/capture proofs, external Artifact custody, the chain-backed multiplayer client, and production services remain unavailable and fail closed.
 
 The name describes an endless succession of bounded stellar worlds, not one season that runs forever. A player's civilization disappears when its universe closes; the Soul remains as the persistent actor and carries only verifiable history, relationships, and expression into the next world.
 
 Infinite Stellar uses *stellar* in its astronomical sense and is built on Sui. “Stellar” is a trademark of the Stellar Development Foundation. All rights reserved. This is an independent project, not affiliated with, sponsored by, or endorsed by the Stellar Development Foundation.
 
-Prior written name consent has not been obtained. The public working name is legally unconfirmed and may require another rename. On 30 August 2026, the project owner authorized a narrow, unannounced technical canary using this existing GitHub repository, Sui testnet, and a default Vercel project URL. That authorization is not trademark clearance. Custom domains, internet or social accounts, app-store listings, campaigns, public events, commercial announcements, mainnet, and promoted releases remain blocked until counsel completes clearance and any required prior written consent is obtained. See the [decision log](docs/08-decisions.md).
+Prior written name consent has not been obtained. The public working name is legally unconfirmed and may require another rename. On 1 September 2026, the project owner expanded the earlier canary authorization to include GitHub updates and production-valid Sui mainnet engineering. That authorization is not trademark clearance and does not waive technical release gates. Custom domains, internet or social accounts, app-store listings, campaigns, public events, commercial announcements, and promoted public releases remain blocked until counsel completes clearance and any required prior written consent is obtained. See the [decision log](docs/08-decisions.md).
 
 ## Product thesis
 
@@ -54,7 +54,8 @@ These are integration boundaries, not claims that every integration is already s
 
 ## First public target
 
-The first public target is a web-first Sui testnet season:
+The release path uses private/testnet rehearsals before a web-first Sui mainnet
+season. The player target is:
 
 - 100–300 active players in one universe.
 - A seven-day season.
@@ -90,6 +91,7 @@ Mainnet is gated by circuit, contract, performance, privacy, indexer-rebuild, op
 | [Round 5 parity contract](docs/14-dark-forest-v06-parity.md) | Source-linked behavioral target, formulas, compatibility quirks, and acceptance vectors |
 | [Round 5 Sui architecture](docs/15-round5-sui-architecture.md) | Object topology, proof intents, concurrency, state machines, and release gates |
 | [Proof interface and artifact preflight](docs/16-proof-interface-and-artifact-preflight.md) | Exact BN254/Poseidon encoding, golden vector, manifest contract, Worker lifecycle, and mainnet gates |
+| [Mainnet readiness](docs/17-mainnet-readiness.md) | Canonical Soul evidence, successful publish simulation, exact blockers, and safe release order |
 | [`apps/web`](apps/web) | Responsive React player client with Sui wallet connection and a clearly labeled local strategy sandbox |
 | [`packages/game-sdk`](packages/game-sdk) | Typed journey, exact MiMC/Perlin vectors, Round 5 rules simulator, persistence, and fail-closed Sui gateway |
 | [`packages/prover`](packages/prover) | Cross-language proof intent, Arkworks-compatible Sui Groth16 bytes, content-addressed artifact loader, and Worker protocol |
@@ -108,7 +110,7 @@ npm ci
 npm run dev
 ```
 
-Open `http://127.0.0.1:4173`. The wallet client targets Sui mainnet while the readiness screen links the existing testnet canary evidence; all ranked writes remain disabled because the production Soul, circuit, setup, and verifier are not pinned. Choose **Explore local demo** to enter the full local loop: activate a Soul-bound commander, claim a valid founding location, and enter a full-viewport private star map. Desktop commands live in draggable, keyboard-movable windows with persisted safe positions and a minimize/reopen dock; mobile commands become one dock-selected bottom sheet. Drag empty map space or use the arrow keys to pan; use the wheel, camera buttons, `H`, and `0` to zoom, return Home, and fit resolved space. Voyage routes use aspect-ratio-safe SVG endpoints, so they remain attached to both Planet centers through pan and zoom. The map can mine deterministic square-spiral frontier batches in a cancellable browser Worker while the main interface stays responsive. From there, launch and settle energy/silver fleets, conquer and upgrade planets, operate artifacts and all five ships, route eligible artifacts through controlled Spacetime Rips, manage junk, reveal/capture, score, and finalize Last Light. Rip custody is simulated locally; a production wallet-owned Sui artifact wrapper remains fail-closed.
+Open `http://127.0.0.1:4173`. The wallet client targets Sui mainnet while the readiness screen links the existing testnet canary evidence; ranked writes remain disabled because no production package/Season or production circuit setup is pinned. The canonical Soul adapter and enrollment builder exist in source but are deliberately not exposed against the sealed canary. Choose **Explore local demo** to enter the full local loop: activate a Soul-bound commander, claim a valid founding location, and enter a full-viewport private star map. Desktop commands live in draggable, keyboard-movable windows with persisted safe positions and a minimize/reopen dock; mobile commands become one dock-selected bottom sheet. Drag empty map space or use the arrow keys to pan; use the wheel, camera buttons, `H`, and `0` to zoom, return Home, and fit resolved space. Voyage routes use aspect-ratio-safe SVG endpoints, so they remain attached to both Planet centers through pan and zoom. The map can mine deterministic square-spiral frontier batches in a cancellable browser Worker while the main interface stays responsive. From there, launch and settle energy/silver fleets, conquer and upgrade planets, operate artifacts and all five ships, route eligible artifacts through controlled Spacetime Rips, manage junk, reveal/capture, score, and finalize Last Light. Rip custody is simulated locally; a production wallet-owned Sui artifact wrapper remains fail-closed.
 
 The controller session is authenticated and encrypted with AES-GCM under a non-extractable device key stored beside ciphertext in IndexedDB. Valid legacy plaintext sessions migrate once and are removed from `localStorage`. This improves at-rest handling but is not an XSS boundary: a compromised same-origin script, browser extension, or device can still use the unlocked browser context. Portable key wrapping, user export/restore, recovery UX, and an independent client security review remain production release gates.
 
@@ -118,6 +120,8 @@ Run all TypeScript checks with:
 npm run validate:web
 npm run lint:docs
 npm run verify:deployment
+npm run verify:soulidity-mainnet
+npm run verify:move-mainnet-dry-run  # requires active Sui environment: mainnet
 ```
 
 The capability boundary and remaining work are documented in the [player vertical slice](docs/13-player-vertical-slice.md).
@@ -150,8 +154,8 @@ Implemented directories are shown above. The remaining entries are roadmap targe
 
 - **Phase:** Experimental testnet interface canary plus player-facing full-stack vertical slice
 - **Network:** Sui testnet package and sealed canary deployed; no mainnet deployment
-- **Implementation:** Round 5 gameplay state machines are implemented in Move; complete development claim/move/move-new relations constrain manifest-committed MiMC, rarity, radius, Perlin, home-band, distance, and action intent; each Season binds exact per-action circuit-config IDs and digests; real development Groth16 proofs create a Founding Planet, dispatch nonce-bound fleets, and atomically initialize a proof-derived natural Planet in Sui Move tests; production configs, Soul enrollment, and ranked writes remain fail-closed; the Prover Worker rejects unpinned artifacts; the SDK and responsive client provide a playable local compatibility sandbox backed by canonical universe and rules vectors
+- **Implementation:** Round 5 gameplay state machines are implemented in Move; canonical Soulidity mainnet enrollment is compile-time pinned and has a typed SDK builder but is undeployed; complete development claim/move/move-new relations constrain manifest-committed MiMC, rarity, radius, Perlin, home-band, distance, and action intent; each Season binds exact per-action circuit-config IDs and digests; real development Groth16 proofs create a Founding Planet, dispatch nonce-bound fleets, and atomically initialize a proof-derived natural Planet in Sui Move tests; production proof configs and ranked gameplay writes remain fail-closed; the Prover Worker rejects unpinned artifacts; the SDK and responsive client provide a playable local compatibility sandbox backed by canonical universe and rules vectors
 - **License:** [MIT](LICENSE)
-- **Next gate:** Freeze the Soulidity adapter ABI, independently audit the circuits/contracts/client, reproduce artifacts in a pinned build environment, complete the production Phase 2 ceremony and key pinning, soak real multiplayer writes, then publish a legally cleared mainnet season
+- **Next gate:** Complete the production proof ceremony and key pinning, all missing transaction/indexer/sponsor paths, independent circuit/contract/client audits, multi-wallet soak, operational controls, and release clearance before publishing a playable mainnet season. See [mainnet readiness](docs/17-mainnet-readiness.md).
 
 Dark Forest v0.6 is GPL-3.0 licensed. Infinite Stellar requires original fiction, art direction, writing, Move code, and circuits unless the team deliberately accepts the obligations of incorporating GPL-licensed material. See [research notes](docs/09-research-notes.md).

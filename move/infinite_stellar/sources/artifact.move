@@ -433,7 +433,7 @@ public fun activate(
     planet: &mut Planet,
     artifact: &mut Artifact,
     clock_obj: &Clock,
-    ctx: &TxContext,
+    ctx: &mut TxContext,
 ) {
     let now_ms = clock::timestamp_ms(clock_obj);
     assert!(artifact.artifact_type != TYPE_WORMHOLE, EInvalidActivation);
@@ -459,7 +459,7 @@ public fun activate_wormhole(
     endpoint: &mut Planet,
     artifact: &mut Artifact,
     clock_obj: &Clock,
-    ctx: &TxContext,
+    ctx: &mut TxContext,
 ) {
     let now_ms = clock::timestamp_ms(clock_obj);
     let season_id = season::season_id(manifest);
@@ -566,7 +566,7 @@ public fun deactivate(
     planet: &mut Planet,
     artifact: &mut Artifact,
     clock_obj: &Clock,
-    ctx: &TxContext,
+    ctx: &mut TxContext,
 ) {
     let now_ms = clock::timestamp_ms(clock_obj);
     season::assert_action_allowed_after_home_close(manifest, runtime, now_ms);
@@ -716,7 +716,7 @@ public fun withdraw(
     spacetime_rip: &mut Planet,
     artifact: &mut Artifact,
     clock_obj: &Clock,
-    ctx: &TxContext,
+    ctx: &mut TxContext,
 ) {
     let now_ms = clock::timestamp_ms(clock_obj);
     season::assert_action_allowed_after_home_close(manifest, runtime, now_ms);
@@ -747,7 +747,7 @@ public fun deposit(
     spacetime_rip: &mut Planet,
     artifact: &mut Artifact,
     clock_obj: &Clock,
-    ctx: &TxContext,
+    ctx: &mut TxContext,
 ) {
     let now_ms = clock::timestamp_ms(clock_obj);
     season::assert_action_allowed_after_home_close(manifest, runtime, now_ms);

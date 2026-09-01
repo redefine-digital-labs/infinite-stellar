@@ -128,9 +128,10 @@ fun deterministic_enrollment_creates_one_awaiting_home_seat() {
 }
 
 #[test]
-fun production_soul_adapter_is_fail_closed() {
-    assert!(!soul_adapter::production_adapter_ready());
+fun production_soul_adapter_is_compile_time_pinned() {
+    assert!(soul_adapter::production_adapter_ready());
     assert!(soul_adapter::required_interface_version() == 1);
+    assert!(soul_adapter::required_soulidity_protocol_version() == 1);
 }
 
 #[test, expected_failure(abort_code = 0, location = infinite_stellar::season)]

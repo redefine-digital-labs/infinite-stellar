@@ -76,7 +76,7 @@ Beacon finalization writes an onchain winner or no-winner result after its bound
 
 The public pre-production working name is **Infinite Stellar** and the repository slug is `infinite-stellar`. “Infinite” describes one Soul crossing an open-ended succession of finite seasonal worlds; it never describes an unbounded Run, queue, or season. “Stellar” is used in its astronomical sense. The product is built on Sui and is not affiliated with, sponsored by, or endorsed by the Stellar Development Foundation or the Stellar network.
 
-This decision records the user's working-name choice; it does not establish a legal right or represent written consent. The repository openly records that consent has not been obtained. D-023 permits one narrow technical canary on existing infrastructure; it does not permit a custom domain, internet or social account, app-store listing, external campaign, public event, commercial announcement, mainnet release, or promoted public launch before counsel completes clearance and any required prior written consent is obtained.
+This decision records the user's working-name choice; it does not establish a legal right or represent written consent. The repository openly records that consent has not been obtained. D-024 permits production-valid mainnet engineering but does not permit a custom domain, internet or social account, app-store listing, external campaign, public event, commercial announcement, or promoted public launch before counsel completes clearance and any required prior written consent is obtained.
 
 ### D-019 — Ecosystem layers remain separate
 
@@ -90,15 +90,27 @@ Planning documents and original implementation in this repository use the MIT Li
 
 Enrollment atomically creates every uniqueness claim, the fixed Season Seat, Commander Projection, attribution/score state, unused home state, and `CivilizationState(status = AwaitingHome)`, but no Planet. After the universe opens, one finalized `claim_home` creates the Seat-owned Founding Planet and changes the Civilization to `Active`. `AwaitingHome` cannot move, score, colonize, or use gameplay recovery. A nonzero manifest Clock-time observation delay rejects an immediate claim without pretending to force checkpoint separation. Permissionless capped ticks credit onchain-evidenced claimable time: at close, sufficient credit first records global `ClosedAvailable` and permits `HomeNotEstablished`, while insufficient evidence records global `CancelledUnavailable` and applies `HomeWindowUnavailable` cancellation/refund before any Seat can act or finalize further. `HomeSearchAvailableAt` anchors end-to-end activation because a public seed permits local work even during a pause; `HomeClaimAvailableAt` separately records the onchain submission gate. Neither uses Seat creation or client/indexer observation.
 
-### D-022 — The unfinished Soul ABI is isolated behind a closed adapter
+### D-022 — The canonical Soul ABI is isolated behind a compile-time adapter
 
-Season, Seat, Civilization, and Planet modules consume only a package-internal, non-storable verified Soul binding. A concrete Soulidity package/type dependency belongs in `soul_adapter`, not in game-core modules. The production adapter remains unavailable until canonical Soul/SoulState linkage, owner, epoch, listing/custody, visual-license, upgrade, and historical-read semantics are pinned and integration-tested. Each accepted adapter is compile-time code in a frozen engine release; it is not a runtime-pluggable or caller-selected interface. Pure fixed-controller Seat actions do not revalidate Soul ownership after enrollment, while every new Soul-attributed write does.
+Season, Seat, Civilization, and Planet modules consume only a package-internal, non-storable verified Soul binding. A concrete Soulidity package/type dependency belongs in `soul_adapter`, not in game-core modules. On 1 September 2026, canonical Soulidity v1 source, callable/original mainnet package identities, `SoulState`, owner, epoch, Soul/State IDs, and listing accessors were compile-time pinned and live-verified. Each accepted adapter is compile-time code in a frozen engine release; it is not runtime-pluggable or caller-selected. Pure fixed-controller Seat actions do not revalidate Soul ownership after enrollment, while every new Soul-attributed write does. Projection display rights, package-upgrade review, and historical presentation remain independent release policies rather than reasons to trust client-supplied identity facts.
 
 ### D-023 — Permit a limited unannounced infrastructure canary
 
 On 30 August 2026, the project owner explicitly authorized a production-grade technical deployment using the existing GitHub organization, existing Sui address on testnet only, and the existing Vercel team with a default Vercel URL. The deployment may publish the unaudited Move foundation, create a non-player interface canary, and host the clearly labeled local player simulation. Production Soul enrollment and proof claiming remain fail-closed.
 
 This is a narrow engineering exception to D-018's earlier blanket infrastructure block, not name clearance or a commercial/public-launch approval. It creates no permission for a custom domain, social account, app-store listing, campaign, public event, paid promotion, commercial announcement, mainnet deployment, or representation that Infinite Stellar is affiliated with the Stellar Development Foundation.
+
+### D-024 — Authorize mainnet engineering, but retain production gates
+
+On 1 September 2026, the project owner explicitly authorized GitHub updates,
+Sui mainnet engineering, and a production deployment using the existing
+infrastructure. This supersedes D-023's network restriction for technical work
+and valid onchain release transactions. It does not turn development proof
+keys into production keys, supply missing audits or signer approvals, establish
+name/asset rights, or permit the client to describe a sealed package as
+playable. A mainnet transaction executes only after every applicable release
+gate has evidence and the resulting Season can support its declared player
+journey.
 
 ## Working hypotheses
 

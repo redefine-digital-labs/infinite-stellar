@@ -274,9 +274,10 @@ The following are independent gates:
    sandbox.
 4. Development circuits, config-bound verification, and proof-consuming Move
    adapters — integrated and tested; production setup remains blocked.
-5. Production Soul adapter ABI.
+5. Canonical Soulidity mainnet adapter ABI — integrated, live-verified, and
+   publish-simulated; production deployment remains gated by the other items.
 6. External Move/circuit/client security review and testnet soak.
 
-Gates one through three may proceed before Soulidity finalizes its Soul ABI.
-Ranked enrollment and attributed production writes stay fail-closed until gate
-five. No gate authorizes mainnet deployment.
+The Soul ABI no longer blocks engineering. Ranked gameplay still stays
+fail-closed until the production proof, client, review, and operations gates
+pass. No individual gate authorizes a player-facing mainnet release.

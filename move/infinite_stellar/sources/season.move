@@ -33,6 +33,14 @@ public struct SeasonAdminCap has key, store {
     season_id: ID,
 }
 
+/// One immutable action-specific proof configuration. Grouping the three
+/// fields keeps `SeasonManifest` below Sui's protocol-level 32-field limit.
+public struct CircuitBinding has copy, drop, store {
+    config_id: ID,
+    config_digest: vector<u8>,
+    verifying_key_digest: vector<u8>,
+}
+
 /// Immutable authority for one ranked P0 season. Runtime facts live in the
 /// separate `SeasonRuntime` shared object.
 public struct SeasonManifest has key {
@@ -59,15 +67,9 @@ public struct SeasonManifest has key {
     home_perlin_max: u8,
     rules_geometry_commitment: u256,
     proof_network_field: u256,
-    claim_home_circuit_config_id: ID,
-    claim_home_circuit_config_digest: vector<u8>,
-    claim_home_verifying_key_digest: vector<u8>,
-    move_circuit_config_id: ID,
-    move_circuit_config_digest: vector<u8>,
-    move_verifying_key_digest: vector<u8>,
-    move_new_circuit_config_id: ID,
-    move_new_circuit_config_digest: vector<u8>,
-    move_new_verifying_key_digest: vector<u8>,
+    claim_home_circuit: CircuitBinding,
+    move_circuit: CircuitBinding,
+    move_new_circuit: CircuitBinding,
     enrollment_registry_id: ID,
     runtime_id: ID,
     planet_registry_id: ID,
@@ -239,15 +241,21 @@ public(package) fun new_season(
         home_perlin_max,
         rules_geometry_commitment: geometry_commitment,
         proof_network_field,
-        claim_home_circuit_config_id,
-        claim_home_circuit_config_digest,
-        claim_home_verifying_key_digest,
-        move_circuit_config_id,
-        move_circuit_config_digest,
-        move_verifying_key_digest,
-        move_new_circuit_config_id,
-        move_new_circuit_config_digest,
-        move_new_verifying_key_digest,
+        claim_home_circuit: CircuitBinding {
+            config_id: claim_home_circuit_config_id,
+            config_digest: claim_home_circuit_config_digest,
+            verifying_key_digest: claim_home_verifying_key_digest,
+        },
+        move_circuit: CircuitBinding {
+            config_id: move_circuit_config_id,
+            config_digest: move_circuit_config_digest,
+            verifying_key_digest: move_verifying_key_digest,
+        },
+        move_new_circuit: CircuitBinding {
+            config_id: move_new_circuit_config_id,
+            config_digest: move_new_circuit_config_digest,
+            verifying_key_digest: move_new_verifying_key_digest,
+        },
         enrollment_registry_id: @0x0.to_id(),
         runtime_id: runtime_uid.to_inner(),
         planet_registry_id: @0x0.to_id(),
@@ -301,15 +309,15 @@ public(package) fun emit_season_created(
         world_radius: manifest.world_radius,
         rules_geometry_commitment: manifest.rules_geometry_commitment,
         proof_network_field: manifest.proof_network_field,
-        claim_home_circuit_config_id: manifest.claim_home_circuit_config_id,
-        claim_home_circuit_config_digest: manifest.claim_home_circuit_config_digest,
-        claim_home_verifying_key_digest: manifest.claim_home_verifying_key_digest,
-        move_circuit_config_id: manifest.move_circuit_config_id,
-        move_circuit_config_digest: manifest.move_circuit_config_digest,
-        move_verifying_key_digest: manifest.move_verifying_key_digest,
-        move_new_circuit_config_id: manifest.move_new_circuit_config_id,
-        move_new_circuit_config_digest: manifest.move_new_circuit_config_digest,
-        move_new_verifying_key_digest: manifest.move_new_verifying_key_digest,
+        claim_home_circuit_config_id: manifest.claim_home_circuit.config_id,
+        claim_home_circuit_config_digest: manifest.claim_home_circuit.config_digest,
+        claim_home_verifying_key_digest: manifest.claim_home_circuit.verifying_key_digest,
+        move_circuit_config_id: manifest.move_circuit.config_id,
+        move_circuit_config_digest: manifest.move_circuit.config_digest,
+        move_verifying_key_digest: manifest.move_circuit.verifying_key_digest,
+        move_new_circuit_config_id: manifest.move_new_circuit.config_id,
+        move_new_circuit_config_digest: manifest.move_new_circuit.config_digest,
+        move_new_verifying_key_digest: manifest.move_new_circuit.verifying_key_digest,
     });
 }
 
@@ -551,31 +559,31 @@ public fun home_perlin_max(self: &SeasonManifest): u8 { self.home_perlin_max }
 public fun rules_geometry_commitment(self: &SeasonManifest): u256 { self.rules_geometry_commitment }
 public fun proof_network_field(self: &SeasonManifest): u256 { self.proof_network_field }
 public fun claim_home_circuit_config_id(self: &SeasonManifest): ID {
-    self.claim_home_circuit_config_id
+    self.claim_home_circuit.config_id
 }
 public fun claim_home_circuit_config_digest(self: &SeasonManifest): &vector<u8> {
-    &self.claim_home_circuit_config_digest
+    &self.claim_home_circuit.config_digest
 }
 public fun claim_home_verifying_key_digest(self: &SeasonManifest): &vector<u8> {
-    &self.claim_home_verifying_key_digest
+    &self.claim_home_circuit.verifying_key_digest
 }
 public fun move_circuit_config_id(self: &SeasonManifest): ID {
-    self.move_circuit_config_id
+    self.move_circuit.config_id
 }
 public fun move_circuit_config_digest(self: &SeasonManifest): &vector<u8> {
-    &self.move_circuit_config_digest
+    &self.move_circuit.config_digest
 }
 public fun move_verifying_key_digest(self: &SeasonManifest): &vector<u8> {
-    &self.move_verifying_key_digest
+    &self.move_circuit.verifying_key_digest
 }
 public fun move_new_circuit_config_id(self: &SeasonManifest): ID {
-    self.move_new_circuit_config_id
+    self.move_new_circuit.config_id
 }
 public fun move_new_circuit_config_digest(self: &SeasonManifest): &vector<u8> {
-    &self.move_new_circuit_config_digest
+    &self.move_new_circuit.config_digest
 }
 public fun move_new_verifying_key_digest(self: &SeasonManifest): &vector<u8> {
-    &self.move_new_verifying_key_digest
+    &self.move_new_circuit.verifying_key_digest
 }
 public fun enrollment_registry_id(self: &SeasonManifest): ID { self.enrollment_registry_id }
 public fun planet_registry_id(self: &SeasonManifest): ID { self.planet_registry_id }
@@ -648,8 +656,8 @@ public fun bind_circuit_configs_for_testing(
     move_circuit_config_digest: vector<u8>,
     move_verifying_key_digest: vector<u8>,
 ) {
-    assert!(manifest.claim_home_circuit_config_id == @0x0.to_id(), EInvalidManifest);
-    assert!(manifest.move_circuit_config_id == @0x0.to_id(), EInvalidManifest);
+    assert!(manifest.claim_home_circuit.config_id == @0x0.to_id(), EInvalidManifest);
+    assert!(manifest.move_circuit.config_id == @0x0.to_id(), EInvalidManifest);
     assert!(claim_home_circuit_config_id != @0x0.to_id(), EInvalidManifest);
     assert!(move_circuit_config_id != @0x0.to_id(), EInvalidManifest);
     assert!(claim_home_circuit_config_id != move_circuit_config_id, EInvalidManifest);
@@ -657,12 +665,12 @@ public fun bind_circuit_configs_for_testing(
     assert!(claim_home_verifying_key_digest.length() == 32, EInvalidManifest);
     assert!(move_circuit_config_digest.length() == 32, EInvalidManifest);
     assert!(move_verifying_key_digest.length() == 32, EInvalidManifest);
-    manifest.claim_home_circuit_config_id = claim_home_circuit_config_id;
-    manifest.claim_home_circuit_config_digest = claim_home_circuit_config_digest;
-    manifest.claim_home_verifying_key_digest = claim_home_verifying_key_digest;
-    manifest.move_circuit_config_id = move_circuit_config_id;
-    manifest.move_circuit_config_digest = move_circuit_config_digest;
-    manifest.move_verifying_key_digest = move_verifying_key_digest;
+    manifest.claim_home_circuit.config_id = claim_home_circuit_config_id;
+    manifest.claim_home_circuit.config_digest = claim_home_circuit_config_digest;
+    manifest.claim_home_circuit.verifying_key_digest = claim_home_verifying_key_digest;
+    manifest.move_circuit.config_id = move_circuit_config_id;
+    manifest.move_circuit.config_digest = move_circuit_config_digest;
+    manifest.move_circuit.verifying_key_digest = move_verifying_key_digest;
 }
 
 #[test_only]
@@ -672,17 +680,17 @@ public fun bind_move_new_config_for_testing(
     move_new_circuit_config_digest: vector<u8>,
     move_new_verifying_key_digest: vector<u8>,
 ) {
-    assert!(manifest.claim_home_circuit_config_id != @0x0.to_id(), EInvalidManifest);
-    assert!(manifest.move_circuit_config_id != @0x0.to_id(), EInvalidManifest);
-    assert!(manifest.move_new_circuit_config_id == @0x0.to_id(), EInvalidManifest);
+    assert!(manifest.claim_home_circuit.config_id != @0x0.to_id(), EInvalidManifest);
+    assert!(manifest.move_circuit.config_id != @0x0.to_id(), EInvalidManifest);
+    assert!(manifest.move_new_circuit.config_id == @0x0.to_id(), EInvalidManifest);
     assert!(move_new_circuit_config_id != @0x0.to_id(), EInvalidManifest);
-    assert!(move_new_circuit_config_id != manifest.claim_home_circuit_config_id, EInvalidManifest);
-    assert!(move_new_circuit_config_id != manifest.move_circuit_config_id, EInvalidManifest);
+    assert!(move_new_circuit_config_id != manifest.claim_home_circuit.config_id, EInvalidManifest);
+    assert!(move_new_circuit_config_id != manifest.move_circuit.config_id, EInvalidManifest);
     assert!(move_new_circuit_config_digest.length() == 32, EInvalidManifest);
     assert!(move_new_verifying_key_digest.length() == 32, EInvalidManifest);
-    manifest.move_new_circuit_config_id = move_new_circuit_config_id;
-    manifest.move_new_circuit_config_digest = move_new_circuit_config_digest;
-    manifest.move_new_verifying_key_digest = move_new_verifying_key_digest;
+    manifest.move_new_circuit.config_id = move_new_circuit_config_id;
+    manifest.move_new_circuit.config_digest = move_new_circuit_config_digest;
+    manifest.move_new_circuit.verifying_key_digest = move_new_verifying_key_digest;
 }
 
 #[test_only]
@@ -788,7 +796,7 @@ public fun destroy_for_testing(
     runtime: SeasonRuntime,
     admin_cap: SeasonAdminCap,
 ) {
-    let SeasonManifest { id, version: _, league: _, enrollment_close_at_ms: _, universe_open_at_ms: _, home_claim_open_at_ms: _, home_claim_close_at_ms: _, season_end_at_ms: _, seed_observation_delay_ms: _, minimum_home_claim_window_ms: _, max_home_availability_tick_gap_ms: _, max_ranked_seats: _, world_radius: _, planet_hash_threshold: _, location_hash_key: _, space_type_key: _, perlin_scale: _, perlin_mirror_x: _, perlin_mirror_y: _, home_perlin_min: _, home_perlin_max: _, rules_geometry_commitment: _, proof_network_field: _, claim_home_circuit_config_id: _, claim_home_circuit_config_digest: _, claim_home_verifying_key_digest: _, move_circuit_config_id: _, move_circuit_config_digest: _, move_verifying_key_digest: _, move_new_circuit_config_id: _, move_new_circuit_config_digest: _, move_new_verifying_key_digest: _, enrollment_registry_id: _, runtime_id: _, planet_registry_id: _ } = manifest;
+    let SeasonManifest { id, version: _, league: _, enrollment_close_at_ms: _, universe_open_at_ms: _, home_claim_open_at_ms: _, home_claim_close_at_ms: _, season_end_at_ms: _, seed_observation_delay_ms: _, minimum_home_claim_window_ms: _, max_home_availability_tick_gap_ms: _, max_ranked_seats: _, world_radius: _, planet_hash_threshold: _, location_hash_key: _, space_type_key: _, perlin_scale: _, perlin_mirror_x: _, perlin_mirror_y: _, home_perlin_min: _, home_perlin_max: _, rules_geometry_commitment: _, proof_network_field: _, claim_home_circuit: _, move_circuit: _, move_new_circuit: _, enrollment_registry_id: _, runtime_id: _, planet_registry_id: _ } = manifest;
     object::delete(id);
     let SeasonRuntime { id, season_id: _, universe_opened: _, universe_opened_at_ms: _, universe_seed: _, home_claim_not_before_at_ms: _, paused: _, home_availability_last_tick_at_ms: _, accumulated_home_claimable_ms: _, home_window_resolution: _, cancelled: _, settlement_started: _ } = runtime;
     object::delete(id);

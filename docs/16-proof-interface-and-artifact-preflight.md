@@ -237,7 +237,8 @@ bytes match the selected hashes”; it does not mean the circuit or setup is saf
 
 Mainnet ranked writes remain disabled until all of the following are evidenced:
 
-- the Soulidity adapter ABI and accepted package are final;
+- the exact live-verified Soulidity adapter ABI and accepted package remain
+  pinned to the reviewed source and deployment record;
 - circuit source and build image are reproducible and independently audited;
 - Phase 2 ceremony, transcript, contribution verification, and final hashes are
   public and checked;

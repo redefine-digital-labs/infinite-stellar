@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "network": "mainnet",
+  "grpcUrl": "https://fullnode.mainnet.sui.io:443",
+  "chainIdentifier": "4btiuiMPvEENsttpZC7CZ53DruC3MAgfznDbASZ7DR6S",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/soulidity",
+    "commit": "a3a4a835e0298c3a4a0aba80943a05443770a9ef",
+    "subdirectory": "move/soulidity",
+    "moveManifestDigest": "61C1E08DA4F36430E16AB146DBBF4972DC0009F15B324F24E88C2A3147E398CB",
+    "soulModuleBlob": "55158bf024710b549b5e5f0e22d303017e8098b9"
+  },
+  "package": {
+    "callablePackageId": "0x60bf39455f90e2af94381f2434d2c013c4e38a12fd16873ac296a26660f92ecd",
+    "originalPackageId": "0xa43cc9a94caa904a97316d97c08804369ee8fbe3335d2ddae154022d7d6e5d5d",
+    "callableVersion": "2",
+    "callableDigest": "9Dc2DPnjknLHMzE5gtdBBXy1LHi4QRbpKDkFUib2sPt",
+    "callableTransaction": "4YP6XzdtMSYNZGuSfm5iK2Bg3yC3HXJx3oTfnbCbJb6q",
+    "originalVersion": "1",
+    "originalDigest": "HSs3Pez8VhqripsDHX4xnQUgWJcXHm6Fb2c2Lm9VpGem",
+    "originalTransaction": "FdYdVA5nJsGv4PQqYbnwhwnWwogUybT9gZ9uhraCxFvs",
+    "soulStateType": "0xa43cc9a94caa904a97316d97c08804369ee8fbe3335d2ddae154022d7d6e5d5d::soul::SoulState"
+  },
+  "interface": {
+    "protocolVersion": "1",
+    "stateVersion": "1",
+    "module": "soul",
+    "functions": {
+      "protocol_version": { "parameters": [], "returns": ["u64"] },
+      "state_version": { "parameters": ["&SoulState"], "returns": ["u64"] },
+      "state_id": { "parameters": ["&SoulState"], "returns": ["ID"] },
+      "soul_id": { "parameters": ["&SoulState"], "returns": ["ID"] },
+      "current_owner": { "parameters": ["&SoulState"], "returns": ["address"] },
+      "ownership_epoch": { "parameters": ["&SoulState"], "returns": ["u64"] },
+      "is_listed": { "parameters": ["&SoulState"], "returns": ["bool"] }
+    }
+  }
+}

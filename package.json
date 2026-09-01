@@ -20,6 +20,8 @@
     "lint:docs": "markdownlint-cli2 README.md CONTRIBUTING.md SECURITY.md 'docs/**/*.md' 'apps/**/*.md' 'packages/**/*.md' 'ops/**/*.md' move/infinite_stellar/README.md",
     "validate:web": "npm run typecheck && npm run lint && npm run test && npm run build",
     "verify:deployment": "node ops/verify-sui-deployment.mjs",
+    "verify:soulidity-mainnet": "node ops/verify-soulidity-mainnet.mjs",
+    "verify:move-mainnet-dry-run": "node ops/verify-move-mainnet-dry-run.mjs",
     "circuits:fixtures": "node --experimental-strip-types circuits/scripts/create-fixtures.mjs",
     "circuits:build:dev": "node circuits/scripts/build-development-artifacts.mjs",
     "circuits:test:dev": "node circuits/scripts/test-development-proofs.mjs",

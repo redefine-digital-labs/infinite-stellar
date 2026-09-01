@@ -10,7 +10,8 @@ Rules:
   Add a new versioned file and update `latest.json` deliberately.
 - Never store private keys, mnemonics, capability contents, private map data, or
   Vercel/GitHub credentials here.
-- Keep production Soul and proof readiness false until their exact integration
+- Keep the sealed canary's Soul and proof readiness false; any later deployment
+  record must prove its exact adapter and verifier integration
   suites and release gates pass.
 - Verify every ID against the named Sui network and transaction before merging.
 - A testnet deployment is not a mainnet release or an audit claim.

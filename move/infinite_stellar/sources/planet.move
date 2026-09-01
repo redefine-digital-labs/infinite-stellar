@@ -70,6 +70,36 @@ public struct VerifiedPlanetProof has drop {
     space_perlin: u64,
 }
 
+public struct PlanetDefaults has copy, drop, store {
+    energy: u64,
+    space_junk: u64,
+}
+
+public struct UpgradeLevels has copy, drop, store {
+    defense: u8,
+    range: u8,
+    speed: u8,
+}
+
+public struct PlanetArtifactState has drop, store {
+    ids: vector<ID>,
+    active_id: Option<ID>,
+    prospected_checkpoint: Option<u64>,
+    found: bool,
+}
+
+public struct PlanetCaptureState has copy, drop, store {
+    invader_seat_id: Option<ID>,
+    invade_start_checkpoint: u64,
+    capturer_seat_id: Option<ID>,
+}
+
+public struct PlanetRevealState has copy, drop, store {
+    x: Option<vector<u8>>,
+    y: Option<vector<u8>>,
+    revealer_seat_id: Option<ID>,
+}
+
 public struct Planet has key {
     id: UID,
     season_id: ID,
@@ -93,25 +123,15 @@ public struct Planet has key {
     silver_capacity: u64,
     silver_growth: u64,
     space_junk: u64,
-    default_energy: u64,
-    default_space_junk: u64,
+    defaults: PlanetDefaults,
     last_updated_at_seconds: u64,
     destroyed: bool,
     pausers: u64,
-    upgrade_defense: u8,
-    upgrade_range: u8,
-    upgrade_speed: u8,
+    upgrades: UpgradeLevels,
     pending_voyages: vector<PendingVoyage>,
-    artifact_ids: vector<ID>,
-    active_artifact_id: Option<ID>,
-    prospected_checkpoint: Option<u64>,
-    artifact_found: bool,
-    invader_seat_id: Option<ID>,
-    invade_start_checkpoint: u64,
-    capturer_seat_id: Option<ID>,
-    revealed_x: Option<vector<u8>>,
-    revealed_y: Option<vector<u8>>,
-    revealer_seat_id: Option<ID>,
+    artifacts: PlanetArtifactState,
+    capture: PlanetCaptureState,
+    reveal: PlanetRevealState,
 }
 
 public struct FoundingPlanetClaimed has copy, drop {
@@ -259,25 +279,31 @@ public(package) fun claim_home_verified(
         silver_capacity: rules::stats_silver_capacity(&stats),
         silver_growth: rules::stats_silver_growth(&stats),
         space_junk: rules::stats_space_junk(&stats),
-        default_energy: rules::stats_energy(&stats),
-        default_space_junk: rules::stats_space_junk(&stats),
+        defaults: PlanetDefaults {
+            energy: rules::stats_energy(&stats),
+            space_junk: rules::stats_space_junk(&stats),
+        },
         last_updated_at_seconds: now_ms / 1000,
         destroyed: false,
         pausers: 0,
-        upgrade_defense: 0,
-        upgrade_range: 0,
-        upgrade_speed: 0,
+        upgrades: UpgradeLevels { defense: 0, range: 0, speed: 0 },
         pending_voyages: vector[],
-        artifact_ids: vector[],
-        active_artifact_id: option::none(),
-        prospected_checkpoint: option::none(),
-        artifact_found: false,
-        invader_seat_id: option::none(),
-        invade_start_checkpoint: 0,
-        capturer_seat_id: option::none(),
-        revealed_x: option::none(),
-        revealed_y: option::none(),
-        revealer_seat_id: option::none(),
+        artifacts: PlanetArtifactState {
+            ids: vector[],
+            active_id: option::none(),
+            prospected_checkpoint: option::none(),
+            found: false,
+        },
+        capture: PlanetCaptureState {
+            invader_seat_id: option::none(),
+            invade_start_checkpoint: 0,
+            capturer_seat_id: option::none(),
+        },
+        reveal: PlanetRevealState {
+            x: option::none(),
+            y: option::none(),
+            revealer_seat_id: option::none(),
+        },
     };
     event::emit(FoundingPlanetClaimed { season_id, seat_id, planet_id });
     planet
@@ -338,25 +364,31 @@ public(package) fun initialize_planet_verified(
         silver_capacity: rules::stats_silver_capacity(&stats),
         silver_growth: rules::stats_silver_growth(&stats),
         space_junk: rules::stats_space_junk(&stats),
-        default_energy: rules::stats_energy(&stats),
-        default_space_junk: rules::stats_space_junk(&stats),
+        defaults: PlanetDefaults {
+            energy: rules::stats_energy(&stats),
+            space_junk: rules::stats_space_junk(&stats),
+        },
         last_updated_at_seconds: now_ms / 1000,
         destroyed: false,
         pausers: 0,
-        upgrade_defense: 0,
-        upgrade_range: 0,
-        upgrade_speed: 0,
+        upgrades: UpgradeLevels { defense: 0, range: 0, speed: 0 },
         pending_voyages: vector[],
-        artifact_ids: vector[],
-        active_artifact_id: option::none(),
-        prospected_checkpoint: option::none(),
-        artifact_found: false,
-        invader_seat_id: option::none(),
-        invade_start_checkpoint: 0,
-        capturer_seat_id: option::none(),
-        revealed_x: option::none(),
-        revealed_y: option::none(),
-        revealer_seat_id: option::none(),
+        artifacts: PlanetArtifactState {
+            ids: vector[],
+            active_id: option::none(),
+            prospected_checkpoint: option::none(),
+            found: false,
+        },
+        capture: PlanetCaptureState {
+            invader_seat_id: option::none(),
+            invade_start_checkpoint: 0,
+            capturer_seat_id: option::none(),
+        },
+        reveal: PlanetRevealState {
+            x: option::none(),
+            y: option::none(),
+            revealer_seat_id: option::none(),
+        },
     };
     event::emit(NeutralPlanetInitialized {
         season_id,
@@ -412,21 +444,21 @@ public fun silver(self: &Planet): u64 { self.silver }
 public fun silver_capacity(self: &Planet): u64 { self.silver_capacity }
 public fun silver_growth(self: &Planet): u64 { self.silver_growth }
 public fun space_junk(self: &Planet): u64 { self.space_junk }
-public fun default_energy(self: &Planet): u64 { self.default_energy }
-public fun default_space_junk(self: &Planet): u64 { self.default_space_junk }
+public fun default_energy(self: &Planet): u64 { self.defaults.energy }
+public fun default_space_junk(self: &Planet): u64 { self.defaults.space_junk }
 public fun pending_voyage_count(self: &Planet): u64 { self.pending_voyages.length() }
 public fun is_neutral(self: &Planet): bool { self.owner_seat_id == @0x0.to_id() }
-public fun upgrade_defense(self: &Planet): u8 { self.upgrade_defense }
-public fun upgrade_range(self: &Planet): u8 { self.upgrade_range }
-public fun upgrade_speed(self: &Planet): u8 { self.upgrade_speed }
-public fun artifact_count(self: &Planet): u64 { self.artifact_ids.length() }
-public fun has_active_artifact(self: &Planet): bool { self.active_artifact_id.is_some() }
-public fun active_artifact_id(self: &Planet): &Option<ID> { &self.active_artifact_id }
-public fun prospected_checkpoint(self: &Planet): &Option<u64> { &self.prospected_checkpoint }
-public fun artifact_found(self: &Planet): bool { self.artifact_found }
-public fun has_invader(self: &Planet): bool { self.invader_seat_id.is_some() }
-public fun is_captured(self: &Planet): bool { self.capturer_seat_id.is_some() }
-public fun is_revealed(self: &Planet): bool { self.revealed_x.is_some() }
+public fun upgrade_defense(self: &Planet): u8 { self.upgrades.defense }
+public fun upgrade_range(self: &Planet): u8 { self.upgrades.range }
+public fun upgrade_speed(self: &Planet): u8 { self.upgrades.speed }
+public fun artifact_count(self: &Planet): u64 { self.artifacts.ids.length() }
+public fun has_active_artifact(self: &Planet): bool { self.artifacts.active_id.is_some() }
+public fun active_artifact_id(self: &Planet): &Option<ID> { &self.artifacts.active_id }
+public fun prospected_checkpoint(self: &Planet): &Option<u64> { &self.artifacts.prospected_checkpoint }
+public fun artifact_found(self: &Planet): bool { self.artifacts.found }
+public fun has_invader(self: &Planet): bool { self.capture.invader_seat_id.is_some() }
+public fun is_captured(self: &Planet): bool { self.capture.capturer_seat_id.is_some() }
+public fun is_revealed(self: &Planet): bool { self.reveal.x.is_some() }
 
 public(package) fun assert_planet_season(planet: &Planet, season_id: ID) {
     assert!(planet.season_id == season_id, ESeasonMismatch);
@@ -514,17 +546,17 @@ public(package) fun abandon_for_voyage(
     let sent_energy = planet.energy;
     let sent_silver = planet.silver;
     planet.owner_seat_id = @0x0.to_id();
-    planet.energy = if (planet.default_energy > 0xffffffffffffffff / 2) {
+    planet.energy = if (planet.defaults.energy > 0xffffffffffffffff / 2) {
         0xffffffffffffffff
     } else {
-        planet.default_energy * 2
+        planet.defaults.energy * 2
     };
     planet.silver = 0;
-    planet.space_junk = planet.default_space_junk;
+    planet.space_junk = planet.defaults.space_junk;
     identity::return_space_junk_flooring_zero(
         seat,
         civilization,
-        planet.default_space_junk,
+        planet.defaults.space_junk,
     );
     identity::decrement_controlled_planets(seat, civilization);
     (sent_energy, sent_silver)
@@ -539,7 +571,7 @@ public fun upgrade(
     planet: &mut Planet,
     branch: u8,
     clock_obj: &Clock,
-    ctx: &TxContext,
+    ctx: &mut TxContext,
 ) {
     upgrade_at(
         manifest,
@@ -573,14 +605,14 @@ public(package) fun upgrade_at(
     assert!(planet.planet_type == rules::planet_regular(), EInvalidUpgrade);
     assert!(planet.level > 0, EInvalidUpgrade);
     assert!(branch <= rules::branch_speed(), EInvalidUpgrade);
-    let total = planet.upgrade_defense + planet.upgrade_range + planet.upgrade_speed;
+    let total = planet.upgrades.defense + planet.upgrades.range + planet.upgrades.speed;
     assert!(total < rules::max_total_upgrade_level(planet.space_type), EInvalidUpgrade);
     let branch_level = if (branch == rules::branch_defense()) {
-        planet.upgrade_defense
+        planet.upgrades.defense
     } else if (branch == rules::branch_range()) {
-        planet.upgrade_range
+        planet.upgrades.range
     } else {
-        planet.upgrade_speed
+        planet.upgrades.speed
     };
     assert!(branch_level < 4, EInvalidUpgrade);
     let cost = rules::upgrade_cost(planet.silver_capacity, total);
@@ -601,11 +633,11 @@ public(package) fun upgrade_at(
     planet.speed = speed;
     let new_branch_level = branch_level + 1;
     if (branch == rules::branch_defense()) {
-        planet.upgrade_defense = new_branch_level;
+        planet.upgrades.defense = new_branch_level;
     } else if (branch == rules::branch_range()) {
-        planet.upgrade_range = new_branch_level;
+        planet.upgrades.range = new_branch_level;
     } else {
-        planet.upgrade_speed = new_branch_level;
+        planet.upgrades.speed = new_branch_level;
     };
     event::emit(PlanetUpgraded {
         season_id: planet.season_id,
@@ -626,7 +658,7 @@ public fun withdraw_silver(
     planet: &mut Planet,
     amount: u64,
     clock_obj: &Clock,
-    ctx: &TxContext,
+    ctx: &mut TxContext,
 ) {
     withdraw_silver_at(
         manifest,
@@ -681,29 +713,29 @@ public(package) fun take_space_junk_for_dispatch(planet: &mut Planet): u64 {
 }
 
 public(package) fun assert_artifact_capacity_for_dispatch(planet: &Planet) {
-    assert!(planet.artifact_ids.length() < 5, EArtifactCapacity);
+    assert!(planet.artifacts.ids.length() < 5, EArtifactCapacity);
 }
 
 public(package) fun contains_artifact(planet: &Planet, artifact_id: ID): bool {
-    planet.artifact_ids.contains(&artifact_id)
+    planet.artifacts.ids.contains(&artifact_id)
 }
 
 public(package) fun attach_artifact(planet: &mut Planet, artifact_id: ID) {
-    assert!(planet.artifact_ids.length() < 5, EArtifactCapacity);
-    assert!(!planet.artifact_ids.contains(&artifact_id), EArtifactCapacity);
-    planet.artifact_ids.push_back(artifact_id);
+    assert!(planet.artifacts.ids.length() < 5, EArtifactCapacity);
+    assert!(!planet.artifacts.ids.contains(&artifact_id), EArtifactCapacity);
+    planet.artifacts.ids.push_back(artifact_id);
 }
 
 public(package) fun detach_artifact(planet: &mut Planet, artifact_id: ID) {
     assert!(
-        planet.active_artifact_id.is_none() ||
-            *planet.active_artifact_id.borrow() != artifact_id,
+        planet.artifacts.active_id.is_none() ||
+            *planet.artifacts.active_id.borrow() != artifact_id,
         EInvalidShipAction,
     );
     let mut index = 0u64;
-    while (index < planet.artifact_ids.length()) {
-        if (*planet.artifact_ids.borrow(index) == artifact_id) {
-            planet.artifact_ids.swap_remove(index);
+    while (index < planet.artifacts.ids.length()) {
+        if (*planet.artifacts.ids.borrow(index) == artifact_id) {
+            planet.artifacts.ids.swap_remove(index);
             return
         };
         index = index + 1;
@@ -719,8 +751,8 @@ public(package) fun activate_artifact_stats(
     biome: u8,
 ) {
     assert!(!planet.destroyed, EDestroyed);
-    assert!(planet.active_artifact_id.is_none(), EInvalidShipAction);
-    assert!(planet.artifact_ids.contains(&artifact_id), EArtifactMissing);
+    assert!(planet.artifacts.active_id.is_none(), EInvalidShipAction);
+    assert!(planet.artifacts.ids.contains(&artifact_id), EArtifactMissing);
     let (capacity, growth, range, speed, defense) =
         rules::artifact_upgrade(artifact_type, rarity, biome);
     planet.energy_capacity = ((planet.energy_capacity as u128) * (capacity as u128) / 100) as u64;
@@ -728,7 +760,7 @@ public(package) fun activate_artifact_stats(
     planet.range = ((planet.range as u128) * (range as u128) / 100) as u64;
     planet.speed = ((planet.speed as u128) * (speed as u128) / 100) as u64;
     planet.defense = ((planet.defense as u128) * (defense as u128) / 100) as u64;
-    planet.active_artifact_id = option::some(artifact_id);
+    planet.artifacts.active_id = option::some(artifact_id);
 }
 
 public(package) fun deactivate_artifact_stats(
@@ -739,8 +771,8 @@ public(package) fun deactivate_artifact_stats(
     biome: u8,
 ) {
     assert!(!planet.destroyed, EDestroyed);
-    assert!(planet.active_artifact_id.is_some(), EInvalidShipAction);
-    assert!(*planet.active_artifact_id.borrow() == artifact_id, EInvalidShipAction);
+    assert!(planet.artifacts.active_id.is_some(), EInvalidShipAction);
+    assert!(*planet.artifacts.active_id.borrow() == artifact_id, EInvalidShipAction);
     let (capacity, growth, range, speed, defense) =
         rules::artifact_upgrade(artifact_type, rarity, biome);
     planet.energy_capacity = ((planet.energy_capacity as u128) * 100 / (capacity as u128)) as u64;
@@ -748,7 +780,7 @@ public(package) fun deactivate_artifact_stats(
     planet.range = ((planet.range as u128) * 100 / (range as u128)) as u64;
     planet.speed = ((planet.speed as u128) * 100 / (speed as u128)) as u64;
     planet.defense = ((planet.defense as u128) * 100 / (defense as u128)) as u64;
-    planet.active_artifact_id = option::none();
+    planet.artifacts.active_id = option::none();
 }
 
 public(package) fun bloom(planet: &mut Planet) {
@@ -765,8 +797,8 @@ public(package) fun destroy_with_black_domain(planet: &mut Planet) {
 public(package) fun prospect(planet: &mut Planet, checkpoint: u64) {
     assert!(!planet.destroyed, EDestroyed);
     assert!(planet.planet_type == rules::planet_ruins(), EInvalidShipAction);
-    assert!(planet.prospected_checkpoint.is_none(), EInvalidShipAction);
-    planet.prospected_checkpoint = option::some(checkpoint);
+    assert!(planet.artifacts.prospected_checkpoint.is_none(), EInvalidShipAction);
+    planet.artifacts.prospected_checkpoint = option::some(checkpoint);
 }
 
 public(package) fun consume_artifact_find(
@@ -775,12 +807,12 @@ public(package) fun consume_artifact_find(
     current_checkpoint: u64,
 ) {
     assert!(!planet.destroyed, EDestroyed);
-    assert!(!planet.artifact_found, EInvalidShipAction);
-    assert!(planet.prospected_checkpoint.is_some(), EInvalidShipAction);
-    assert!(*planet.prospected_checkpoint.borrow() == prospected_checkpoint, EInvalidShipAction);
+    assert!(!planet.artifacts.found, EInvalidShipAction);
+    assert!(planet.artifacts.prospected_checkpoint.is_some(), EInvalidShipAction);
+    assert!(*planet.artifacts.prospected_checkpoint.borrow() == prospected_checkpoint, EInvalidShipAction);
     assert!(current_checkpoint > prospected_checkpoint, EInvalidShipAction);
     assert!(current_checkpoint - prospected_checkpoint < 256, EInvalidShipAction);
-    planet.artifact_found = true;
+    planet.artifacts.found = true;
 }
 
 public(package) fun attach_ship(
@@ -788,8 +820,8 @@ public(package) fun attach_ship(
     artifact_id: ID,
     ship_type: u8,
 ) {
-    assert!(!planet.artifact_ids.contains(&artifact_id), EInvalidShipAction);
-    planet.artifact_ids.push_back(artifact_id);
+    assert!(!planet.artifacts.ids.contains(&artifact_id), EInvalidShipAction);
+    planet.artifacts.ids.push_back(artifact_id);
     if (!planet.is_founding_planet) {
         if (ship_type == 10) {
             planet.energy_growth = planet.energy_growth * 2;
@@ -807,9 +839,9 @@ public(package) fun detach_ship(
     ship_type: u8,
 ) {
     let mut index = 0u64;
-    while (index < planet.artifact_ids.length()) {
-        if (*planet.artifact_ids.borrow(index) == artifact_id) {
-            planet.artifact_ids.swap_remove(index);
+    while (index < planet.artifacts.ids.length()) {
+        if (*planet.artifacts.ids.borrow(index) == artifact_id) {
+            planet.artifacts.ids.swap_remove(index);
             if (!planet.is_founding_planet) {
                 if (ship_type == 10) {
                     planet.energy_growth = planet.energy_growth / 2;
@@ -847,11 +879,11 @@ public(package) fun begin_capture_invasion(
 ) {
     assert_controlled_by(planet, seat);
     assert!(!planet.destroyed, EDestroyed);
-    assert!(planet.invader_seat_id.is_none(), EInvalidCaptureState);
-    assert!(planet.capturer_seat_id.is_none(), EInvalidCaptureState);
+    assert!(planet.capture.invader_seat_id.is_none(), EInvalidCaptureState);
+    assert!(planet.capture.capturer_seat_id.is_none(), EInvalidCaptureState);
     assert!(current_checkpoint <= 0xffffffffffffffff - 2048, EInvalidCaptureState);
-    planet.invader_seat_id = option::some(identity::seat_id(seat));
-    planet.invade_start_checkpoint = current_checkpoint;
+    planet.capture.invader_seat_id = option::some(identity::seat_id(seat));
+    planet.capture.invade_start_checkpoint = current_checkpoint;
 }
 
 public(package) fun complete_capture(
@@ -861,17 +893,17 @@ public(package) fun complete_capture(
 ): u64 {
     assert_controlled_by(planet, seat);
     assert!(!planet.destroyed, EDestroyed);
-    assert!(planet.invader_seat_id.is_some(), EInvalidCaptureState);
-    assert!(planet.capturer_seat_id.is_none(), EInvalidCaptureState);
+    assert!(planet.capture.invader_seat_id.is_some(), EInvalidCaptureState);
+    assert!(planet.capture.capturer_seat_id.is_none(), EInvalidCaptureState);
     assert!(
-        current_checkpoint >= planet.invade_start_checkpoint + 2048,
+        current_checkpoint >= planet.capture.invade_start_checkpoint + 2048,
         ECaptureHoldIncomplete,
     );
     assert!(
         rules::capture_energy_eligible(planet.energy, planet.energy_capacity),
         ECaptureEnergyTooLow,
     );
-    planet.capturer_seat_id = option::some(identity::seat_id(seat));
+    planet.capture.capturer_seat_id = option::some(identity::seat_id(seat));
     rules::capture_score(planet.level)
 }
 
@@ -881,12 +913,12 @@ public(package) fun reveal(
     x: vector<u8>,
     y: vector<u8>,
 ) {
-    assert!(planet.revealed_x.is_none(), EAlreadyRevealed);
-    assert!(planet.revealed_y.is_none(), EAlreadyRevealed);
+    assert!(planet.reveal.x.is_none(), EAlreadyRevealed);
+    assert!(planet.reveal.y.is_none(), EAlreadyRevealed);
     assert!(x.length() == 32 && y.length() == 32, EInvalidProof);
-    planet.revealed_x = option::some(x);
-    planet.revealed_y = option::some(y);
-    planet.revealer_seat_id = option::some(revealer_seat_id);
+    planet.reveal.x = option::some(x);
+    planet.reveal.y = option::some(y);
+    planet.reveal.revealer_seat_id = option::some(revealer_seat_id);
 }
 
 public(package) fun register_pending_voyage(
@@ -1162,25 +1194,31 @@ public fun new_neutral_fixture_for_testing(
         silver_capacity: rules::stats_silver_capacity(&stats),
         silver_growth: rules::stats_silver_growth(&stats),
         space_junk: rules::stats_space_junk(&stats),
-        default_energy: rules::stats_energy(&stats),
-        default_space_junk: rules::stats_space_junk(&stats),
+        defaults: PlanetDefaults {
+            energy: rules::stats_energy(&stats),
+            space_junk: rules::stats_space_junk(&stats),
+        },
         last_updated_at_seconds: now_seconds,
         destroyed: false,
         pausers: 0,
-        upgrade_defense: 0,
-        upgrade_range: 0,
-        upgrade_speed: 0,
+        upgrades: UpgradeLevels { defense: 0, range: 0, speed: 0 },
         pending_voyages: vector[],
-        artifact_ids: vector[],
-        active_artifact_id: option::none(),
-        prospected_checkpoint: option::none(),
-        artifact_found: false,
-        invader_seat_id: option::none(),
-        invade_start_checkpoint: 0,
-        capturer_seat_id: option::none(),
-        revealed_x: option::none(),
-        revealed_y: option::none(),
-        revealer_seat_id: option::none(),
+        artifacts: PlanetArtifactState {
+            ids: vector[],
+            active_id: option::none(),
+            prospected_checkpoint: option::none(),
+            found: false,
+        },
+        capture: PlanetCaptureState {
+            invader_seat_id: option::none(),
+            invade_start_checkpoint: 0,
+            capturer_seat_id: option::none(),
+        },
+        reveal: PlanetRevealState {
+            x: option::none(),
+            y: option::none(),
+            revealer_seat_id: option::none(),
+        },
     }
 }
 
@@ -1239,25 +1277,15 @@ public fun destroy_planet_for_testing(planet: Planet) {
         silver_capacity: _,
         silver_growth: _,
         space_junk: _,
-        default_energy: _,
-        default_space_junk: _,
+        defaults: _,
         last_updated_at_seconds: _,
         destroyed: _,
         pausers: _,
-        upgrade_defense: _,
-        upgrade_range: _,
-        upgrade_speed: _,
+        upgrades: _,
         pending_voyages: _,
-        artifact_ids: _,
-        active_artifact_id: _,
-        prospected_checkpoint: _,
-        artifact_found: _,
-        invader_seat_id: _,
-        invade_start_checkpoint: _,
-        capturer_seat_id: _,
-        revealed_x: _,
-        revealed_y: _,
-        revealer_seat_id: _,
+        artifacts: _,
+        capture: _,
+        reveal: _,
     } = planet;
     object::delete(id);
 }

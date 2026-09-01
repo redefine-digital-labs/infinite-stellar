@@ -128,7 +128,7 @@ fun claim_home_at(
 /// Production action. It is intentionally unreachable until a later package
 /// revision code-pins audited ceremony material and enables both readiness
 /// gates; development configs can never pass this function.
-public entry fun claim_home(
+public fun claim_home(
     config: &CircuitConfig,
     manifest: &SeasonManifest,
     runtime: &SeasonRuntime,
@@ -140,7 +140,7 @@ public entry fun claim_home(
     deadline_ms: u64,
     proof_bytes: vector<u8>,
     clock_obj: &Clock,
-    ctx: &TxContext,
+    ctx: &mut TxContext,
 ) {
     let home = claim_home_at(
         config,
@@ -241,7 +241,7 @@ fun dispatch_move_at(
 
 /// Production normal-fleet dispatch. Artifact and ship adapters remain a
 /// separate review surface even though they reuse the same route relation.
-public entry fun dispatch_move(
+public fun dispatch_move(
     config: &CircuitConfig,
     manifest: &SeasonManifest,
     runtime: &SeasonRuntime,
@@ -377,7 +377,7 @@ fun dispatch_move_new_at(
 /// Production discovery-and-dispatch action. The target Planet and Voyage are
 /// published together only after proof verification and every gameplay check
 /// succeeds; any abort rolls back the registry claim and source mutation.
-public entry fun dispatch_move_new(
+public fun dispatch_move_new(
     config: &CircuitConfig,
     manifest: &SeasonManifest,
     runtime: &SeasonRuntime,

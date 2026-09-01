@@ -1,0 +1,71 @@
+# Mainnet Readiness
+
+## Current verdict
+
+**Blocked for a player-facing mainnet season. Do not publish or advertise a
+playable release yet.**
+
+The package now compiles against the canonical Soulidity mainnet package and a
+full Sui mainnet publish dry-run succeeds. That proves the current bytecode is
+publishable; it does not make the season playable or production-safe. Ranked
+home claiming and fleet movement still reject because production proof
+configurations and verifying keys are intentionally unavailable.
+
+## Resolved release work
+
+| Gate | Evidence | Status |
+| --- | --- | --- |
+| Canonical Soul format | `soulidity::soul::SoulState` v1; owner, epoch, Soul ID, State ID, and listing accessors verified live | Ready |
+| Soulidity package identity | Callable package `0x60bf…2ecd`; original/type-origin package `0xa43c…e5d5d`; exact source commit pinned | Ready |
+| Ranked enrollment adapter | Move reads the canonical shared `SoulState` in the enrollment transaction and creates no Soul custody | Ready in source, undeployed |
+| Enrollment transaction builder | SDK constructs `soul_adapter::enroll` from pinned Manifest, registry, SoulState, Clock, and projection commitment | Ready in source, undeployed |
+| Sui protocol limits | `SeasonManifest` and `Planet` are below the mainnet 32-field struct limit without changing gameplay accessors | Ready |
+| Bytecode verification | Mainnet build and bytecode meter pass | Ready |
+| Publish simulation | Full mainnet dry-run succeeds; observed simulated gas was 544,308,000 MIST | Ready at the tested source revision |
+
+The machine-readable Soul ABI record is
+[`config/soulidity-mainnet-v1.json`](../config/soulidity-mainnet-v1.json). Run:
+
+```bash
+npm run verify:soulidity-mainnet
+cd move/infinite_stellar
+sui move test -e testnet
+sui move build --warnings-are-errors -e mainnet
+sui client verify-bytecode-meter --package . -e mainnet --warnings-are-errors
+cd ../..
+npm run verify:move-mainnet-dry-run
+```
+
+The last command requires the Sui CLI's active environment to be `mainnet`. It
+does not sign, publish, or spend gas.
+
+## Remaining blockers to multiplayer play
+
+| Release gate | Current evidence | Required closure |
+| --- | --- | --- |
+| Production claim/move/move-new circuits | Complete development relations and real test proofs; production readiness is hardcoded false | Reproducible release build, public Phase 2 ceremony, pinned production artifacts, independent circuit review, production `CircuitConfig` constructor, and positive/adversarial vectors |
+| Reveal and capture privacy | Typed fail-closed adapters only | Complete and audit the action-specific relations, keys, Move verifier paths, and client builders |
+| External Artifact custody | Local Spacetime Rip behavior and fail-closed adapter | Define and audit the wallet-owned Sui artifact wrapper, extraction/deposit authority, and signed client paths |
+| Player transaction gateway | Enrollment builder exists; home, move, and move-new production builders still fail closed | Build all signed PTBs, preflight/simulation, finality/retry reconciliation, errors, and wallet tests |
+| Chain-backed web client | Full local deterministic sandbox | Replace demo authority with checkpoint-derived Season/Seat/Planet/Voyage state while preserving private local coordinates and proof generation |
+| Multiplayer infrastructure | No production indexer, sponsor, or monitoring service in this repository | Rebuildable checkpoint indexer, rate-limited sponsor, health/incident telemetry, archive/full-node strategy, and failure-mode tests |
+| Season release | No production Manifest, production circuit objects, or immutable engine package | Freeze exact timings/rules/hashes, publish and verify objects, make the engine immutable, and record every transaction/object digest |
+| Operational control | Release authority is not yet a documented production ceremony | Establish signer/capability custody, separation of duties, incident actions, and auditable release approvals |
+| Security and performance | Unit/local integration evidence only | Independent Move/circuit/client review, browser proof benchmarks, gas/load tests, multi-wallet contention soak, indexer rebuild, and recovery rehearsal |
+| Public release clearance | Working name and third-party presentation rights remain unconfirmed | Complete name, asset, font, audio, visual-license, privacy, and public-launch review |
+
+## Safe release order
+
+1. Finish and review production circuits and ceremony artifacts.
+2. Activate the production Move verifiers only against their exact pinned
+   digests and add the remaining SDK transaction builders.
+3. Run a real multi-wallet rehearsal with a checkpoint-rebuildable indexer and
+   the production web path.
+4. Complete independent security, performance, operations, and release-rights
+   gates.
+5. Publish the immutable engine and production objects, verify them from a
+   second endpoint, then expose the ranked route.
+
+Publishing the current package before step 4 would create an immutable-looking
+mainnet object whose core ranked actions are sealed. It would not let everyone
+play and would make later release provenance harder to explain.

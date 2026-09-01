@@ -10,11 +10,64 @@ import {
 
 describe('Sui gateway', () => {
   it('keeps real Soul enrollment fail-closed', () => {
-    expect(() => buildEnrollmentTransaction(UNCONFIGURED_TESTNET)).toThrowError(
+    expect(() => buildEnrollmentTransaction(UNCONFIGURED_TESTNET, {
+      soulStateId: '0x3',
+      projectionCommitment: new Uint8Array(32),
+    })).toThrowError(
       expect.objectContaining({
         code: 'SOUL_ADAPTER_UNAVAILABLE',
       }),
     );
+  });
+
+  it('builds canonical mainnet SoulState enrollment only from a complete deployment record', () => {
+    const transaction = buildEnrollmentTransaction({
+      network: 'mainnet',
+      packageId: '0x10',
+      manifestId: '0x11',
+      runtimeId: '0x12',
+      enrollmentRegistryId: '0x13',
+      clockObjectId: '0x6',
+      soulidityCallablePackageId: '0x60',
+      soulidityOriginalPackageId: '0xa4',
+      productionSoulAdapterReady: true,
+      productionProofVerifierReady: false,
+    }, {
+      soulStateId: '0x14',
+      projectionCommitment: new Uint8Array(32).fill(7),
+    });
+
+    expect(transaction.getData().commands).toEqual([
+      expect.objectContaining({
+        $kind: 'MoveCall',
+        MoveCall: expect.objectContaining({
+          package: '0x0000000000000000000000000000000000000000000000000000000000000010',
+          module: 'soul_adapter',
+          function: 'enroll',
+        }),
+      }),
+    ]);
+  });
+
+  it('rejects malformed Commander Projection commitments before wallet signing', () => {
+    expect(() => buildEnrollmentTransaction({
+      network: 'mainnet',
+      packageId: '0x10',
+      manifestId: '0x11',
+      runtimeId: '0x12',
+      enrollmentRegistryId: '0x13',
+      clockObjectId: '0x6',
+      soulidityCallablePackageId: '0x60',
+      soulidityOriginalPackageId: '0xa4',
+      productionSoulAdapterReady: true,
+      productionProofVerifierReady: false,
+    }, {
+      soulStateId: '0x14',
+      projectionCommitment: new Uint8Array(31),
+    })).toThrowError(expect.objectContaining({
+      code: 'DEPLOYMENT_UNAVAILABLE',
+      message: expect.stringMatching(/32 bytes/),
+    }));
   });
 
   it('keeps real home proving fail-closed', () => {
