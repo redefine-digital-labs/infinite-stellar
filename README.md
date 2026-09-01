@@ -6,6 +6,8 @@
 
 > **Status:** Experimental pre-production testnet canary plus a playable local Round 5 rules sandbox. The canonical Soulidity mainnet `SoulState` ABI, typed ranked-enrollment adapter, live ABI verifier, and proof-bound enrollment/home/move/move-new transaction gateway are now pinned in source, and the complete package passes a Sui mainnet publish dry-run. They are not deployed. The gateway simulates before signing, rejects resolved onchain failures, waits for indexed finality, reconciles exact BCS events/effects, and reconstructs the deterministic controller Seat bundle from chain BCS. Production proof keys, the web integration of that chain read model, reveal/capture proofs, external Artifact custody, and production services remain unavailable and fail closed.
 
+**Play the current local-simulation canary:** <https://infinite-stellar.vercel.app>. It creates no Sui transaction or Soul history; ranked mainnet writes remain fail-closed.
+
 The name describes an endless succession of bounded stellar worlds, not one season that runs forever. A player's civilization disappears when its universe closes; the Soul remains as the persistent actor and carries only verifiable history, relationships, and expression into the next world.
 
 Infinite Stellar uses *stellar* in its astronomical sense and is built on Sui. “Stellar” is a trademark of the Stellar Development Foundation. All rights reserved. This is an independent project, not affiliated with, sponsored by, or endorsed by the Stellar Development Foundation.

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "surface": "vercel",
+  "environment": "production",
+  "project": "infinite-stellar",
+  "deployedAt": "2026-09-01T06:42:57Z",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "branch": "codex/dark-forest-parity",
+    "commit": "85c9db6a205fed6e6fbeecd9bc9e182371fd0ab4"
+  },
+  "deployment": {
+    "id": "dpl_9mqhtJ3krUJkPMszA3rSKRxxAjoH",
+    "status": "READY",
+    "immutableUrl": "https://infinite-stellar-c6716o9ol-soulidity-ai.vercel.app",
+    "productionAlias": "https://infinite-stellar.vercel.app"
+  },
+  "capability": {
+    "localRound5Simulation": true,
+    "walletDiscovery": true,
+    "suiMainnetTarget": true,
+    "rankedMainnetWrites": false,
+    "suiTransactionOrSoulHistoryFromDemo": false
+  },
+  "verification": {
+    "nodeVersion": "24.x",
+    "typecheck": "passed",
+    "lint": "passed",
+    "typescriptTests": 105,
+    "productionBuild": "passed",
+    "dependencyVulnerabilities": 0,
+    "httpStatus": 200,
+    "mainnetRpcAllowedByCsp": true,
+    "browserSmoke": [
+      "select Soul fixture",
+      "create local Season Seat",
+      "open local universe",
+      "run private local search",
+      "claim local Founding Planet",
+      "enter full-screen command map",
+      "zoom map from 100% to 80%"
+    ]
+  },
+  "mainnetReleaseGate": {
+    "canonicalSoulidityAbi": "verified",
+    "publishDryRun": "passed",
+    "moduleCount": 15,
+    "simulatedNetGasMist": "544308000",
+    "productionProofVerifiersReady": false,
+    "independentAuditComplete": false,
+    "transactionSubmitted": false,
+    "decision": "blocked_fail_closed"
+  }
+}

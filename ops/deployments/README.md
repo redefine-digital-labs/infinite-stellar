@@ -21,3 +21,8 @@ Verify the current record against Sui's public testnet GraphQL endpoint with:
 ```bash
 npm run verify:deployment
 ```
+
+The current Vercel web-canary record is
+`vercel-production-2026-09-01.json`. It records the immutable deployment URL,
+source commit, browser smoke path, security-header check, and the independently
+blocked mainnet release state. It is not an onchain deployment record.
