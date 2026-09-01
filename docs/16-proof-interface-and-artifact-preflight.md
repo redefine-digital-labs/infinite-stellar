@@ -3,15 +3,17 @@
 ## Status and boundary
 
 This document freezes Infinite Stellar proof interface v1 for cross-language
-implementation. The repository includes development-only `claim_home` and
-`move` relations that cover the intended v1 geometry and action predicates,
+implementation. The repository includes development-only `claim_home`, `move`,
+and `move_new` relations that cover the intended v1 geometry and action predicates,
 plus a deterministic Sui serialization bridge and test-only proof-consuming
 Move adapters. They remain unaudited development circuits; no production
 verifying key, production trusted setup, or audited verifier exists. Ranked
 writes remain fail-closed until every production gate in this document passes.
 
 The machine-readable authority is
-[`config/proof-interface-v1.json`](../config/proof-interface-v1.json). The
+[`config/proof-interface-v1.json`](../config/proof-interface-v1.json), with the
+action-specific natural-Planet statement in
+[`config/move-new-proof-interface-v1.json`](../config/move-new-proof-interface-v1.json). The
 TypeScript implementation lives in [`packages/prover`](../packages/prover), and
 the matching Sui Move helper lives in
 [`move/infinite_stellar/sources/proof_intent.move`](../move/infinite_stellar/sources/proof_intent.move).
@@ -21,8 +23,9 @@ the matching Sui Move helper lives in
 Interface v1 uses BN254. Sui's Groth16 API accepts at most eight public inputs
 and expects concatenated 32-byte little-endian scalar elements. Sui's framework
 Poseidon primitive accepts between one and sixteen canonical BN254 field
-elements. Infinite Stellar therefore uses exactly four public signals and one
-sixteen-field action commitment.
+elements. Infinite Stellar uses exactly four public signals for `claim_home`
+and ordinary `move`, five for `move_new`, and one sixteen-field action
+commitment. Both layouts remain below Sui's eight-input ceiling.
 
 Primary implementation references:
 
@@ -70,7 +73,8 @@ public-input byte serialization.
 
 ## Action commitment
 
-Action kinds are `claim_home = 1`, `move = 2`, `reveal = 3`, and `capture = 4`.
+Action kinds are `claim_home = 1`, `move = 2`, `reveal = 3`, `capture = 4`, and
+`move_new = 5`.
 The context field is:
 
 ```text
@@ -98,7 +102,7 @@ The action commitment is `poseidon_bn254` over exactly these sixteen fields:
 15  rules_geometry_commitment
 ```
 
-Each Season pins the exact immutable claim/move `CircuitConfig` object ID,
+Each Season pins the exact immutable claim/move/move-new `CircuitConfig` object ID,
 config digest, and verifying-key digest. `CircuitConfig` schema v1 also fixes
 the action kind, proof-interface version, public-input count, raw Arkworks key,
 and SHA-256 digests of circuit source, proving key, verifying key, ceremony
@@ -109,7 +113,7 @@ intended deployed object graph.
 
 ## Public inputs
 
-The exact public-signal order is:
+The standard claim/move public-signal order is:
 
 ```text
 source_location_hash
@@ -122,6 +126,22 @@ Each signal is serialized as one 32-byte little-endian canonical scalar and the
 four values are concatenated without a length prefix. The final byte length is
 128. The TypeScript and Move tests lock the mainnet golden action commitment and
 the SHA-256 digest of the serialized public inputs.
+
+`move_new` uses this action-specific order:
+
+```text
+source_location_hash
+destination_location_hash
+destination_space_perlin
+action_commitment
+rules_geometry_commitment
+```
+
+Its five scalars occupy 160 bytes, and its Arkworks prepared verifying key
+occupies 424 bytes rather than 392. The circuit constrains
+`destination_space_perlin` to the exact Round-5 Perlin of the private
+destination coordinates and manifest-committed geometry. Move accepts it only
+after native verification, then derives all natural-Planet stats internally.
 
 The numeric location field has two intentionally distinct byte views. Groth16
 uses the little-endian scalar encoding above. Planet identity and Round-5
@@ -148,7 +168,7 @@ builds, benchmarks, and an independent audit are mandatory before setup.
 ## Development circuit candidates
 
 The independently written candidates in [`circuits/`](../circuits/) now
-exercise the exact four-signal interface with real Groth16 proofs:
+exercise the frozen standard interface and move-new extension with real Groth16 proofs:
 
 - `claim_home_v1` constrains the action intent, canonical signed coordinates,
   exact Round-5 MiMC location hash, dynamic manifest radius, planet rarity,
@@ -157,14 +177,17 @@ exercise the exact four-signal interface with real Groth16 proofs:
   bound; for action kind `move`, proof-intent `amount_u64` canonically means
   the route's maximum distance, while sent energy and silver remain Move state
   transition inputs;
+- `move_new_v1` proves the same route relation and exposes the constrained
+  destination space Perlin so one transaction can claim the derived Planet ID,
+  initialize canonical neutral stats, and dispatch its colonizing Voyage;
 - TypeScript generates the fixtures, Circom generates the witness, snarkjs
   proves and self-verifies, and TypeScript serializes the proof/VK into
   Arkworks canonical-compressed bytes accepted by Sui's native verifier;
-- a tracked development-only fixture binds the exact claim/move configs to a
+- a tracked development-only fixture binds the exact claim/move/move-new configs to a
   deterministic Move Season/Seat object graph; Move recomputes every public
-  input, creates a Founding Planet, dispatches a fleet, increments its source
-  proof nonce, and rejects replay, sender mutation, expiry, and config
-  substitution;
+  input, creates a Founding Planet, dispatches fleets, initializes a natural
+  Planet, increments its source proof nonce, and rejects replay, sender/Perlin
+  mutation, expiry, and config substitution;
 - wrong coordinate preimages, negative-zero encodings, non-home planets,
   inconsistent geometry, non-power-of-two Perlin scales, rarity mutations,
   out-of-range routes, public-input mutation, and action mutation are rejected.
@@ -181,7 +204,7 @@ runtime code has no constructor that can approve it.
 A selected manifest pins:
 
 - mainnet, ruleset ID, circuit ID, and circuit version;
-- BN254 and the exact four-signal order;
+- BN254 and one of the two exact supported signal orders;
 - source repository, 40-hex commit, circuit source SHA-256, and build image;
 - development or production status;
 - trusted-setup kind, and for production, ceremony ID and transcript SHA-256;

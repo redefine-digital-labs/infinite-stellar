@@ -10,6 +10,7 @@ const EInvalidProofEncoding: u64 = 1;
 /// production ceremony is pinned in this package version.
 public fun production_claim_home_verifier_ready(): bool { false }
 public fun production_move_verifier_ready(): bool { false }
+public fun production_move_new_verifier_ready(): bool { false }
 
 public fun assert_production_claim_home_verifier_ready() {
     assert!(production_claim_home_verifier_ready(), EProductionVerifierNotPinned)
@@ -19,12 +20,19 @@ public fun assert_production_move_verifier_ready() {
     assert!(production_move_verifier_ready(), EProductionVerifierNotPinned)
 }
 
+public fun assert_production_move_new_verifier_ready() {
+    assert!(production_move_new_verifier_ready(), EProductionVerifierNotPinned)
+}
+
 public(package) fun verify_with_config(
     config: &CircuitConfig,
     public_input_bytes: vector<u8>,
     proof_bytes: vector<u8>,
 ): bool {
-    assert!(public_input_bytes.length() == 128, EInvalidProofEncoding);
+    assert!(
+        public_input_bytes.length() == (circuit_config::public_input_count(config) as u64) * 32,
+        EInvalidProofEncoding,
+    );
     assert!(proof_bytes.length() == 128, EInvalidProofEncoding);
     let curve = groth16::bn254();
     let pvk = groth16::prepare_verifying_key(
@@ -45,7 +53,8 @@ public fun verify_development_bn254_fixture(
     public_input_bytes: vector<u8>,
     proof_bytes: vector<u8>,
 ): bool {
-    assert!(public_input_bytes.length() == 128, EInvalidProofEncoding);
+    let input_length = public_input_bytes.length();
+    assert!(input_length == 128 || input_length == 160, EInvalidProofEncoding);
     assert!(proof_bytes.length() == 128, EInvalidProofEncoding);
     let curve = groth16::bn254();
     let pvk = groth16::prepare_verifying_key(&curve, &verifying_key);

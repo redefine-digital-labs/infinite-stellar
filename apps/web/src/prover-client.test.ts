@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   PROOF_ARTIFACT_WORKER_VERSION,
+  PROOF_PUBLIC_SIGNAL_ORDER,
   type ProofArtifactSelection,
   type ProofArtifactWorkerMessage,
   type ProofArtifactWorkerRequest,
@@ -15,6 +16,7 @@ const selection: ProofArtifactSelection = {
   expectedRulesetId: 'dark-forest-v06-round5',
   expectedCircuitId: 'round5-move',
   expectedCircuitVersion: 1,
+  expectedPublicSignals: PROOF_PUBLIC_SIGNAL_ORDER,
 };
 
 class FakeWorker implements ProofWorkerLike {

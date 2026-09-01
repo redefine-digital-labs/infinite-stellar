@@ -17,13 +17,14 @@ export interface InfiniteStellarDeployment {
   clockObjectId?: string;
   claimHomeCircuitConfig?: CircuitConfigPin;
   moveCircuitConfig?: CircuitConfigPin;
+  moveNewCircuitConfig?: CircuitConfigPin;
   productionSoulAdapterReady: boolean;
   productionProofVerifierReady: boolean;
 }
 
 function requireCircuitConfigPin(
   pin: CircuitConfigPin | undefined,
-  action: 'claim_home' | 'move',
+  action: 'claim_home' | 'move' | 'move_new',
 ): CircuitConfigPin {
   const objectIdPattern = /^(?:0x)?[0-9a-f]{1,64}$/;
   const digestPattern = /^(?:0x)?[0-9a-f]{64}$/;
@@ -181,6 +182,22 @@ export function buildMoveTransaction(
   throw new IntegrationUnavailableError(
     'DEPLOYMENT_UNAVAILABLE',
     'No production fleet transaction builder is available in this release.',
+  );
+}
+
+export function buildMoveNewTransaction(
+  deployment: InfiniteStellarDeployment,
+): never {
+  if (!deployment.productionProofVerifierReady) {
+    throw new IntegrationUnavailableError(
+      'PROOF_VERIFIER_UNAVAILABLE',
+      'Natural-planet discovery is disabled until the manifest-pinned proof verifier is ready.',
+    );
+  }
+  requireCircuitConfigPin(deployment.moveNewCircuitConfig, 'move_new');
+  throw new IntegrationUnavailableError(
+    'DEPLOYMENT_UNAVAILABLE',
+    'No production move-new transaction builder is available in this release.',
   );
 }
 

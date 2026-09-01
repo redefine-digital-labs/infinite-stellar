@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import type { ProofArtifactProgress, ProofArtifactSelection } from '@infinite-stellar/prover';
+import {
+  PROOF_PUBLIC_SIGNAL_ORDER,
+  type ProofArtifactProgress,
+  type ProofArtifactSelection,
+} from '@infinite-stellar/prover';
 import { ProverWorkerClient } from './prover-client';
 
 export type ProofReadinessStatus = 'not-configured' | 'loading' | 'ready' | 'error';
@@ -24,6 +28,7 @@ function productionSelection(): ProofArtifactSelection | undefined {
     expectedRulesetId: 'dark-forest-v06-round5',
     expectedCircuitId: 'round5-move',
     expectedCircuitVersion: 1,
+    expectedPublicSignals: PROOF_PUBLIC_SIGNAL_ORDER,
   };
 }
 

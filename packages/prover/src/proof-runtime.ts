@@ -1,6 +1,6 @@
 import { groth16 } from 'snarkjs';
 import type { LoadedProofArtifacts } from './artifact-manifest';
-import { BN254_SCALAR_FIELD, PROOF_PUBLIC_SIGNAL_ORDER } from './proof-intent';
+import { BN254_SCALAR_FIELD } from './proof-intent';
 import type { Groth16ProofJson } from './worker-protocol';
 
 export interface GeneratedGroth16Proof {
@@ -24,9 +24,12 @@ function requiredArtifact(loaded: LoadedProofArtifacts, role: 'circuit-wasm' | '
   return artifact;
 }
 
-function assertCanonicalPublicSignals(publicSignals: string[]): void {
-  if (publicSignals.length !== PROOF_PUBLIC_SIGNAL_ORDER.length) {
-    throw new ProofGenerationError('PUBLIC_SIGNAL_MISMATCH', 'The proof did not return exactly four public signals.');
+function assertCanonicalPublicSignals(publicSignals: string[], expectedCount: number): void {
+  if (publicSignals.length !== expectedCount) {
+    throw new ProofGenerationError(
+      'PUBLIC_SIGNAL_MISMATCH',
+      `The proof did not return the manifest-pinned ${expectedCount} public signals.`,
+    );
   }
   for (const signal of publicSignals) {
     if (!/^(0|[1-9][0-9]*)$/.test(signal)) {
@@ -54,7 +57,7 @@ export async function generateAndVerifyGroth16Proof(
   }
 
   const { proof, publicSignals } = await groth16.fullProve(witness, wasm, provingKey);
-  assertCanonicalPublicSignals(publicSignals);
+  assertCanonicalPublicSignals(publicSignals, loaded.manifest.publicSignals.length);
   if (!await groth16.verify(verificationKey, publicSignals, proof)) {
     throw new ProofGenerationError('SELF_VERIFICATION_FAILED', 'The generated proof failed local verification.');
   }

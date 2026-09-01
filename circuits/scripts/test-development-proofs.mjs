@@ -65,7 +65,7 @@ for (const coordinates of [
 }
 console.log('round5_perlin_test: Circom matches 24 TypeScript signed/mirrored vectors.');
 
-for (const circuit of ['claim_home_v1', 'move_v1']) {
+for (const circuit of ['claim_home_v1', 'move_v1', 'move_new_v1']) {
   const input = JSON.parse(await readFile(resolve(fixtures, `${circuit}.input.json`), 'utf8'));
   const verificationKey = JSON.parse(
     await readFile(resolve(out, `${circuit}.verification_key.json`), 'utf8'),
@@ -83,7 +83,8 @@ for (const circuit of ['claim_home_v1', 'move_v1']) {
     throw new Error(`${circuit} valid development proof failed verification.`);
   }
   const mutated = [...publicSignals];
-  mutated[2] = (BigInt(mutated[2]) + 1n).toString();
+  const actionCommitmentIndex = circuit === 'move_new_v1' ? 3 : 2;
+  mutated[actionCommitmentIndex] = (BigInt(mutated[actionCommitmentIndex]) + 1n).toString();
   if (await groth16.verify(verificationKey, mutated, proof)) {
     throw new Error(`${circuit} accepted a mutated action commitment.`);
   }
@@ -129,6 +130,13 @@ for (const circuit of ['claim_home_v1', 'move_v1']) {
       { ...input, planet_hash_threshold: (BigInt(input.planet_hash_threshold) + 1n).toString() },
       circuit,
     );
+    if (circuit === 'move_new_v1') {
+      await expectWitnessRejection(
+        'caller-substituted destination space Perlin',
+        { ...input, destination_space_perlin: (BigInt(input.destination_space_perlin) + 1n).toString() },
+        circuit,
+      );
+    }
   }
 }
 

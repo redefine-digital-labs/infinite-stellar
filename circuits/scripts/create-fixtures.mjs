@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { round5WorldLocation } from '../../packages/game-sdk/src/round5-universe.ts';
 import {
   createProofIntentCommitment,
+  createMoveNewProofIntentCommitment,
   ROUND5_PLANET_HASH_THRESHOLD,
   ROUND5_RULES_GEOMETRY_COMMITMENT,
   splitSuiIdentifier,
@@ -76,6 +77,17 @@ function publicWitness(commitment) {
   };
 }
 
+function moveNewPublicWitness(commitment) {
+  const [source, destination, destinationPerlin, action, rules] = commitment.publicSignals;
+  return {
+    source_location_hash: source.toString(),
+    destination_location_hash: destination.toString(),
+    destination_space_perlin: destinationPerlin.toString(),
+    action_commitment: action.toString(),
+    rules_geometry_commitment: rules.toString(),
+  };
+}
+
 function geometryWitness() {
   return {
     geometry_schema_version: '1',
@@ -130,6 +142,21 @@ const moveCommitment = createProofIntentCommitment({
   rulesGeometryCommitment: ROUND5_RULES_GEOMETRY_COMMITMENT,
 });
 
+const moveNewCommitment = createMoveNewProofIntentCommitment({
+  network,
+  league,
+  actionKind: 'move_new',
+  seasonId,
+  seatId,
+  sender,
+  sourceLocationHash: home.hash,
+  destinationLocationHash: destination.hash,
+  amount: maxDistance,
+  sourcePlanetNonce: 7n,
+  deadlineMs,
+  rulesGeometryCommitment: ROUND5_RULES_GEOMETRY_COMMITMENT,
+}, destination.perlin);
+
 const nonHomeCommitment = createProofIntentCommitment({
   network,
   league,
@@ -175,6 +202,21 @@ const moveAdapterMoveCommitment = createProofIntentCommitment({
   rulesGeometryCommitment: ROUND5_RULES_GEOMETRY_COMMITMENT,
 });
 
+const moveAdapterMoveNewCommitment = createMoveNewProofIntentCommitment({
+  network,
+  league,
+  actionKind: 'move_new',
+  seasonId: moveAdapterSeasonId,
+  seatId: moveAdapterSeatId,
+  sender,
+  sourceLocationHash: home.hash,
+  destinationLocationHash: destination.hash,
+  amount: maxDistance,
+  sourcePlanetNonce: 0n,
+  deadlineMs,
+  rulesGeometryCommitment: ROUND5_RULES_GEOMETRY_COMMITMENT,
+}, destination.perlin);
+
 const claimFixture = {
   ...publicWitness(claimCommitment),
   network_field: claimCommitment.networkField.toString(),
@@ -187,6 +229,18 @@ const claimFixture = {
 const moveFixture = {
   ...publicWitness(moveCommitment),
   network_field: moveCommitment.networkField.toString(),
+  ...contextWitness(),
+  max_distance: maxDistance.toString(),
+  source_planet_nonce: '7',
+  deadline_ms: deadlineMs.toString(),
+  ...geometryWitness(),
+  ...coordinateWitness('source_', homeCoordinates),
+  ...coordinateWitness('destination_', destinationCoordinates),
+};
+
+const moveNewFixture = {
+  ...moveNewPublicWitness(moveNewCommitment),
+  network_field: moveNewCommitment.networkField.toString(),
   ...contextWitness(),
   max_distance: maxDistance.toString(),
   source_planet_nonce: '7',
@@ -226,13 +280,27 @@ const moveAdapterMoveFixture = {
   ...coordinateWitness('destination_', destinationCoordinates),
 };
 
+const moveAdapterMoveNewFixture = {
+  ...moveNewPublicWitness(moveAdapterMoveNewCommitment),
+  network_field: moveAdapterMoveNewCommitment.networkField.toString(),
+  ...contextWitnessFor(moveAdapterSeasonId, moveAdapterSeatId),
+  max_distance: maxDistance.toString(),
+  source_planet_nonce: '0',
+  deadline_ms: deadlineMs.toString(),
+  ...geometryWitness(),
+  ...coordinateWitness('source_', homeCoordinates),
+  ...coordinateWitness('destination_', destinationCoordinates),
+};
+
 await mkdir(fixtureDir, { recursive: true });
 await Promise.all([
   writeFile(resolve(fixtureDir, 'claim_home_v1.input.json'), stringify(claimFixture)),
   writeFile(resolve(fixtureDir, 'move_v1.input.json'), stringify(moveFixture)),
+  writeFile(resolve(fixtureDir, 'move_new_v1.input.json'), stringify(moveNewFixture)),
   writeFile(resolve(fixtureDir, 'claim_home_v1.non_home.input.json'), stringify(nonHomeFixture)),
   writeFile(resolve(fixtureDir, 'claim_home_v1.move_adapter.input.json'), stringify(moveAdapterClaimFixture)),
   writeFile(resolve(fixtureDir, 'move_v1.move_adapter.input.json'), stringify(moveAdapterMoveFixture)),
+  writeFile(resolve(fixtureDir, 'move_new_v1.move_adapter.input.json'), stringify(moveAdapterMoveNewFixture)),
   writeFile(resolve(fixtureDir, 'expected-public-signals.json'), stringify({
     order: [
       'source_location_hash',
@@ -242,8 +310,10 @@ await Promise.all([
     ],
     claim_home_v1: claimCommitment.publicSignals,
     move_v1: moveCommitment.publicSignals,
+    move_new_v1: moveNewCommitment.publicSignals,
     move_adapter_claim_home_v1: moveAdapterClaimCommitment.publicSignals,
     move_adapter_move_v1: moveAdapterMoveCommitment.publicSignals,
+    move_adapter_move_new_v1: moveAdapterMoveNewCommitment.publicSignals,
   })),
 ]);
 

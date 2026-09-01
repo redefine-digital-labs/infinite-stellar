@@ -32,7 +32,7 @@ fun assert_config_bound(
             circuit_config::assert_production_approved(config);
             zk_verifier::assert_production_claim_home_verifier_ready();
         };
-    } else {
+    } else if (action_kind == proof_intent::action_move()) {
         circuit_config::assert_bound(
             config,
             season::move_circuit_config_id(manifest),
@@ -42,6 +42,18 @@ fun assert_config_bound(
         if (require_production) {
             circuit_config::assert_production_approved(config);
             zk_verifier::assert_production_move_verifier_ready();
+        };
+    } else {
+        assert!(action_kind == proof_intent::action_move_new(), EInvalidProof);
+        circuit_config::assert_bound(
+            config,
+            season::move_new_circuit_config_id(manifest),
+            season::move_new_circuit_config_digest(manifest),
+            season::move_new_verifying_key_digest(manifest),
+        );
+        if (require_production) {
+            circuit_config::assert_production_approved(config);
+            zk_verifier::assert_production_move_new_verifier_ready();
         };
     };
 }
@@ -266,6 +278,147 @@ public entry fun dispatch_move(
     voyage::share_voyage(flight);
 }
 
+fun dispatch_move_new_at(
+    config: &CircuitConfig,
+    manifest: &SeasonManifest,
+    runtime: &SeasonRuntime,
+    registry: &mut PlanetRegistry,
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+    source: &mut Planet,
+    destination_location_hash: u256,
+    destination_space_perlin: u8,
+    max_distance: u64,
+    sent_energy: u64,
+    sent_silver: u64,
+    deadline_ms: u64,
+    proof_bytes: vector<u8>,
+    now_ms: u64,
+    sender: address,
+    require_production: bool,
+    ctx: &mut TxContext,
+): (Planet, Voyage) {
+    assert!(now_ms <= deadline_ms, EProofExpired);
+    assert!(max_distance <= 0xffffffffffffffff / 100, EInvalidDistance);
+    assert_config_bound(
+        config,
+        manifest,
+        proof_intent::action_move_new(),
+        require_production,
+    );
+    let source_location_hash = planet::location_hash(source);
+    let source_planet_nonce = planet::proof_nonce(source);
+    let action_commitment = proof_intent::action_commitment(
+        season::proof_network_field(manifest),
+        season::league(manifest),
+        proof_intent::action_move_new(),
+        &season::season_id(manifest),
+        &identity::seat_id(seat),
+        sender,
+        source_location_hash,
+        destination_location_hash,
+        max_distance,
+        source_planet_nonce,
+        deadline_ms,
+        season::rules_geometry_commitment(manifest),
+    );
+    let public_input_bytes = proof_intent::move_new_public_inputs_bytes(
+        source_location_hash,
+        destination_location_hash,
+        destination_space_perlin,
+        action_commitment,
+        season::rules_geometry_commitment(manifest),
+    );
+    let public_input_digest = hash::sha2_256(public_input_bytes);
+    assert!(
+        zk_verifier::verify_with_config(config, public_input_bytes, proof_bytes),
+        EInvalidProof,
+    );
+    let planet_proof = planet::new_verified_planet_proof(
+        proof_intent::interface_version(),
+        season::season_id(manifest),
+        destination_location_hash,
+        public_input_digest,
+        destination_space_perlin as u64,
+    );
+    let mut target = planet::initialize_planet_verified(
+        manifest,
+        registry,
+        planet_proof,
+        now_ms,
+    );
+    let target_id = object::id(&target);
+    let move_proof = voyage::new_verified_move_proof(
+        proof_intent::interface_version(),
+        season::season_id(manifest),
+        object::id(source),
+        target_id,
+        max_distance,
+        source_planet_nonce,
+        public_input_digest,
+    );
+    let flight = voyage::dispatch_verified(
+        manifest,
+        runtime,
+        seat,
+        civilization,
+        source,
+        &mut target,
+        move_proof,
+        sent_energy,
+        sent_silver,
+        now_ms,
+        sender,
+        ctx,
+    );
+    (target, flight)
+}
+
+/// Production discovery-and-dispatch action. The target Planet and Voyage are
+/// published together only after proof verification and every gameplay check
+/// succeeds; any abort rolls back the registry claim and source mutation.
+public entry fun dispatch_move_new(
+    config: &CircuitConfig,
+    manifest: &SeasonManifest,
+    runtime: &SeasonRuntime,
+    registry: &mut PlanetRegistry,
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+    source: &mut Planet,
+    destination_location_hash: u256,
+    destination_space_perlin: u8,
+    max_distance: u64,
+    sent_energy: u64,
+    sent_silver: u64,
+    deadline_ms: u64,
+    proof_bytes: vector<u8>,
+    clock_obj: &Clock,
+    ctx: &mut TxContext,
+) {
+    let (target, flight) = dispatch_move_new_at(
+        config,
+        manifest,
+        runtime,
+        registry,
+        seat,
+        civilization,
+        source,
+        destination_location_hash,
+        destination_space_perlin,
+        max_distance,
+        sent_energy,
+        sent_silver,
+        deadline_ms,
+        proof_bytes,
+        clock::timestamp_ms(clock_obj),
+        ctx.sender(),
+        true,
+        ctx,
+    );
+    planet::share_planet(target);
+    voyage::share_voyage(flight);
+}
+
 #[test_only]
 public fun claim_home_development_at_for_testing(
     config: &CircuitConfig,
@@ -324,6 +477,48 @@ public fun dispatch_move_development_at_for_testing(
         civilization,
         source,
         target,
+        max_distance,
+        sent_energy,
+        sent_silver,
+        deadline_ms,
+        proof_bytes,
+        now_ms,
+        sender,
+        false,
+        ctx,
+    )
+}
+
+#[test_only]
+public fun dispatch_move_new_development_at_for_testing(
+    config: &CircuitConfig,
+    manifest: &SeasonManifest,
+    runtime: &SeasonRuntime,
+    registry: &mut PlanetRegistry,
+    seat: &SeasonSeat,
+    civilization: &mut CivilizationState,
+    source: &mut Planet,
+    destination_location_hash: u256,
+    destination_space_perlin: u8,
+    max_distance: u64,
+    sent_energy: u64,
+    sent_silver: u64,
+    deadline_ms: u64,
+    proof_bytes: vector<u8>,
+    now_ms: u64,
+    sender: address,
+    ctx: &mut TxContext,
+): (Planet, Voyage) {
+    dispatch_move_new_at(
+        config,
+        manifest,
+        runtime,
+        registry,
+        seat,
+        civilization,
+        source,
+        destination_location_hash,
+        destination_space_perlin,
         max_distance,
         sent_energy,
         sent_silver,

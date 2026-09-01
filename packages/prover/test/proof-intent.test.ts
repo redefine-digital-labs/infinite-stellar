@@ -5,6 +5,7 @@ import { bytesToHex } from '@noble/hashes/utils.js';
 import {
   BN254_SCALAR_FIELD,
   createRulesGeometryCommitment,
+  createMoveNewProofIntentCommitment,
   createProofIntentCommitment,
   PROOF_INTENT_DOMAIN_FIELD,
   proofNetworkField,
@@ -135,6 +136,21 @@ describe('proof intent v1', () => {
     expect([...bytes.slice(96)]).toEqual(new Array<number>(32).fill(0));
   });
 
+  it('adds proof-derived destination Perlin only for move-new statements', () => {
+    const result = createMoveNewProofIntentCommitment(
+      { ...GOLDEN_INTENT, actionKind: 'move_new', sourceLocationHash: 9n },
+      14,
+    );
+    expect(result.publicSignals).toHaveLength(5);
+    expect(result.publicSignals[2]).toBe(14n);
+    expect(result.publicInputBytes).toHaveLength(160);
+    expect(() => createMoveNewProofIntentCommitment(GOLDEN_INTENT, 14)).toThrow(/move_new/);
+    expect(() => createMoveNewProofIntentCommitment(
+      { ...GOLDEN_INTENT, actionKind: 'move_new' },
+      32,
+    )).toThrow(/destinationSpacePerlin/);
+  });
+
   it('uses big-endian Sui IDs split into low then high 128-bit limbs', () => {
     expect(splitSuiIdentifier('0x100000000000000000000000000000002')).toEqual([2n, 1n]);
   });
@@ -147,7 +163,7 @@ describe('proof intent v1', () => {
       ...GOLDEN_INTENT,
       destinationLocationHash: BN254_SCALAR_FIELD,
     })).toThrow(/destinationLocationHash/);
-    expect(() => serializeProofPublicSignals([1n, 2n, 3n])).toThrow(/exactly 4/);
+    expect(() => serializeProofPublicSignals([1n, 2n, 3n])).toThrow(/four or five/);
     expect(() => createRulesGeometryCommitment({
       ...ROUND5_RULES_GEOMETRY,
       planetHashThreshold: 0n,

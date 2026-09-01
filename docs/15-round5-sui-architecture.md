@@ -98,7 +98,7 @@ predicate, initializes `50,000` energy and zero junk, and performs the existing
 ## Typed proof intents
 
 Each verifier wrapper accepts only one action-specific public-input type. Proof
-interface v1 fixes four public signals in this exact order:
+interface v1 fixes four standard public signals in this exact order:
 
 ```text
 source_location_hash
@@ -116,21 +116,29 @@ For `move` in interface v1, `amount` is the proof's maximum route distance;
 energy and silver amounts remain separate state-transition arguments checked by
 the source Planet and voyage logic.
 
+`move_new = 5` preserves that action commitment and adds
+`destination_space_perlin` as the third public signal, before the commitment.
+The five-signal relation proves the Perlin from private destination coordinates
+and committed geometry. Move uses it only after verification to derive every
+natural-Planet stat, then creates the Planet and Voyage atomically.
+
 Package, circuit, and verifying-key identity are not free transaction fields.
-Each Season pins the exact claim/move `CircuitConfig` object ID, config digest,
+Each Season pins the exact claim/move/move-new `CircuitConfig` object ID, config digest,
 and verifying-key digest. The config digest covers action kind, interface/public
 input versions, circuit source, proving key, verifying key, ceremony transcript,
 and artifact manifest. The entry point obtains the raw key only from that
 config and rejects any ID or digest mismatch.
 Globally unique season and Seat object IDs bind an intent to that deployed
 object graph. Sui's Groth16 native accepts at most eight public field elements;
-v1 uses four. Native inputs are exactly 128 bytes: four canonical BN254 scalar
-elements concatenated as 32-byte little-endian values.
+standard actions use four and `move_new` uses five. Native inputs are exactly
+128 or 160 bytes: canonical BN254 scalars concatenated as 32-byte little-endian
+values.
 The checked-in serializer additionally emits Arkworks canonical-compressed
 BN254 proof points (`128` bytes) and verifying keys (`232 + 32 * IC.length`
-bytes; `392` bytes for four public inputs). Tracked claim and move vectors are
-verified by the Sui native and then exercise real Founding Planet and voyage
-state transitions in Move tests. A source Planet's monotonic proof nonce is in
+bytes; `392` bytes for four public inputs and `424` for five). Tracked claim,
+move, and move-new vectors are verified by the Sui native and then exercise real
+Founding Planet, natural Planet, and voyage state transitions in Move tests. A
+source Planet's monotonic proof nonce is in
 the move intent and increments atomically on every successful dispatch, so the
 same proof cannot be replayed. Production code must use an audited ceremony key
 from a frozen, code-pinned config, never transaction-supplied key bytes.

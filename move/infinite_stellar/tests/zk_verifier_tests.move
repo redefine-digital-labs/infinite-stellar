@@ -7,6 +7,7 @@ use infinite_stellar::zk_verifier;
 fun production_verifiers_are_fail_closed_until_ceremony_and_audit() {
     assert!(!zk_verifier::production_claim_home_verifier_ready());
     assert!(!zk_verifier::production_move_verifier_ready());
+    assert!(!zk_verifier::production_move_new_verifier_ready());
 }
 
 #[test]

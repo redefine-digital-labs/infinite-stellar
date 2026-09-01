@@ -3,6 +3,7 @@ import {
   buildEnrollmentTransaction,
   buildHomeClaimTransaction,
   buildMoveTransaction,
+  buildMoveNewTransaction,
   buildOpenUniverseTransaction,
   UNCONFIGURED_TESTNET,
 } from '../src';
@@ -26,6 +27,14 @@ describe('Sui gateway', () => {
 
   it('keeps real movement proving fail-closed', () => {
     expect(() => buildMoveTransaction(UNCONFIGURED_TESTNET)).toThrowError(
+      expect.objectContaining({
+        code: 'PROOF_VERIFIER_UNAVAILABLE',
+      }),
+    );
+  });
+
+  it('keeps proof-derived natural Planet discovery fail-closed', () => {
+    expect(() => buildMoveNewTransaction(UNCONFIGURED_TESTNET)).toThrowError(
       expect.objectContaining({
         code: 'PROOF_VERIFIER_UNAVAILABLE',
       }),

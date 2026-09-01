@@ -17,7 +17,8 @@
     "claim_home": 1,
     "move": 2,
     "reveal": 3,
-    "capture": 4
+    "capture": 4,
+    "move_new": 5
   },
   "actionCommitment": {
     "hash": "sui_poseidon_bn254",
@@ -105,11 +106,13 @@
   "developmentCandidates": {
     "claimHome": "circuits/src/claim_home_v1.circom",
     "move": "circuits/src/move_v1.circom",
+    "moveNew": "circuits/src/move_new_v1.circom",
     "compiler": "circom-v2.2.3",
     "prover": "snarkjs-v0.7.6",
     "productionEligible": false,
     "remainingRequiredRelations": [],
-    "moveAdapterFixture": "packages/prover/test/fixtures/proof-actions-development.json"
+    "moveAdapterFixture": "packages/prover/test/fixtures/proof-actions-development.json",
+    "moveNewExtension": "config/move-new-proof-interface-v1.json"
   },
   "goldenVector": {
     "network": "sui:mainnet",

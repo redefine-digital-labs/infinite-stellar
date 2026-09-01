@@ -9,7 +9,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const out = resolve(root, 'circuits/build/dev');
 const circom = process.env.CIRCOM_BIN ?? 'circom';
 const snarkjs = resolve(root, 'node_modules/.bin/snarkjs');
-const circuits = ['claim_home_v1', 'move_v1'];
+const circuits = ['claim_home_v1', 'move_v1', 'move_new_v1'];
 const testCircuits = ['round5_perlin_test'];
 
 function run(command, args) {
@@ -33,6 +33,7 @@ async function circuitSourceDigest() {
   const paths = [
     'circuits/src/claim_home_v1.circom',
     'circuits/src/move_v1.circom',
+    'circuits/src/move_new_v1.circom',
     'circuits/src/lib/action_intent_v1.circom',
     'circuits/src/lib/round5_location.circom',
     'circuits/src/lib/round5_perlin.circom',
@@ -127,7 +128,23 @@ for (const circuit of circuits) {
   }
   const circuitId = circuit === 'claim_home_v1'
     ? 'round5-claim-home-development-candidate'
-    : 'round5-move-development-candidate';
+    : circuit === 'move_v1'
+      ? 'round5-move-development-candidate'
+      : 'round5-move-new-development-candidate';
+  const publicSignals = circuit === 'move_new_v1'
+    ? [
+        'source_location_hash',
+        'destination_location_hash',
+        'destination_space_perlin',
+        'action_commitment',
+        'rules_geometry_commitment',
+      ]
+    : [
+        'source_location_hash',
+        'destination_location_hash',
+        'action_commitment',
+        'rules_geometry_commitment',
+      ];
   const manifest = {
     schemaVersion: 1,
     status: 'development',
@@ -136,12 +153,7 @@ for (const circuit of circuits) {
     circuitId,
     circuitVersion: 1,
     curve: 'bn254',
-    publicSignals: [
-      'source_location_hash',
-      'destination_location_hash',
-      'action_commitment',
-      'rules_geometry_commitment',
-    ],
+    publicSignals,
     source: {
       repository,
       commit: sourceCommit,

@@ -21,6 +21,8 @@ const CIRCUIT_CLAIM_ACTION: u256 =
     3061462994074414654632234259829315536673679399742702261024041757068735395695u256;
 const CIRCUIT_MOVE_ACTION: u256 =
     5944891567764051431126369871904075300148615979378029950410975332507680934758u256;
+const CIRCUIT_MOVE_NEW_ACTION: u256 =
+    15641729311414852921669845935476921168532267999925470042850747303705248792148u256;
 
 #[test]
 fun mainnet_claim_home_matches_typescript_golden_vector() {
@@ -113,6 +115,31 @@ fun development_circuit_vectors_match_typescript_and_move() {
         movement,
         RULES_GEOMETRY_COMMITMENT,
     )) == x"09759e8d66e82e99bb1de56e9ffb067f5d35c928c7a635a1d329b1ec1ad86c41");
+
+    let move_new = proof_intent::action_commitment(
+        network,
+        1,
+        proof_intent::action_move_new(),
+        &season_id,
+        &seat_id,
+        @0xa11ce,
+        CIRCUIT_HOME_HASH,
+        CIRCUIT_MOVE_DESTINATION_HASH,
+        198,
+        7,
+        1800000000000,
+        RULES_GEOMETRY_COMMITMENT,
+    );
+    assert!(move_new == CIRCUIT_MOVE_NEW_ACTION);
+    let move_new_inputs = proof_intent::move_new_public_inputs_bytes(
+        CIRCUIT_HOME_HASH,
+        CIRCUIT_MOVE_DESTINATION_HASH,
+        14,
+        move_new,
+        RULES_GEOMETRY_COMMITMENT,
+    );
+    assert!(move_new_inputs.length() == 160);
+    assert!(hash::sha2_256(move_new_inputs) == x"8ecc4519c5993ce6703eeb407f2996e94ea41b7c6c733b30595347b5b4a71bed");
 }
 
 #[test]

@@ -8,6 +8,10 @@ import {
   type ProofArtifactSelection,
   type ProofFetcher,
 } from '../src/artifact-manifest';
+import {
+  MOVE_NEW_PUBLIC_SIGNAL_ORDER,
+  PROOF_PUBLIC_SIGNAL_ORDER,
+} from '../src/proof-intent';
 
 const encoder = new TextEncoder();
 const ARTIFACTS = {
@@ -80,6 +84,7 @@ function fixture(overrides: Partial<ProofArtifactSelection> = {}, status: 'devel
     expectedRulesetId: 'dark-forest-v06-round5',
     expectedCircuitId: 'round5-move',
     expectedCircuitVersion: 1,
+    expectedPublicSignals: PROOF_PUBLIC_SIGNAL_ORDER,
     ...overrides,
   };
   return { body, selection };
@@ -126,6 +131,34 @@ describe('proof artifact manifest preflight', () => {
     expect(progress).toHaveBeenLastCalledWith(expect.objectContaining({ loadedArtifacts: 3 }));
   });
 
+  it('accepts the pinned five-signal move-new extension and rejects other orders', async () => {
+    const moveNew = manifest();
+    moveNew.circuitId = 'round5-move-new';
+    moveNew.publicSignals = [
+      'source_location_hash',
+      'destination_location_hash',
+      'destination_space_perlin',
+      'action_commitment',
+      'rules_geometry_commitment',
+    ];
+    const body = encoder.encode(JSON.stringify(moveNew));
+    const selection = fixture({
+      manifestSha256: digest(body),
+      expectedCircuitId: 'round5-move-new',
+      expectedPublicSignals: MOVE_NEW_PUBLIC_SIGNAL_ORDER,
+    }).selection;
+    await expect(loadProofArtifacts(selection, fetcherFor(body))).resolves.toMatchObject({
+      manifest: { publicSignals: moveNew.publicSignals },
+    });
+
+    moveNew.publicSignals = [...moveNew.publicSignals].reverse();
+    const invalidBody = encoder.encode(JSON.stringify(moveNew));
+    await expectCode(loadProofArtifacts(
+      { ...selection, manifestSha256: digest(invalidBody) },
+      fetcherFor(invalidBody),
+    ), 'INVALID_MANIFEST');
+  });
+
   it('rejects an unpinned or mismatched manifest', async () => {
     const { body, selection } = fixture({ manifestSha256: 'f'.repeat(64) });
     await expectCode(loadProofArtifacts(selection, fetcherFor(body)), 'UNPINNED_MANIFEST');
@@ -138,6 +171,11 @@ describe('proof artifact manifest preflight', () => {
     ['expectedCircuitVersion', 2],
   ] as const)('rejects a mismatched %s', async (key, value) => {
     const { body, selection } = fixture({ [key]: value });
+    await expectCode(loadProofArtifacts(selection, fetcherFor(body)), 'MANIFEST_MISMATCH');
+  });
+
+  it('rejects a manifest whose public-signal order differs from the selected action', async () => {
+    const { body, selection } = fixture({ expectedPublicSignals: MOVE_NEW_PUBLIC_SIGNAL_ORDER });
     await expectCode(loadProofArtifacts(selection, fetcherFor(body)), 'MANIFEST_MISMATCH');
   });
 

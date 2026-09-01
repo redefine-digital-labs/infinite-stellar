@@ -1,6 +1,10 @@
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
-import { PROOF_PUBLIC_SIGNAL_ORDER, type ProofPublicSignalName } from './proof-intent';
+import {
+  MOVE_NEW_PUBLIC_SIGNAL_ORDER,
+  PROOF_PUBLIC_SIGNAL_ORDER,
+  type ProofPublicSignalName,
+} from './proof-intent';
 
 export const PROOF_ARTIFACT_MANIFEST_VERSION = 1 as const;
 export const PROOF_ARTIFACT_WORKER_VERSION = 1 as const;
@@ -49,6 +53,7 @@ export interface ProofArtifactSelection {
   expectedRulesetId: string;
   expectedCircuitId: string;
   expectedCircuitVersion: number;
+  expectedPublicSignals: readonly ProofPublicSignalName[];
   allowCrossOriginArtifacts?: boolean;
   maxTotalBytes?: number;
 }
@@ -147,6 +152,12 @@ export function parseProofArtifactManifest(raw: string): ProofArtifactManifestV1
   if (!record(value)) throw new ProofArtifactError('INVALID_MANIFEST', 'The proof artifact manifest must be an object.');
   const source = value.source;
   const trustedSetup = value.trustedSetup;
+  const publicSignals = Array.isArray(value.publicSignals)
+    ? value.publicSignals.join(':')
+    : '';
+  const supportedPublicSignals =
+    publicSignals === PROOF_PUBLIC_SIGNAL_ORDER.join(':') ||
+    publicSignals === MOVE_NEW_PUBLIC_SIGNAL_ORDER.join(':');
   if (
     value.schemaVersion !== PROOF_ARTIFACT_MANIFEST_VERSION ||
     (value.status !== 'development' && value.status !== 'production') ||
@@ -155,8 +166,7 @@ export function parseProofArtifactManifest(raw: string): ProofArtifactManifestV1
     typeof value.circuitId !== 'string' ||
     !Number.isSafeInteger(value.circuitVersion) || Number(value.circuitVersion) < 1 ||
     value.curve !== 'bn254' ||
-    !Array.isArray(value.publicSignals) ||
-    value.publicSignals.join(':') !== PROOF_PUBLIC_SIGNAL_ORDER.join(':') ||
+    !supportedPublicSignals ||
     !record(source) ||
     typeof source.repository !== 'string' ||
     typeof source.commit !== 'string' || !/^[0-9a-f]{40}$/.test(source.commit) ||
@@ -190,7 +200,7 @@ export function parseProofArtifactManifest(raw: string): ProofArtifactManifestV1
     circuitId: value.circuitId,
     circuitVersion: Number(value.circuitVersion),
     curve: 'bn254',
-    publicSignals: [...PROOF_PUBLIC_SIGNAL_ORDER],
+    publicSignals: [...value.publicSignals as ProofPublicSignalName[]],
     source: {
       repository: source.repository,
       commit: source.commit,
@@ -217,7 +227,8 @@ function assertSelection(manifest: ProofArtifactManifestV1, selection: ProofArti
     manifest.network !== selection.expectedNetwork ||
     manifest.rulesetId !== selection.expectedRulesetId ||
     manifest.circuitId !== selection.expectedCircuitId ||
-    manifest.circuitVersion !== selection.expectedCircuitVersion
+    manifest.circuitVersion !== selection.expectedCircuitVersion ||
+    manifest.publicSignals.join(':') !== selection.expectedPublicSignals.join(':')
   ) {
     throw new ProofArtifactError('MANIFEST_MISMATCH', 'The proof manifest does not match the active season selection.');
   }

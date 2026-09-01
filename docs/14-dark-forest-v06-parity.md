@@ -68,7 +68,7 @@ planet initialization always derive type from location byte `8`.
 | REV-DF-001 | Reveal | Proof-bound public coordinates, global deduplication, and three-hour cooldown match | Integrated under fixture proofs |
 | LIF-DF-001 | Round lifecycle | Pause, mint cutoff, round close, score finality, and settlement are one-way | Integrated under fixture proofs |
 | SOU-IS-001 | Soul commander | One Soul projection selects a fixed Season Seat without changing gameplay math | Integrated; production adapter blocked |
-| ZKP-IS-001 | Sui verifier | Config-bound BN254 Groth16 claim/move intents and replay nonce; production stays fail-closed until audited ceremony activation | Development adapters integrated; production blocked |
+| ZKP-IS-001 | Sui verifier | Config-bound BN254 Groth16 claim/move/move-new intents, proof-derived natural-Planet Perlin, and replay nonce; production stays fail-closed until audited ceremony activation | Development adapters integrated; production blocked |
 | UI-IS-001 | Player client | Discover, inspect, move, fight, upgrade, use artifacts, reveal, capture, score, and settle | Local rules sandbox integrated |
 
 ## Canonical enumerations
@@ -268,12 +268,15 @@ The reference circuits prove:
 - biome perlin matching the committed coordinates for artifact discovery.
 
 Infinite Stellar uses Sui's BN254 Groth16 natives behind typed proof intents.
-Every claim/move intent commits to network/league, season, action kind, Seat,
+Every claim/move/move-new intent commits to network/league, season, action kind, Seat,
 sender, location hashes, source nonce, deadline, and rules geometry. Each Season
-separately binds the exact circuit-config object and config/verifying-key
-digests. Move recomputes those inputs and constructs its package-internal
-witness only after native verification succeeds. Real development proofs cover
-home creation and nonce-bound fleet dispatch in tests. Public production paths
+separately binds the exact per-action circuit-config object and
+config/verifying-key digests. Standard claim/move statements retain the frozen
+four signals. `move_new` adds proof-derived destination space Perlin as a fifth
+signal, then atomically creates the neutral Planet and its colonizing Voyage.
+Move constructs package-internal witnesses only after native verification
+succeeds. Real development proofs cover home creation, nonce-bound fleet
+dispatch, and natural-Planet creation in tests. Public production paths
 remain fail-closed until circuits, trusted-setup provenance, verifier keys, gas
 limits, and independent audits are approved.
 

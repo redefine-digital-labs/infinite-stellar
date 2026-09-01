@@ -71,12 +71,13 @@ The official client may present these systems as one journey. Onchain authorizat
 `CircuitConfig` is also frozen and contains:
 
 - Config schema, action kind, proof-interface version, and public-input count.
-- The raw `392`-byte Arkworks BN254 key for the four-input interface.
+- The raw Arkworks BN254 key: `392` bytes for standard four-input actions or
+  `424` bytes for the five-input `move_new` extension.
 - Circuit-source, proving-key, verifying-key, ceremony-transcript, and artifact-
   manifest SHA-256 digests.
 - A fixed-width domain-separated config digest and production-approval bit.
 
-Each `SeasonManifest` stores the network field plus the exact claim/move config
+Each `SeasonManifest` stores the network field plus exact claim/move/move-new config
 object IDs, config digests, and verifying-key digests. The current package has
 no runtime constructor capable of setting production approval; a later audited
 revision must construct configs only from code-pinned ceremony constants and
@@ -148,7 +149,7 @@ The Seat's shared `AgentControlState` stores the current generation and bounded 
 
 Do not place all planets inside a global `Universe` table.
 
-The preferred hypothesis is a small fixed set of `SectorRegistry` shared objects. `claim_home` or `move_new` uses one registry shard and a public `location_hash` as the key to claim a deterministic derived object ID. This gives one-per-key uniqueness, not ownership. From `AwaitingHome`, a successful `claim_home` validates the matching logical home slot and atomically consumes it, creates the one Founding Planet with `owner_seat_id = seat_id`, records `initial_home_planet_id`, increments the controlled count, and changes the Civilization to `Active`. A failed proof, occupied location, rejected signature, sponsor failure, cross-Seat substitution, or abort changes none of those facts. `move_new` creates a neutral destination whose arrival must later colonize it. After creation, the resulting `Planet` is a top-level shared derived object and ordinary updates do not require the registry.
+The preferred hypothesis is a small fixed set of `SectorRegistry` shared objects. `claim_home` or `move_new` uses one registry shard and a public `location_hash` as the key to claim a deterministic derived object ID. This gives one-per-key uniqueness, not ownership. From `AwaitingHome`, a successful `claim_home` validates the matching logical home slot and atomically consumes it, creates the one Founding Planet with `owner_seat_id = seat_id`, records `initial_home_planet_id`, increments the controlled count, and changes the Civilization to `Active`. A failed proof, occupied location, rejected signature, sponsor failure, cross-Seat substitution, or abort changes none of those facts. `move_new` verifies an action-specific fifth public signal, `destination_space_perlin`, initializes every natural-Planet stat from the proven location and Perlin, and dispatches the colonizing voyage in the same transaction. The caller supplies no trusted stat. If proof verification or any later voyage check aborts, the derived-object claim, Planet, source nonce/energy, and Voyage all roll back. After successful creation, the resulting neutral `Planet` is a top-level shared derived object and ordinary updates do not require the registry.
 
 The shard function must depend only on the location commitment and season domain, not on private coordinate bits that would leak geography.
 
@@ -266,7 +267,7 @@ action_commitment
 rules_geometry_commitment
 ```
 
-`rules_geometry_commitment` is derived inside the circuit from the schema/domain, world radius, exact planet-hash threshold, location/space keys, Perlin scale and mirrors, and the inclusive/exclusive home band. Move recomputes the same Poseidon value from immutable `SeasonManifest` fields; an unconstrained configuration hash is not acceptable. The exact 16-field Poseidon action tuple, identifier limbs, four-signal order, BN254 limits, little-endian scalar serialization, Arkworks point serialization, and mainnet golden vector are normative in [`16-proof-interface-and-artifact-preflight.md`](16-proof-interface-and-artifact-preflight.md) and [`config/proof-interface-v1.json`](../config/proof-interface-v1.json). TypeScript, Circom, and Move agree on that interface. Tracked development proofs pass through config binding and Sui-native verification before creating a Founding Planet or nonce-bound Voyage. Production artifacts, ceremony keys, independent audit, and production-config activation remain unavailable before any ranked write.
+`rules_geometry_commitment` is derived inside the circuit from the schema/domain, world radius, exact planet-hash threshold, location/space keys, Perlin scale and mirrors, and the inclusive/exclusive home band. Move recomputes the same Poseidon value from immutable `SeasonManifest` fields; an unconstrained configuration hash is not acceptable. The exact 16-field Poseidon action tuple, identifier limbs, standard four-signal order, `move_new` five-signal extension, BN254 limits, little-endian scalar serialization, Arkworks point serialization, and mainnet golden vectors are normative in [`16-proof-interface-and-artifact-preflight.md`](16-proof-interface-and-artifact-preflight.md), [`config/proof-interface-v1.json`](../config/proof-interface-v1.json), and [`config/move-new-proof-interface-v1.json`](../config/move-new-proof-interface-v1.json). TypeScript, Circom, and Move agree on those layouts. Tracked development proofs pass through config binding and Sui-native verification before creating a Founding Planet, nonce-bound Voyage, or proof-derived natural Planet. Production artifacts, ceremony keys, independent audit, and production-config activation remain unavailable before any ranked write.
 
 ### Circuit stack
 

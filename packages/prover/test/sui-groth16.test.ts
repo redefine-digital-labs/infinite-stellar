@@ -55,6 +55,27 @@ describe('snarkjs to Sui Groth16 serialization', () => {
     );
   });
 
+  it('derives a five-input, 424-byte move-new config without weakening standard actions', () => {
+    const bytes32 = (value: number) => new Uint8Array(32).fill(value);
+    const result = createCircuitConfigDigest({
+      actionKind: 'move_new',
+      circuitSourceDigest: bytes32(1),
+      provingKeyDigest: bytes32(2),
+      ceremonyTranscriptDigest: bytes32(3),
+      artifactManifestDigest: bytes32(4),
+      verifyingKeyBytes: new Uint8Array(424),
+    });
+    expect(result.publicInputCount).toBe(5);
+    expect(() => createCircuitConfigDigest({
+      actionKind: 'move_new',
+      circuitSourceDigest: bytes32(1),
+      provingKeyDigest: bytes32(2),
+      ceremonyTranscriptDigest: bytes32(3),
+      artifactManifestDigest: bytes32(4),
+      verifyingKeyBytes: new Uint8Array(392),
+    })).toThrow(/424-byte/);
+  });
+
   it('rejects mismatched curve and public-input metadata before point conversion', async () => {
     const proof = { protocol: 'groth16', curve: 'bls12381' } as SnarkjsGroth16Proof;
     const verificationKey = { protocol: 'groth16', curve: 'bn128', nPublic: 4, IC: [] } as unknown as SnarkjsGroth16VerificationKey;
@@ -88,6 +109,6 @@ describe('snarkjs to Sui Groth16 serialization', () => {
       ceremonyTranscriptDigest: bytes32,
       artifactManifestDigest: bytes32,
       verifyingKeyBytes: new Uint8Array(392),
-    })).toThrow(/claim_home or move/);
+    })).toThrow(/claim_home, move, or move_new/);
   });
 });

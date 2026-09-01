@@ -26,14 +26,25 @@ export const PROOF_PUBLIC_SIGNAL_ORDER = [
   'rules_geometry_commitment',
 ] as const;
 
-export type ProofPublicSignalName = typeof PROOF_PUBLIC_SIGNAL_ORDER[number];
-export type ProofActionKind = 'claim_home' | 'move' | 'reveal' | 'capture';
+export const MOVE_NEW_PUBLIC_SIGNAL_ORDER = [
+  'source_location_hash',
+  'destination_location_hash',
+  'destination_space_perlin',
+  'action_commitment',
+  'rules_geometry_commitment',
+] as const;
+
+export type ProofPublicSignalName =
+  | typeof PROOF_PUBLIC_SIGNAL_ORDER[number]
+  | typeof MOVE_NEW_PUBLIC_SIGNAL_ORDER[number];
+export type ProofActionKind = 'claim_home' | 'move' | 'reveal' | 'capture' | 'move_new';
 
 export const PROOF_ACTION_KIND: Readonly<Record<ProofActionKind, number>> = {
   claim_home: 1,
   move: 2,
   reveal: 3,
   capture: 4,
+  move_new: 5,
 };
 
 export interface ProofIntentV1 {
@@ -62,6 +73,13 @@ export interface ProofIntentCommitmentV1 {
   publicInputDigest: string;
 }
 
+export interface MoveNewProofIntentCommitmentV1
+  extends Omit<ProofIntentCommitmentV1, 'publicSignals' | 'publicInputBytes' | 'publicInputDigest'> {
+  publicSignals: readonly [bigint, bigint, bigint, bigint, bigint];
+  publicInputBytes: Uint8Array;
+  publicInputDigest: string;
+}
+
 export interface RulesGeometryV1 {
   worldRadius: number | bigint;
   planetHashThreshold: string | bigint;
@@ -75,7 +93,7 @@ export interface RulesGeometryV1 {
 }
 
 export interface CircuitConfigV1Input {
-  actionKind: 'claim_home' | 'move';
+  actionKind: 'claim_home' | 'move' | 'move_new';
   circuitSourceDigest: Uint8Array;
   provingKeyDigest: Uint8Array;
   ceremonyTranscriptDigest: Uint8Array;
@@ -87,7 +105,7 @@ export interface CircuitConfigV1Digest {
   schemaVersion: typeof CIRCUIT_CONFIG_SCHEMA_VERSION;
   actionKind: number;
   proofInterfaceVersion: typeof PROOF_INTERFACE_VERSION;
-  publicInputCount: 4;
+  publicInputCount: 4 | 5;
   verifyingKeyDigest: Uint8Array;
   configDigest: Uint8Array;
 }
@@ -159,19 +177,30 @@ function digest32(value: Uint8Array, name: string): Uint8Array {
 /// immutable Sui Move CircuitConfig object. The raw verifying key is hashed,
 /// never embedded in a JSON identity tuple by reference.
 export function createCircuitConfigDigest(input: CircuitConfigV1Input): CircuitConfigV1Digest {
-  if (!(input.verifyingKeyBytes instanceof Uint8Array) || input.verifyingKeyBytes.length !== 392) {
-    throw new RangeError('verifyingKeyBytes must be the 392-byte BN254 interface-v1 Arkworks key.');
-  }
   const actionKind = PROOF_ACTION_KIND[input.actionKind];
-  if (actionKind !== PROOF_ACTION_KIND.claim_home && actionKind !== PROOF_ACTION_KIND.move) {
-    throw new RangeError('CircuitConfig actionKind must be claim_home or move.');
+  if (
+    actionKind !== PROOF_ACTION_KIND.claim_home &&
+    actionKind !== PROOF_ACTION_KIND.move &&
+    actionKind !== PROOF_ACTION_KIND.move_new
+  ) {
+    throw new RangeError('CircuitConfig actionKind must be claim_home, move, or move_new.');
+  }
+  const publicInputCount = actionKind === PROOF_ACTION_KIND.move_new ? 5 : 4;
+  const expectedVerifyingKeyBytes = 232 + (publicInputCount + 1) * 32;
+  if (
+    !(input.verifyingKeyBytes instanceof Uint8Array) ||
+    input.verifyingKeyBytes.length !== expectedVerifyingKeyBytes
+  ) {
+    throw new RangeError(
+      `verifyingKeyBytes must be the ${expectedVerifyingKeyBytes}-byte BN254 interface-v1 Arkworks key for ${input.actionKind}.`,
+    );
   }
   const verifyingKeyDigest = sha256(input.verifyingKeyBytes);
   const encoded = [...new TextEncoder().encode(CIRCUIT_CONFIG_DOMAIN)];
   appendU64LittleEndian(encoded, BigInt(CIRCUIT_CONFIG_SCHEMA_VERSION));
   encoded.push(actionKind);
   appendU64LittleEndian(encoded, BigInt(PROOF_INTERFACE_VERSION));
-  encoded.push(PROOF_PUBLIC_SIGNAL_ORDER.length);
+  encoded.push(publicInputCount);
   encoded.push(...digest32(input.circuitSourceDigest, 'circuitSourceDigest'));
   encoded.push(...digest32(input.provingKeyDigest, 'provingKeyDigest'));
   encoded.push(...verifyingKeyDigest);
@@ -181,7 +210,7 @@ export function createCircuitConfigDigest(input: CircuitConfigV1Input): CircuitC
     schemaVersion: CIRCUIT_CONFIG_SCHEMA_VERSION,
     actionKind,
     proofInterfaceVersion: PROOF_INTERFACE_VERSION,
-    publicInputCount: 4,
+    publicInputCount,
     verifyingKeyDigest,
     configDigest: sha256(Uint8Array.from(encoded)),
   };
@@ -242,8 +271,8 @@ function littleEndian32(value: bigint): Uint8Array {
 }
 
 export function serializeProofPublicSignals(signals: readonly bigint[]): Uint8Array {
-  if (signals.length !== PROOF_PUBLIC_SIGNAL_ORDER.length) {
-    throw new RangeError(`Proof interface v1 requires exactly ${PROOF_PUBLIC_SIGNAL_ORDER.length} public signals.`);
+  if (signals.length !== PROOF_PUBLIC_SIGNAL_ORDER.length && signals.length !== MOVE_NEW_PUBLIC_SIGNAL_ORDER.length) {
+    throw new RangeError('Proof interface v1 requires exactly four or five public signals.');
   }
   const output = new Uint8Array(signals.length * 32);
   signals.forEach((signal, index) => output.set(littleEndian32(field(signal, `publicSignals[${index}]`)), index * 32));
@@ -295,6 +324,31 @@ export function createProofIntentCommitment(intent: ProofIntentV1): ProofIntentC
     networkField,
     contextField,
     actionFields,
+    publicSignals,
+    publicInputBytes,
+    publicInputDigest: bytesToHex(sha256(publicInputBytes)),
+  };
+}
+
+export function createMoveNewProofIntentCommitment(
+  intent: ProofIntentV1,
+  destinationSpacePerlin: number | bigint,
+): MoveNewProofIntentCommitmentV1 {
+  if (intent.actionKind !== 'move_new') {
+    throw new RangeError('A move-new public statement requires actionKind move_new.');
+  }
+  const base = createProofIntentCommitment(intent);
+  const perlin = bounded(destinationSpacePerlin, 31n, 'destinationSpacePerlin');
+  const publicSignals = [
+    base.publicSignals[0],
+    base.publicSignals[1],
+    perlin,
+    base.publicSignals[2],
+    base.publicSignals[3],
+  ] as const;
+  const publicInputBytes = serializeProofPublicSignals(publicSignals);
+  return {
+    ...base,
     publicSignals,
     publicInputBytes,
     publicInputDigest: bytesToHex(sha256(publicInputBytes)),

@@ -10,6 +10,7 @@ const ACTION_CLAIM_HOME: u8 = 1;
 const ACTION_MOVE: u8 = 2;
 const ACTION_REVEAL: u8 = 3;
 const ACTION_CAPTURE: u8 = 4;
+const ACTION_MOVE_NEW: u8 = 5;
 
 const DOMAIN_FIELD: u256 =
     13909138997969785233372616111572825994268025797777928597047068964955765571998u256;
@@ -33,6 +34,7 @@ public fun action_claim_home(): u8 { ACTION_CLAIM_HOME }
 public fun action_move(): u8 { ACTION_MOVE }
 public fun action_reveal(): u8 { ACTION_REVEAL }
 public fun action_capture(): u8 { ACTION_CAPTURE }
+public fun action_move_new(): u8 { ACTION_MOVE_NEW }
 
 public fun assert_supported_network(network_tag: u256) {
     assert!(
@@ -73,7 +75,8 @@ public fun action_commitment(
         action_kind == ACTION_CLAIM_HOME ||
             action_kind == ACTION_MOVE ||
             action_kind == ACTION_REVEAL ||
-            action_kind == ACTION_CAPTURE,
+            action_kind == ACTION_CAPTURE ||
+            action_kind == ACTION_MOVE_NEW,
         EInvalidActionKind,
     );
     let (season_low, season_high) = split_identifier(object::id_to_address(season_id));
@@ -113,6 +116,29 @@ public fun public_inputs_bytes(
     assert_canonical_field(rules_geometry_commitment);
     let mut bytes = bcs::to_bytes(&source_location_hash);
     bytes.append(bcs::to_bytes(&destination_location_hash));
+    bytes.append(bcs::to_bytes(&action_commitment));
+    bytes.append(bcs::to_bytes(&rules_geometry_commitment));
+    bytes
+}
+
+/// Action-specific extension for a move to an uninitialized coordinate. The
+/// proof-derived space Perlin is public so Move can deterministically derive
+/// every natural-Planet stat without trusting a caller-supplied value.
+public fun move_new_public_inputs_bytes(
+    source_location_hash: u256,
+    destination_location_hash: u256,
+    destination_space_perlin: u8,
+    action_commitment: u256,
+    rules_geometry_commitment: u256,
+): vector<u8> {
+    assert!(destination_space_perlin < 32, ENonCanonicalField);
+    assert_canonical_field(source_location_hash);
+    assert_canonical_field(destination_location_hash);
+    assert_canonical_field(action_commitment);
+    assert_canonical_field(rules_geometry_commitment);
+    let mut bytes = bcs::to_bytes(&source_location_hash);
+    bytes.append(bcs::to_bytes(&destination_location_hash));
+    bytes.append(bcs::to_bytes(&(destination_space_perlin as u256)));
     bytes.append(bcs::to_bytes(&action_commitment));
     bytes.append(bcs::to_bytes(&rules_geometry_commitment));
     bytes

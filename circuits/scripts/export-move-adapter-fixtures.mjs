@@ -92,6 +92,7 @@ const fixture = {
   deadlineMs: '1800000000000',
   claimHome: await buildFixture('claim_home_v1', 'claim_home'),
   move: await buildFixture('move_v1', 'move'),
+  moveNew: await buildFixture('move_new_v1', 'move_new'),
 };
 
 await writeFile(output, `${JSON.stringify(fixture, null, 2)}\n`);

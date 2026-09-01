@@ -5,8 +5,10 @@ use std::hash;
 use infinite_stellar::proof_intent;
 
 const SCHEMA_VERSION: u64 = 1;
-const PUBLIC_INPUT_COUNT: u8 = 4;
-const BN254_V1_VERIFYING_KEY_BYTES: u64 = 392;
+const STANDARD_PUBLIC_INPUT_COUNT: u8 = 4;
+const MOVE_NEW_PUBLIC_INPUT_COUNT: u8 = 5;
+const BN254_STANDARD_VERIFYING_KEY_BYTES: u64 = 392;
+const BN254_MOVE_NEW_VERIFYING_KEY_BYTES: u64 = 424;
 const DIGEST_BYTES: u64 = 32;
 const DOMAIN: vector<u8> = b"INFINITE_STELLAR_CIRCUIT_CONFIG_V1";
 
@@ -71,23 +73,27 @@ fun new_config(
 ): CircuitConfig {
     assert!(
         action_kind == proof_intent::action_claim_home() ||
-            action_kind == proof_intent::action_move(),
+            action_kind == proof_intent::action_move() ||
+            action_kind == proof_intent::action_move_new(),
         EInvalidConfig,
     );
     assert!(circuit_source_digest.length() == DIGEST_BYTES, EInvalidConfig);
     assert!(proving_key_digest.length() == DIGEST_BYTES, EInvalidConfig);
     assert!(ceremony_transcript_digest.length() == DIGEST_BYTES, EInvalidConfig);
     assert!(artifact_manifest_digest.length() == DIGEST_BYTES, EInvalidConfig);
-    assert!(
-        verifying_key_bytes.length() == BN254_V1_VERIFYING_KEY_BYTES,
-        EInvalidConfig,
-    );
+    let public_input_count = expected_public_input_count(action_kind);
+    let expected_verifying_key_bytes = if (action_kind == proof_intent::action_move_new()) {
+        BN254_MOVE_NEW_VERIFYING_KEY_BYTES
+    } else {
+        BN254_STANDARD_VERIFYING_KEY_BYTES
+    };
+    assert!(verifying_key_bytes.length() == expected_verifying_key_bytes, EInvalidConfig);
     let verifying_key_digest = hash::sha2_256(verifying_key_bytes);
     let proof_interface_version = proof_intent::interface_version();
     let config_digest = calculate_digest(
         action_kind,
         proof_interface_version,
-        PUBLIC_INPUT_COUNT,
+        public_input_count,
         &circuit_source_digest,
         &proving_key_digest,
         &verifying_key_digest,
@@ -99,7 +105,7 @@ fun new_config(
         schema_version: SCHEMA_VERSION,
         action_kind,
         proof_interface_version,
-        public_input_count: PUBLIC_INPUT_COUNT,
+        public_input_count,
         circuit_source_digest,
         proving_key_digest,
         verifying_key_digest,
@@ -114,8 +120,21 @@ fun new_config(
 public(package) fun assert_action(config: &CircuitConfig, expected_action: u8) {
     assert!(config.schema_version == SCHEMA_VERSION, EInvalidConfig);
     assert!(config.proof_interface_version == proof_intent::interface_version(), EInvalidConfig);
-    assert!(config.public_input_count == PUBLIC_INPUT_COUNT, EInvalidConfig);
+    assert!(config.public_input_count == expected_public_input_count(expected_action), EInvalidConfig);
     assert!(config.action_kind == expected_action, EWrongAction);
+}
+
+fun expected_public_input_count(action_kind: u8): u8 {
+    if (action_kind == proof_intent::action_move_new()) {
+        MOVE_NEW_PUBLIC_INPUT_COUNT
+    } else {
+        assert!(
+            action_kind == proof_intent::action_claim_home() ||
+                action_kind == proof_intent::action_move(),
+            EInvalidConfig,
+        );
+        STANDARD_PUBLIC_INPUT_COUNT
+    }
 }
 
 public(package) fun assert_bound(

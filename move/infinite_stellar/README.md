@@ -18,14 +18,15 @@ Implemented modules:
 - `soul_adapter`: closed production seam for the unfinished Soulidity ABI.
 - `planet`: closed verifier seam and atomic Founding Planet activation.
 - `circuit_config`: per-action circuit, key, ceremony, and artifact identity.
-- `proof_actions`: recomputes claim/move intent, verifies Groth16, and creates
-  package-internal witnesses only after successful verification.
+- `proof_actions`: recomputes claim/move/move-new intent, verifies Groth16, and
+  creates package-internal witnesses only after successful verification.
 - `zk_verifier`: Sui-native Groth16 byte bridge and fail-closed production
   readiness probes.
 - `voyage`: nonce-consuming fleet dispatch and deterministic delayed arrivals.
 
-The test suite executes real development Groth16 proofs through home activation
-and fleet dispatch, including config substitution and replay rejection. Those
+The test suite executes real development Groth16 proofs through home activation,
+fleet dispatch, and atomic natural-Planet initialization plus dispatch,
+including Perlin substitution, config substitution, and replay rejection. Those
 development configs and adapters are exposed only under `#[test_only]`. Runtime
 production config construction, Soul enrollment, and ranked proof acceptance
 remain impossible until audited ceremony constants and the final Soulidity ABI

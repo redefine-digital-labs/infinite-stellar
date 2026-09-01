@@ -86,4 +86,23 @@ describe('Groth16 proof runtime', () => {
       code: 'SELF_VERIFICATION_FAILED',
     });
   });
+
+  it('accepts a manifest-pinned five-signal move-new proof', async () => {
+    const moveNew = loaded();
+    moveNew.manifest.publicSignals = [
+      'source_location_hash',
+      'destination_location_hash',
+      'destination_space_perlin',
+      'action_commitment',
+      'rules_geometry_commitment',
+    ];
+    vi.mocked(groth16.fullProve).mockResolvedValue({
+      proof: validProof,
+      publicSignals: ['1', '2', '14', '3', '4'],
+    });
+    vi.mocked(groth16.verify).mockResolvedValue(true);
+    await expect(generateAndVerifyGroth16Proof(moveNew, {})).resolves.toMatchObject({
+      publicSignals: ['1', '2', '14', '3', '4'],
+    });
+  });
 });

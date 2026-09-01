@@ -32,13 +32,16 @@ public fun create_season(
     proof_network_field: u256,
     claim_home_config: &CircuitConfig,
     move_config: &CircuitConfig,
+    move_new_config: &CircuitConfig,
     ctx: &mut TxContext,
 ): season::SeasonAdminCap {
     proof_intent::assert_supported_network(proof_network_field);
     circuit_config::assert_action(claim_home_config, proof_intent::action_claim_home());
     circuit_config::assert_action(move_config, proof_intent::action_move());
+    circuit_config::assert_action(move_new_config, proof_intent::action_move_new());
     circuit_config::assert_production_approved(claim_home_config);
     circuit_config::assert_production_approved(move_config);
+    circuit_config::assert_production_approved(move_new_config);
     let (mut manifest, runtime, admin_cap) = season::new_season(
         league,
         enrollment_close_at_ms,
@@ -66,6 +69,9 @@ public fun create_season(
         object::id(move_config),
         *circuit_config::config_digest(move_config),
         *circuit_config::verifying_key_digest(move_config),
+        object::id(move_new_config),
+        *circuit_config::config_digest(move_new_config),
+        *circuit_config::verifying_key_digest(move_new_config),
         ctx,
     );
     let season_id = season::season_id(&manifest);

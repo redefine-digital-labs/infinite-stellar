@@ -4,7 +4,7 @@
 
 **Infinite Stellar is a Soul-centered, zero-knowledge, fully onchain seasonal strategy game built on Sui.**
 
-> **Status:** Experimental pre-production testnet canary plus a playable local Round 5 rules sandbox. The repository now contains Sui Move state machines, a mainnet-bound proof-intent interface, complete but unaudited development `claim_home`/`move` Groth16 relations, deterministic snarkjs-to-Sui Arkworks serialization, content-addressed Prover Worker preflight and local self-verification, and an English client for private discovery, exact Worker-based MiMC/Perlin frontier mining, an authenticated encrypted device vault, planet defaults, energy/silver, voyages/combat, upgrades, artifacts, five ships, junk/abandonment, reveal/capture, score, and Last Light settlement. Ranked Soul enrollment and proof-backed production writes remain unavailable and fail closed.
+> **Status:** Experimental pre-production testnet canary plus a playable local Round 5 rules sandbox. The repository now contains Sui Move state machines, a mainnet-bound proof-intent interface, complete but unaudited development `claim_home`, `move`, and proof-derived `move_new` Groth16 relations, deterministic snarkjs-to-Sui Arkworks serialization, content-addressed Prover Worker preflight and local self-verification, and an English client for private discovery, exact Worker-based MiMC/Perlin frontier mining, an authenticated encrypted device vault, planet defaults, energy/silver, voyages/combat, upgrades, artifacts, five ships, junk/abandonment, reveal/capture, score, and Last Light settlement. Ranked Soul enrollment and proof-backed production writes remain unavailable and fail closed.
 
 The name describes an endless succession of bounded stellar worlds, not one season that runs forever. A player's civilization disappears when its universe closes; the Soul remains as the persistent actor and carries only verifiable history, relationships, and expression into the next world.
 
@@ -96,6 +96,7 @@ Mainnet is gated by circuit, contract, performance, privacy, indexer-rebuild, op
 | [`move/infinite_stellar`](move/infinite_stellar) | Sui Move season, identity, Planet, voyage, artifact, reveal, capture, score, and settlement state machines |
 | [Round 5 rules manifest](config/dark-forest-v06-round5.json) | Machine-readable constants, enumerations, ship effects, and preserved contract quirks |
 | [Proof interface v1](config/proof-interface-v1.json) | Machine-readable field order, constants, mainnet domain, serialization, and golden vector |
+| [Move-new proof extension v1](config/move-new-proof-interface-v1.json) | Five-signal natural-Planet initialization statement, proof-derived Perlin, and config shape |
 | [Sui testnet deployment](ops/deployments/sui-testnet-v0.1.0.json) | Immutable package, transaction, capability, canary-object, source-commit, and readiness evidence |
 
 ## Run the player vertical slice
@@ -149,7 +150,7 @@ Implemented directories are shown above. The remaining entries are roadmap targe
 
 - **Phase:** Experimental testnet interface canary plus player-facing full-stack vertical slice
 - **Network:** Sui testnet package and sealed canary deployed; no mainnet deployment
-- **Implementation:** Round 5 gameplay state machines are implemented in Move; complete development claim/move relations constrain manifest-committed MiMC, rarity, radius, Perlin, home-band, distance, and action intent; each Season now binds exact circuit-config IDs and digests; real development Groth16 proofs create a Founding Planet and dispatch a nonce-bound fleet in Sui Move tests; production configs, Soul enrollment, and ranked writes remain fail-closed; the Prover Worker rejects unpinned artifacts; the SDK and responsive client provide a playable local compatibility sandbox backed by canonical universe and rules vectors
+- **Implementation:** Round 5 gameplay state machines are implemented in Move; complete development claim/move/move-new relations constrain manifest-committed MiMC, rarity, radius, Perlin, home-band, distance, and action intent; each Season binds exact per-action circuit-config IDs and digests; real development Groth16 proofs create a Founding Planet, dispatch nonce-bound fleets, and atomically initialize a proof-derived natural Planet in Sui Move tests; production configs, Soul enrollment, and ranked writes remain fail-closed; the Prover Worker rejects unpinned artifacts; the SDK and responsive client provide a playable local compatibility sandbox backed by canonical universe and rules vectors
 - **License:** [MIT](LICENSE)
 - **Next gate:** Freeze the Soulidity adapter ABI, independently audit the circuits/contracts/client, reproduce artifacts in a pinned build environment, complete the production Phase 2 ceremony and key pinning, soak real multiplayer writes, then publish a legally cleared mainnet season
 

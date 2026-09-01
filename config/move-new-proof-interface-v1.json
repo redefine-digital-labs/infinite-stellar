@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "status": "development-circuit-candidate-only",
+  "extends": "config/proof-interface-v1.json",
+  "actionKind": {
+    "label": "move_new",
+    "value": 5
+  },
+  "statement": "Prove valid source and destination coordinates, bounded route distance, canonical proof intent, committed Round-5 geometry, and destination space Perlin. The onchain PlanetRegistry separately enforces that the destination is uninitialized.",
+  "publicSignals": {
+    "encoding": "five canonical BN254 scalar elements concatenated as 32-byte little-endian values",
+    "order": [
+      "source_location_hash",
+      "destination_location_hash",
+      "destination_space_perlin",
+      "action_commitment",
+      "rules_geometry_commitment"
+    ],
+    "byteLength": 160
+  },
+  "destinationSpacePerlin": {
+    "range": "0..31 inclusive",
+    "derivation": "Round5PerlinV1(destination private coordinates, manifest-committed space_type_key, perlin_scale, mirror flags)",
+    "onchainUse": "Passed only after Groth16 verification to deterministic Round-5 natural Planet stat initialization. No caller-supplied stat is trusted."
+  },
+  "circuitConfig": {
+    "schemaVersion": 1,
+    "proofInterfaceVersion": 1,
+    "publicInputCount": 5,
+    "verifyingKeyByteLength": 424,
+    "productionPolicy": "No production-approved constructor exists. A Season must bind a separately audited move_new config ID, config digest, and verifying-key digest before ranked use can be activated."
+  },
+  "developmentCandidate": {
+    "source": "circuits/src/move_new_v1.circom",
+    "compiler": "circom-v2.2.3",
+    "prover": "snarkjs-v0.7.6",
+    "productionEligible": false,
+    "fixture": "packages/prover/test/fixtures/proof-actions-development.json"
+  },
+  "goldenVector": {
+    "network": "sui:mainnet",
+    "league": 1,
+    "seasonId": "0xaa6c0d93139bf53665db0a89b79e6ef5d6d109f26cf497145acfb07d5fdf1d23",
+    "seatId": "0xca496bc8c86ec7a792681f16f93afb7ee0411f8e4a79ed04fd81e652b5293568",
+    "sender": "0xa11ce",
+    "sourceLocationHash": "441595625074136767652070888593187681073630156209416385716195429441716114",
+    "destinationLocationHash": "1759259153186726942209343294499159540235552521067839175742163671329318918",
+    "destinationSpacePerlin": "14",
+    "maxDistance": "198",
+    "sourcePlanetNonce": "0",
+    "deadlineMs": "1800000000000",
+    "actionCommitment": "15146000630760499760218496512488087199247373991917274551084956646458472711216",
+    "publicInputSha256": "93fe167b1ebca58efd8818e1a614c3a2919ff8e10112ad998e6bd6cf8ea44605"
+  }
+}
