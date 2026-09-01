@@ -20,7 +20,8 @@ verifier production gates.
 - Soul is checked only when a Seat is enrolled or when a later action explicitly
   requests Soul attribution. Ordinary gameplay uses fixed Seat authority.
 - Production entry points reject fixture proofs, unknown key digests, oversized
-  public inputs, stale package intents, and unpinned Soul bindings.
+  public inputs, stale package intents, replayed source nonces, and unpinned
+  Soul bindings.
 
 ## Immutable season rule authority
 
@@ -56,9 +57,10 @@ SeasonSeat (shared, fixed controller)
 ├── ScoreCard (shared, score aggregate)
 └── SpaceJunkState (shared, per-Seat junk and limit)
 
-Planet (shared, derived from season + location commitment)
+Planet (shared, derived from season + canonical location ID)
 ├── bounded current stats and upgrade levels
 ├── current owner Seat ID or neutral sentinel
+├── canonical location-hash field plus monotonic proof nonce
 ├── at most twelve pending voyage descriptors
 ├── at most five resident artifact IDs
 ├── reveal, prospect, invasion, and capture one-way state
@@ -77,15 +79,17 @@ Events and deterministic IDs provide enumeration for clients and indexers.
 `PlanetRegistry` derives exactly one Planet ID from:
 
 ```text
-(encoding_version, package_id, season_id, location_commitment)
+(encoding_version, package_id, season_id, location_id_big_endian_32)
 ```
 
 A verified initialization intent supplies location hash, space perlin, and the
-bounded radius statement. The implemented fixture-proof path checks the typed
-season intent, derives level/type/space/stats through `round5_rules`, claims the
-derived ID, and creates the neutral Planet atomically. A losing race aborts
-without consuming unrelated state. The production verifier constructor remains
-package-private and unavailable until its pinned key is audited.
+bounded radius statement. The numeric field is serialized as the same fixed
+32-byte big-endian location ID used by Round 5 before byte-indexed planet
+generation. This is deliberately distinct from Sui Groth16's little-endian
+public-scalar bytes. The typed initialization path derives
+level/type/space/stats through `round5_rules`, claims the derived ID, and creates
+the neutral Planet atomically. A losing race aborts without consuming unrelated
+state.
 
 Home initialization additionally binds the proof to the Seat, requires the home
 predicate, initializes `50,000` energy and zero junk, and performs the existing
@@ -112,18 +116,24 @@ For `move` in interface v1, `amount` is the proof's maximum route distance;
 energy and silver amounts remain separate state-transition arguments checked by
 the source Planet and voyage logic.
 
-Package, circuit, and verifying-key identity are not free transaction fields:
-the production entry point must obtain them from the immutable package and
-season `CircuitConfig`, then reject any artifact or verifier digest mismatch.
+Package, circuit, and verifying-key identity are not free transaction fields.
+Each Season pins the exact claim/move `CircuitConfig` object ID, config digest,
+and verifying-key digest. The config digest covers action kind, interface/public
+input versions, circuit source, proving key, verifying key, ceremony transcript,
+and artifact manifest. The entry point obtains the raw key only from that
+config and rejects any ID or digest mismatch.
 Globally unique season and Seat object IDs bind an intent to that deployed
 object graph. Sui's Groth16 native accepts at most eight public field elements;
 v1 uses four. Native inputs are exactly 128 bytes: four canonical BN254 scalar
 elements concatenated as 32-byte little-endian values.
 The checked-in serializer additionally emits Arkworks canonical-compressed
 BN254 proof points (`128` bytes) and verifying keys (`232 + 32 * IC.length`
-bytes; `392` bytes for four public inputs). A tracked vector is verified by the
-Sui Move native in tests. Production code must use a ceremony key pinned by the
-immutable circuit configuration, never transaction-supplied key bytes.
+bytes; `392` bytes for four public inputs). Tracked claim and move vectors are
+verified by the Sui native and then exercise real Founding Planet and voyage
+state transitions in Move tests. A source Planet's monotonic proof nonce is in
+the move intent and increments atomically on every successful dispatch, so the
+same proof cannot be replayed. Production code must use an audited ceremony key
+from a frozen, code-pinned config, never transaction-supplied key bytes.
 
 Fixtures construct package-internal witnesses under `#[test_only]`; no public
 function can turn a fixture digest into a production witness.
@@ -254,7 +264,8 @@ The following are independent gates:
    integrated and tested.
 3. SDK local engine and UI parity — integrated as an English local rules
    sandbox.
-4. Real circuits and proof generation with pinned setup provenance.
+4. Development circuits, config-bound verification, and proof-consuming Move
+   adapters — integrated and tested; production setup remains blocked.
 5. Production Soul adapter ABI.
 6. External Move/circuit/client security review and testnet soak.
 

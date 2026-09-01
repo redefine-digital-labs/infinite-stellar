@@ -27,6 +27,7 @@ public struct VerifiedMoveProof has drop {
     from_planet_id: ID,
     to_planet_id: ID,
     max_distance: u64,
+    source_planet_nonce: u64,
     public_input_digest: vector<u8>,
 }
 
@@ -84,6 +85,7 @@ public(package) fun new_verified_move_proof(
     from_planet_id: ID,
     to_planet_id: ID,
     max_distance: u64,
+    source_planet_nonce: u64,
     public_input_digest: vector<u8>,
 ): VerifiedMoveProof {
     VerifiedMoveProof {
@@ -92,6 +94,7 @@ public(package) fun new_verified_move_proof(
         from_planet_id,
         to_planet_id,
         max_distance,
+        source_planet_nonce,
         public_input_digest,
     }
 }
@@ -127,6 +130,7 @@ public(package) fun dispatch_verified(
         from_planet_id: proof_from_planet_id,
         to_planet_id: proof_to_planet_id,
         max_distance,
+        source_planet_nonce,
         public_input_digest,
     } = proof;
     assert!(interface_version == PROOF_INTERFACE_VERSION, EInvalidProof);
@@ -135,6 +139,7 @@ public(package) fun dispatch_verified(
     assert!(proof_from_planet_id == from_planet_id, EProofIntentMismatch);
     assert!(proof_to_planet_id == to_planet_id, EProofIntentMismatch);
     assert!(max_distance <= 0xffffffffffffffff / 100, EInvalidProof);
+    planet::consume_proof_nonce(source, source_planet_nonce);
 
     let now_seconds = now_ms / 1000;
     planet::assert_no_due_pending_voyage(source, now_seconds);
@@ -312,7 +317,7 @@ public(package) fun dispatch_wormhole_verified(
     let to_planet_id = object::id(target);
     assert!(from_planet_id != to_planet_id, ESamePlanet);
     let (max_distance, public_input_digest) =
-        validate_move_proof(proof, season_id, from_planet_id, to_planet_id);
+        validate_move_proof(proof, season_id, from_planet_id, to_planet_id, source);
     let now_seconds = now_ms / 1000;
     planet::assert_no_due_pending_voyage(source, now_seconds);
     planet::assert_no_due_pending_voyage(target, now_seconds);
@@ -392,7 +397,7 @@ public(package) fun dispatch_photoid_verified(
     let to_planet_id = object::id(target);
     assert!(from_planet_id != to_planet_id, ESamePlanet);
     let (max_distance, public_input_digest) =
-        validate_move_proof(proof, season_id, from_planet_id, to_planet_id);
+        validate_move_proof(proof, season_id, from_planet_id, to_planet_id, source);
     let now_seconds = now_ms / 1000;
     planet::assert_no_due_pending_voyage(source, now_seconds);
     planet::assert_no_due_pending_voyage(target, now_seconds);
@@ -474,7 +479,7 @@ public(package) fun dispatch_photoid_wormhole_verified(
     let to_planet_id = object::id(target);
     assert!(from_planet_id != to_planet_id, ESamePlanet);
     let (max_distance, public_input_digest) =
-        validate_move_proof(proof, season_id, from_planet_id, to_planet_id);
+        validate_move_proof(proof, season_id, from_planet_id, to_planet_id, source);
     let now_seconds = now_ms / 1000;
     planet::assert_no_due_pending_voyage(source, now_seconds);
     planet::assert_no_due_pending_voyage(target, now_seconds);
@@ -536,6 +541,7 @@ fun validate_move_proof(
     season_id: ID,
     from_planet_id: ID,
     to_planet_id: ID,
+    source: &mut Planet,
 ): (u64, vector<u8>) {
     let VerifiedMoveProof {
         interface_version,
@@ -543,6 +549,7 @@ fun validate_move_proof(
         from_planet_id: proof_from_planet_id,
         to_planet_id: proof_to_planet_id,
         max_distance,
+        source_planet_nonce,
         public_input_digest,
     } = proof;
     assert!(interface_version == PROOF_INTERFACE_VERSION, EInvalidProof);
@@ -551,6 +558,7 @@ fun validate_move_proof(
     assert!(proof_from_planet_id == from_planet_id, EProofIntentMismatch);
     assert!(proof_to_planet_id == to_planet_id, EProofIntentMismatch);
     assert!(max_distance <= 0xffffffffffffffff / 100, EInvalidProof);
+    planet::consume_proof_nonce(source, source_planet_nonce);
     (max_distance, public_input_digest)
 }
 
@@ -586,6 +594,7 @@ public(package) fun dispatch_abandon_verified(
         from_planet_id: proof_from_planet_id,
         to_planet_id: proof_to_planet_id,
         max_distance,
+        source_planet_nonce,
         public_input_digest,
     } = proof;
     assert!(interface_version == PROOF_INTERFACE_VERSION, EInvalidProof);
@@ -594,6 +603,7 @@ public(package) fun dispatch_abandon_verified(
     assert!(proof_from_planet_id == from_planet_id, EProofIntentMismatch);
     assert!(proof_to_planet_id == to_planet_id, EProofIntentMismatch);
     assert!(max_distance <= 0xffffffffffffffff / 100, EInvalidProof);
+    planet::consume_proof_nonce(source, source_planet_nonce);
 
     let now_seconds = now_ms / 1000;
     planet::assert_no_pending_voyage(source);
@@ -708,6 +718,7 @@ public(package) fun dispatch_ship_verified(
         from_planet_id: proof_from_planet_id,
         to_planet_id: proof_to_planet_id,
         max_distance,
+        source_planet_nonce,
         public_input_digest,
     } = proof;
     assert!(interface_version == PROOF_INTERFACE_VERSION, EInvalidProof);
@@ -716,6 +727,7 @@ public(package) fun dispatch_ship_verified(
     assert!(proof_from_planet_id == from_planet_id, EProofIntentMismatch);
     assert!(proof_to_planet_id == to_planet_id, EProofIntentMismatch);
     assert!(max_distance <= 0xffffffffffffffff / 100, EInvalidProof);
+    planet::consume_proof_nonce(source, source_planet_nonce);
 
     let now_seconds = now_ms / 1000;
     planet::assert_no_due_pending_voyage(source, now_seconds);
@@ -954,6 +966,10 @@ public fun departure_at_seconds(self: &Voyage): u64 { self.departure_at_seconds 
 public fun arrival_at_seconds(self: &Voyage): u64 { self.arrival_at_seconds }
 public fun is_ship_voyage(self: &Voyage): bool { self.is_ship }
 public fun is_abandon_voyage(self: &Voyage): bool { self.is_abandon }
+
+public(package) fun share_voyage(voyage: Voyage) {
+    transfer::share_object(voyage);
+}
 public fun route_kind(self: &Voyage): u8 { self.route_kind }
 
 #[test_only]
@@ -978,6 +994,7 @@ public fun dispatch_fixture_for_testing(
         object::id(source),
         object::id(target),
         max_distance,
+        planet::proof_nonce(source),
         public_input_digest,
     );
     dispatch_verified(
@@ -1016,6 +1033,7 @@ public fun dispatch_abandon_fixture_for_testing(
         object::id(source),
         object::id(target),
         max_distance,
+        planet::proof_nonce(source),
         public_input_digest,
     );
     dispatch_abandon_verified(
@@ -1055,6 +1073,7 @@ public fun dispatch_artifact_fixture_for_testing(
         object::id(source),
         object::id(target),
         max_distance,
+        planet::proof_nonce(source),
         public_input_digest,
     );
     dispatch_artifact_verified(
@@ -1096,6 +1115,7 @@ public fun dispatch_wormhole_fixture_for_testing(
         object::id(source),
         object::id(target),
         max_distance,
+        planet::proof_nonce(source),
         public_input_digest,
     );
     dispatch_wormhole_verified(
@@ -1137,6 +1157,7 @@ public fun dispatch_photoid_fixture_for_testing(
         object::id(source),
         object::id(target),
         max_distance,
+        planet::proof_nonce(source),
         public_input_digest,
     );
     dispatch_photoid_verified(
@@ -1177,6 +1198,7 @@ public fun dispatch_ship_fixture_for_testing(
         object::id(source),
         object::id(target),
         max_distance,
+        planet::proof_nonce(source),
         public_input_digest,
     );
     dispatch_ship_verified(

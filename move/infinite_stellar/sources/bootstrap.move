@@ -1,7 +1,9 @@
 module infinite_stellar::bootstrap;
 
+use infinite_stellar::circuit_config::{Self as circuit_config, CircuitConfig};
 use infinite_stellar::identity;
 use infinite_stellar::planet;
+use infinite_stellar::proof_intent;
 use infinite_stellar::season;
 
 /// Creates the immutable season authority and the three bounded shared roots.
@@ -27,8 +29,16 @@ public fun create_season(
     perlin_mirror_y: bool,
     home_perlin_min: u8,
     home_perlin_max: u8,
+    proof_network_field: u256,
+    claim_home_config: &CircuitConfig,
+    move_config: &CircuitConfig,
     ctx: &mut TxContext,
 ): season::SeasonAdminCap {
+    proof_intent::assert_supported_network(proof_network_field);
+    circuit_config::assert_action(claim_home_config, proof_intent::action_claim_home());
+    circuit_config::assert_action(move_config, proof_intent::action_move());
+    circuit_config::assert_production_approved(claim_home_config);
+    circuit_config::assert_production_approved(move_config);
     let (mut manifest, runtime, admin_cap) = season::new_season(
         league,
         enrollment_close_at_ms,
@@ -49,6 +59,13 @@ public fun create_season(
         perlin_mirror_y,
         home_perlin_min,
         home_perlin_max,
+        proof_network_field,
+        object::id(claim_home_config),
+        *circuit_config::config_digest(claim_home_config),
+        *circuit_config::verifying_key_digest(claim_home_config),
+        object::id(move_config),
+        *circuit_config::config_digest(move_config),
+        *circuit_config::verifying_key_digest(move_config),
         ctx,
     );
     let season_id = season::season_id(&manifest);

@@ -11,14 +11,17 @@ Implemented now:
   planet rarity, three-octave Round-5 Perlin, home band, and movement distance;
 - an in-circuit Poseidon commitment to every geometry parameter;
 - deterministic TypeScript fixtures, valid/tampered Groth16 verification, and
-  an Arkworks byte vector accepted by Sui's native BN254 verifier.
+  Arkworks byte vectors accepted by Sui's native BN254 verifier;
+- test-only immutable-config vectors and real proof-to-state Move tests for
+  Founding Planet creation and nonce-bound fleet dispatch.
 
 Still blocking production:
 
 - broader differential/property testing, performance budgets, reproducible
   container builds, and an independent circuit audit;
 - a production Phase 2 ceremony and audited verifying-key pinning;
-- immutable mainnet `CircuitConfig` and verified package entry points.
+- code-pinned, frozen production `CircuitConfig` creation and explicit enabling
+  of the currently fail-closed ranked entry points.
 
 ## Development build
 
@@ -31,7 +34,15 @@ PATH=/opt/homebrew/opt/node@24/bin:$PATH \
   npm run circuits:build:dev
 
 PATH=/opt/homebrew/opt/node@24/bin:$PATH npm run circuits:test:dev
+
+PATH=/opt/homebrew/opt/node@24/bin:$PATH npm run circuits:export:move-fixtures
 ```
+
+The export command first rebuilds the prover package, then emits one tracked
+development-only bridge fixture. It is an auditable test vector, not a stable
+production setup artifact; rebuilding the disposable development setup may
+produce a different key and proof and therefore requires regenerating the Move
+vector deliberately.
 
 The generated powers of tau and circuit-specific contributions use a public,
 deterministic development entropy string. They have no toxic-waste security and

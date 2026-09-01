@@ -18,6 +18,10 @@ const seasonId = '0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff
 const seatId = '0x22223333444455556666777788889999aaaabbbbccccddddeeeeffff00001111';
 const sender = '0xa11ce';
 const deadlineMs = 1_800_000_000_000n;
+// Fixed IDs emitted by the Move test TxContext hint 800 after creating the
+// claim/move CircuitConfig pair. These lock a real proof -> game-state vector.
+const moveAdapterSeasonId = '0xaa6c0d93139bf53665db0a89b79e6ef5d6d109f26cf497145acfb07d5fdf1d23';
+const moveAdapterSeatId = '0xca496bc8c86ec7a792681f16f93afb7ee0411f8e4a79ed04fd81e652b5293568';
 
 const stringify = (value) => JSON.stringify(
   value,
@@ -35,6 +39,21 @@ const coordinateWitness = (prefix, { x, y }) => ({
 function contextWitness() {
   const [seasonLow, seasonHigh] = splitSuiIdentifier(seasonId, 'seasonId');
   const [seatLow, seatHigh] = splitSuiIdentifier(seatId, 'seatId');
+  const [senderLow, senderHigh] = splitSuiIdentifier(sender, 'sender');
+  return {
+    league: league.toString(),
+    season_id_low_128: seasonLow.toString(),
+    season_id_high_128: seasonHigh.toString(),
+    seat_id_low_128: seatLow.toString(),
+    seat_id_high_128: seatHigh.toString(),
+    sender_low_128: senderLow.toString(),
+    sender_high_128: senderHigh.toString(),
+  };
+}
+
+function contextWitnessFor(activeSeasonId, activeSeatId) {
+  const [seasonLow, seasonHigh] = splitSuiIdentifier(activeSeasonId, 'seasonId');
+  const [seatLow, seatHigh] = splitSuiIdentifier(activeSeatId, 'seatId');
   const [senderLow, senderHigh] = splitSuiIdentifier(sender, 'sender');
   return {
     league: league.toString(),
@@ -126,6 +145,36 @@ const nonHomeCommitment = createProofIntentCommitment({
   rulesGeometryCommitment: ROUND5_RULES_GEOMETRY_COMMITMENT,
 });
 
+const moveAdapterClaimCommitment = createProofIntentCommitment({
+  network,
+  league,
+  actionKind: 'claim_home',
+  seasonId: moveAdapterSeasonId,
+  seatId: moveAdapterSeatId,
+  sender,
+  sourceLocationHash: 0n,
+  destinationLocationHash: home.hash,
+  amount: 0n,
+  sourcePlanetNonce: 0n,
+  deadlineMs,
+  rulesGeometryCommitment: ROUND5_RULES_GEOMETRY_COMMITMENT,
+});
+
+const moveAdapterMoveCommitment = createProofIntentCommitment({
+  network,
+  league,
+  actionKind: 'move',
+  seasonId: moveAdapterSeasonId,
+  seatId: moveAdapterSeatId,
+  sender,
+  sourceLocationHash: home.hash,
+  destinationLocationHash: destination.hash,
+  amount: maxDistance,
+  sourcePlanetNonce: 0n,
+  deadlineMs,
+  rulesGeometryCommitment: ROUND5_RULES_GEOMETRY_COMMITMENT,
+});
+
 const claimFixture = {
   ...publicWitness(claimCommitment),
   network_field: claimCommitment.networkField.toString(),
@@ -156,11 +205,34 @@ const nonHomeFixture = {
   ...coordinateWitness('', destinationCoordinates),
 };
 
+const moveAdapterClaimFixture = {
+  ...publicWitness(moveAdapterClaimCommitment),
+  network_field: moveAdapterClaimCommitment.networkField.toString(),
+  ...contextWitnessFor(moveAdapterSeasonId, moveAdapterSeatId),
+  deadline_ms: deadlineMs.toString(),
+  ...geometryWitness(),
+  ...coordinateWitness('', homeCoordinates),
+};
+
+const moveAdapterMoveFixture = {
+  ...publicWitness(moveAdapterMoveCommitment),
+  network_field: moveAdapterMoveCommitment.networkField.toString(),
+  ...contextWitnessFor(moveAdapterSeasonId, moveAdapterSeatId),
+  max_distance: maxDistance.toString(),
+  source_planet_nonce: '0',
+  deadline_ms: deadlineMs.toString(),
+  ...geometryWitness(),
+  ...coordinateWitness('source_', homeCoordinates),
+  ...coordinateWitness('destination_', destinationCoordinates),
+};
+
 await mkdir(fixtureDir, { recursive: true });
 await Promise.all([
   writeFile(resolve(fixtureDir, 'claim_home_v1.input.json'), stringify(claimFixture)),
   writeFile(resolve(fixtureDir, 'move_v1.input.json'), stringify(moveFixture)),
   writeFile(resolve(fixtureDir, 'claim_home_v1.non_home.input.json'), stringify(nonHomeFixture)),
+  writeFile(resolve(fixtureDir, 'claim_home_v1.move_adapter.input.json'), stringify(moveAdapterClaimFixture)),
+  writeFile(resolve(fixtureDir, 'move_v1.move_adapter.input.json'), stringify(moveAdapterMoveFixture)),
   writeFile(resolve(fixtureDir, 'expected-public-signals.json'), stringify({
     order: [
       'source_location_hash',
@@ -170,6 +242,8 @@ await Promise.all([
     ],
     claim_home_v1: claimCommitment.publicSignals,
     move_v1: moveCommitment.publicSignals,
+    move_adapter_claim_home_v1: moveAdapterClaimCommitment.publicSignals,
+    move_adapter_move_v1: moveAdapterMoveCommitment.publicSignals,
   })),
 ]);
 

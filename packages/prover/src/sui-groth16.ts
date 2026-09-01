@@ -1,4 +1,4 @@
-import { serializeProofPublicSignals } from './proof-intent';
+import { serializeProofPublicSignals } from './proof-intent.js';
 
 const BN254_BASE_FIELD =
   21_888_242_871_839_275_222_246_405_745_257_275_088_696_311_157_297_823_662_689_037_894_645_226_208_583n;

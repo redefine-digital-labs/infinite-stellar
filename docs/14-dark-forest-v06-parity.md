@@ -68,7 +68,7 @@ planet initialization always derive type from location byte `8`.
 | REV-DF-001 | Reveal | Proof-bound public coordinates, global deduplication, and three-hour cooldown match | Integrated under fixture proofs |
 | LIF-DF-001 | Round lifecycle | Pause, mint cutoff, round close, score finality, and settlement are one-way | Integrated under fixture proofs |
 | SOU-IS-001 | Soul commander | One Soul projection selects a fixed Season Seat without changing gameplay math | Integrated; production adapter blocked |
-| ZKP-IS-001 | Sui verifier | Pinned BN254 Groth16 keys and public-input intents; production stays fail-closed until audited | Production blocked |
+| ZKP-IS-001 | Sui verifier | Config-bound BN254 Groth16 claim/move intents and replay nonce; production stays fail-closed until audited ceremony activation | Development adapters integrated; production blocked |
 | UI-IS-001 | Player client | Discover, inspect, move, fight, upgrade, use artifacts, reveal, capture, score, and settle | Local rules sandbox integrated |
 
 ## Canonical enumerations
@@ -267,12 +267,15 @@ The reference circuits prove:
 - public coordinates matching a committed location for reveal; and
 - biome perlin matching the committed coordinates for artifact discovery.
 
-Infinite Stellar will use Sui's BN254 Groth16 natives behind typed proof intents.
-Every intent commits to package, season, action kind, Seat where applicable,
-public inputs, circuit version, and verifying-key digest. Test fixtures may
-construct package-internal witnesses. Public production entry points remain
-unavailable until circuits, trusted-setup provenance, verifier keys, and gas
-limits are pinned and independently audited.
+Infinite Stellar uses Sui's BN254 Groth16 natives behind typed proof intents.
+Every claim/move intent commits to network/league, season, action kind, Seat,
+sender, location hashes, source nonce, deadline, and rules geometry. Each Season
+separately binds the exact circuit-config object and config/verifying-key
+digests. Move recomputes those inputs and constructs its package-internal
+witness only after native verification succeeds. Real development proofs cover
+home creation and nonce-bound fleet dispatch in tests. Public production paths
+remain fail-closed until circuits, trusted-setup provenance, verifier keys, gas
+limits, and independent audits are approved.
 
 No private coordinate, salt, witness, scan cache, or proof-generation secret is
 stored onchain or committed to this repository.

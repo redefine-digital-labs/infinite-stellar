@@ -149,7 +149,7 @@ Implemented directories are shown above. The remaining entries are roadmap targe
 
 - **Phase:** Experimental testnet interface canary plus player-facing full-stack vertical slice
 - **Network:** Sui testnet package and sealed canary deployed; no mainnet deployment
-- **Implementation:** Round 5 gameplay state machines are implemented in Move under typed fixture proofs; complete development claim/move relations constrain manifest-committed MiMC, rarity, radius, Perlin, home-band, distance, and action intent; TypeScript-generated Arkworks bytes verify in Sui's native Groth16 verifier; the Prover Worker rejects unpinned artifacts; the SDK and responsive client provide a playable local compatibility sandbox backed by canonical universe and rules vectors
+- **Implementation:** Round 5 gameplay state machines are implemented in Move; complete development claim/move relations constrain manifest-committed MiMC, rarity, radius, Perlin, home-band, distance, and action intent; each Season now binds exact circuit-config IDs and digests; real development Groth16 proofs create a Founding Planet and dispatch a nonce-bound fleet in Sui Move tests; production configs, Soul enrollment, and ranked writes remain fail-closed; the Prover Worker rejects unpinned artifacts; the SDK and responsive client provide a playable local compatibility sandbox backed by canonical universe and rules vectors
 - **License:** [MIT](LICENSE)
 - **Next gate:** Freeze the Soulidity adapter ABI, independently audit the circuits/contracts/client, reproduce artifacts in a pinned build environment, complete the production Phase 2 ceremony and key pinning, soak real multiplayer writes, then publish a legally cleared mainnet season
 

@@ -17,18 +17,25 @@ Implemented modules:
   Commander Projections, Civilizations, and ScoreCards.
 - `soul_adapter`: closed production seam for the unfinished Soulidity ABI.
 - `planet`: closed verifier seam and atomic Founding Planet activation.
-- `zk_verifier`: Sui-native Groth16 byte bridge under test and fail-closed
-  production readiness probes.
+- `circuit_config`: per-action circuit, key, ceremony, and artifact identity.
+- `proof_actions`: recomputes claim/move intent, verifies Groth16, and creates
+  package-internal witnesses only after successful verification.
+- `zk_verifier`: Sui-native Groth16 byte bridge and fail-closed production
+  readiness probes.
+- `voyage`: nonce-consuming fleet dispatch and deterministic delayed arrivals.
 
-The production Soul adapter and ZK verifier are intentionally unavailable.
-Their fixture constructors exist only under `#[test_only]`; this package cannot
-yet enroll a real Soul or accept a real location proof.
+The test suite executes real development Groth16 proofs through home activation
+and fleet dispatch, including config substitution and replay rejection. Those
+development configs and adapters are exposed only under `#[test_only]`. Runtime
+production config construction, Soul enrollment, and ranked proof acceptance
+remain impossible until audited ceremony constants and the final Soulidity ABI
+are code-pinned in a later reviewed package revision.
 
 ## Verify
 
 ```sh
 sui move build --warnings-are-errors
-sui move test
+sui move test --warnings-are-errors
 ```
 
 See [`docs/12-soul-adapter-contract.md`](../../docs/12-soul-adapter-contract.md)

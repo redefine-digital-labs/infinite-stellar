@@ -4,6 +4,7 @@ use infinite_stellar::identity::{Self as identity, CivilizationState, ScoreCard,
 use infinite_stellar::round5_rules as rules;
 use infinite_stellar::season::{Self as season, SeasonManifest, SeasonRuntime};
 use sui::derived_object;
+use sui::bcs;
 use sui::clock::{Self as clock, Clock};
 use sui::event;
 
@@ -54,7 +55,7 @@ public struct VerifiedHomeProof has drop {
     interface_version: u64,
     season_id: ID,
     seat_id: ID,
-    location_commitment: vector<u8>,
+    location_hash: u256,
     public_input_digest: vector<u8>,
 }
 
@@ -64,7 +65,7 @@ public struct VerifiedHomeProof has drop {
 public struct VerifiedPlanetProof has drop {
     interface_version: u64,
     season_id: ID,
-    location_commitment: vector<u8>,
+    location_hash: u256,
     public_input_digest: vector<u8>,
     space_perlin: u64,
 }
@@ -73,8 +74,10 @@ public struct Planet has key {
     id: UID,
     season_id: ID,
     owner_seat_id: ID,
+    location_hash: u256,
     location_commitment: vector<u8>,
     public_input_digest: vector<u8>,
+    proof_nonce: u64,
     is_founding_planet: bool,
     ruleset_version: u64,
     level: u8,
@@ -154,14 +157,14 @@ public(package) fun new_verified_home_proof(
     interface_version: u64,
     season_id: ID,
     seat_id: ID,
-    location_commitment: vector<u8>,
+    location_hash: u256,
     public_input_digest: vector<u8>,
 ): VerifiedHomeProof {
     VerifiedHomeProof {
         interface_version,
         season_id,
         seat_id,
-        location_commitment,
+        location_hash,
         public_input_digest,
     }
 }
@@ -169,17 +172,29 @@ public(package) fun new_verified_home_proof(
 public(package) fun new_verified_planet_proof(
     interface_version: u64,
     season_id: ID,
-    location_commitment: vector<u8>,
+    location_hash: u256,
     public_input_digest: vector<u8>,
     space_perlin: u64,
 ): VerifiedPlanetProof {
     VerifiedPlanetProof {
         interface_version,
         season_id,
-        location_commitment,
+        location_hash,
         public_input_digest,
         space_perlin,
     }
+}
+
+/// Dark Forest location IDs are the fixed-width, big-endian representation of
+/// the MiMC field value. Groth16 public inputs use Sui's separate little-endian
+/// scalar encoding, so the two byte layouts must never be conflated.
+fun location_id_bytes(location_hash: u256): vector<u8> {
+    let mut little_endian = bcs::to_bytes(&location_hash);
+    let mut big_endian = vector[];
+    while (!little_endian.is_empty()) {
+        big_endian.push_back(little_endian.pop_back());
+    };
+    big_endian
 }
 
 public(package) fun claim_home_verified(
@@ -200,13 +215,13 @@ public(package) fun claim_home_verified(
         interface_version,
         season_id,
         seat_id,
-        location_commitment,
+        location_hash,
         public_input_digest,
     } = proof;
     assert!(interface_version == PROOF_INTERFACE_VERSION, EInvalidProof);
     assert!(season_id == season::season_id(manifest), EProofIntentMismatch);
     assert!(seat_id == identity::seat_id(seat), EProofIntentMismatch);
-    assert!(location_commitment.length() == 32, EInvalidProof);
+    let location_commitment = location_id_bytes(location_hash);
     assert!(public_input_digest.length() == 32, EInvalidProof);
     let key = PlanetClaimKey {
         encoding_version: PROOF_INTERFACE_VERSION,
@@ -225,8 +240,10 @@ public(package) fun claim_home_verified(
         id: planet_uid,
         season_id,
         owner_seat_id: seat_id,
+        location_hash,
         location_commitment,
         public_input_digest,
+        proof_nonce: 0,
         is_founding_planet: true,
         ruleset_version: rules::ruleset_version(),
         level: rules::stats_level(&stats),
@@ -278,13 +295,13 @@ public(package) fun initialize_planet_verified(
     let VerifiedPlanetProof {
         interface_version,
         season_id,
-        location_commitment,
+        location_hash,
         public_input_digest,
         space_perlin,
     } = proof;
     assert!(interface_version == PROOF_INTERFACE_VERSION, EInvalidProof);
     assert!(season_id == season::season_id(manifest), EProofIntentMismatch);
-    assert!(location_commitment.length() == 32, EInvalidProof);
+    let location_commitment = location_id_bytes(location_hash);
     assert!(public_input_digest.length() == 32, EInvalidProof);
     let key = PlanetClaimKey {
         encoding_version: PROOF_INTERFACE_VERSION,
@@ -302,8 +319,10 @@ public(package) fun initialize_planet_verified(
         id: planet_uid,
         season_id,
         owner_seat_id: @0x0.to_id(),
+        location_hash,
         location_commitment,
         public_input_digest,
+        proof_nonce: 0,
         is_founding_planet: false,
         ruleset_version: rules::ruleset_version(),
         level,
@@ -376,7 +395,9 @@ public fun derive_planet_address(
 
 public fun proof_interface_version(): u64 { PROOF_INTERFACE_VERSION }
 public fun owner_seat_id(self: &Planet): ID { self.owner_seat_id }
+public fun location_hash(self: &Planet): u256 { self.location_hash }
 public fun location_commitment(self: &Planet): &vector<u8> { &self.location_commitment }
+public fun proof_nonce(self: &Planet): u64 { self.proof_nonce }
 public fun is_founding_planet(self: &Planet): bool { self.is_founding_planet }
 public fun level(self: &Planet): u8 { self.level }
 public fun planet_type(self: &Planet): u8 { self.planet_type }
@@ -419,6 +440,12 @@ public(package) fun assert_controlled_by(planet: &Planet, seat: &SeasonSeat) {
 
 public(package) fun assert_intact(planet: &Planet) {
     assert!(!planet.destroyed, EDestroyed);
+}
+
+public(package) fun consume_proof_nonce(planet: &mut Planet, expected_nonce: u64) {
+    assert!(planet.proof_nonce == expected_nonce, EProofIntentMismatch);
+    assert!(planet.proof_nonce < 0xffffffffffffffff, EInvalidProof);
+    planet.proof_nonce = planet.proof_nonce + 1;
 }
 
 public(package) fun assert_no_pending_voyage(planet: &Planet) {
@@ -984,6 +1011,18 @@ fun bytes32(value: u8): vector<u8> {
 }
 
 #[test_only]
+fun u256_from_location_id(bytes: &vector<u8>): u256 {
+    assert!(bytes.length() == 32, EInvalidProof);
+    let mut value = 0u256;
+    let mut index = 0u64;
+    while (index < 32) {
+        value = value * 256 + (*bytes.borrow(index) as u256);
+        index = index + 1;
+    };
+    value
+}
+
+#[test_only]
 public fun new_registry_for_testing(season_id: ID, ctx: &mut TxContext): PlanetRegistry {
     new_registry(season_id, ctx)
 }
@@ -1001,11 +1040,12 @@ public fun claim_home_fixture_for_testing(
     now_ms: u64,
     sender: address,
 ): Planet {
+    let location_hash = u256_from_location_id(&location_commitment);
     let proof = new_verified_home_proof(
         PROOF_INTERFACE_VERSION,
         season::season_id(manifest),
         identity::seat_id(seat),
-        location_commitment,
+        location_hash,
         public_input_digest,
     );
     claim_home_verified(
@@ -1036,11 +1076,12 @@ public fun claim_home_fixture_with_intent_for_testing(
     now_ms: u64,
     sender: address,
 ): Planet {
+    let location_hash = u256_from_location_id(&location_commitment);
     let proof = new_verified_home_proof(
         PROOF_INTERFACE_VERSION,
         proof_season_id,
         proof_seat_id,
-        location_commitment,
+        location_hash,
         public_input_digest,
     );
     claim_home_verified(
@@ -1065,10 +1106,11 @@ public fun initialize_planet_fixture_for_testing(
     space_perlin: u64,
     now_ms: u64,
 ): Planet {
+    let location_hash = u256_from_location_id(&location_commitment);
     let proof = new_verified_planet_proof(
         PROOF_INTERFACE_VERSION,
         season::season_id(manifest),
-        location_commitment,
+        location_hash,
         public_input_digest,
         space_perlin,
     );
@@ -1084,6 +1126,8 @@ public fun new_neutral_fixture_for_testing(
     now_seconds: u64,
     ctx: &mut TxContext,
 ): Planet {
+    let location_commitment = bytes32(7);
+    let location_hash = u256_from_location_id(&location_commitment);
     let stats = rules::initialize_planet_stats(
         level,
         planet_type,
@@ -1099,8 +1143,10 @@ public fun new_neutral_fixture_for_testing(
         id: object::new(ctx),
         season_id,
         owner_seat_id: @0x0.to_id(),
-        location_commitment: bytes32(7),
+        location_hash,
+        location_commitment,
         public_input_digest: bytes32(8),
+        proof_nonce: 0,
         is_founding_planet: false,
         ruleset_version: rules::ruleset_version(),
         level: rules::stats_level(&stats),
@@ -1174,8 +1220,10 @@ public fun destroy_planet_for_testing(planet: Planet) {
         id,
         season_id: _,
         owner_seat_id: _,
+        location_hash: _,
         location_commitment: _,
         public_input_digest: _,
+        proof_nonce: _,
         is_founding_planet: _,
         ruleset_version: _,
         level: _,

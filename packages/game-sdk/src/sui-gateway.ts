@@ -1,5 +1,11 @@
 import { Transaction } from '@mysten/sui/transactions';
 
+export interface CircuitConfigPin {
+  objectId: string;
+  configDigest: string;
+  verifyingKeyDigest: string;
+}
+
 export interface InfiniteStellarDeployment {
   network: 'localnet' | 'devnet' | 'testnet' | 'mainnet';
   packageId?: string;
@@ -9,8 +15,30 @@ export interface InfiniteStellarDeployment {
   planetRegistryId?: string;
   randomObjectId?: string;
   clockObjectId?: string;
+  claimHomeCircuitConfig?: CircuitConfigPin;
+  moveCircuitConfig?: CircuitConfigPin;
   productionSoulAdapterReady: boolean;
   productionProofVerifierReady: boolean;
+}
+
+function requireCircuitConfigPin(
+  pin: CircuitConfigPin | undefined,
+  action: 'claim_home' | 'move',
+): CircuitConfigPin {
+  const objectIdPattern = /^(?:0x)?[0-9a-f]{1,64}$/;
+  const digestPattern = /^(?:0x)?[0-9a-f]{64}$/;
+  if (
+    !pin ||
+    !objectIdPattern.test(pin.objectId) ||
+    !digestPattern.test(pin.configDigest) ||
+    !digestPattern.test(pin.verifyingKeyDigest)
+  ) {
+    throw new IntegrationUnavailableError(
+      'DEPLOYMENT_UNAVAILABLE',
+      `The ${action} CircuitConfig object and both 32-byte digests must be pinned.`,
+    );
+  }
+  return pin;
 }
 
 export class IntegrationUnavailableError extends Error {
@@ -133,9 +161,26 @@ export function buildHomeClaimTransaction(
       'Home claiming is disabled until the manifest-pinned proof verifier is ready.',
     );
   }
+  requireCircuitConfigPin(deployment.claimHomeCircuitConfig, 'claim_home');
   throw new IntegrationUnavailableError(
     'DEPLOYMENT_UNAVAILABLE',
     'No production home-claim transaction builder is available in this release.',
+  );
+}
+
+export function buildMoveTransaction(
+  deployment: InfiniteStellarDeployment,
+): never {
+  if (!deployment.productionProofVerifierReady) {
+    throw new IntegrationUnavailableError(
+      'PROOF_VERIFIER_UNAVAILABLE',
+      'Fleet dispatch is disabled until the manifest-pinned proof verifier is ready.',
+    );
+  }
+  requireCircuitConfigPin(deployment.moveCircuitConfig, 'move');
+  throw new IntegrationUnavailableError(
+    'DEPLOYMENT_UNAVAILABLE',
+    'No production fleet transaction builder is available in this release.',
   );
 }
 

@@ -12,6 +12,8 @@ export const RULES_GEOMETRY_DOMAIN = 'INFINITE_STELLAR_RULES_GEOMETRY_V1';
 export const RULES_GEOMETRY_DOMAIN_FIELD =
   6_053_036_279_538_949_956_273_599_243_158_082_485_469_979_069_117_808_157_047_738_621_272_655_476_926n;
 export const RULES_GEOMETRY_SCHEMA_VERSION = 1 as const;
+export const CIRCUIT_CONFIG_SCHEMA_VERSION = 1 as const;
+export const CIRCUIT_CONFIG_DOMAIN = 'INFINITE_STELLAR_CIRCUIT_CONFIG_V1';
 export const ROUND5_PLANET_HASH_THRESHOLD =
   1_824_020_239_319_939_601_853_867_145_438_106_257_379_030_366_701_336_195_308_183_682_214_650_707n;
 export const ROUND5_RULES_GEOMETRY_COMMITMENT =
@@ -72,6 +74,24 @@ export interface RulesGeometryV1 {
   homePerlinMaxExclusive: number | bigint;
 }
 
+export interface CircuitConfigV1Input {
+  actionKind: 'claim_home' | 'move';
+  circuitSourceDigest: Uint8Array;
+  provingKeyDigest: Uint8Array;
+  ceremonyTranscriptDigest: Uint8Array;
+  artifactManifestDigest: Uint8Array;
+  verifyingKeyBytes: Uint8Array;
+}
+
+export interface CircuitConfigV1Digest {
+  schemaVersion: typeof CIRCUIT_CONFIG_SCHEMA_VERSION;
+  actionKind: number;
+  proofInterfaceVersion: typeof PROOF_INTERFACE_VERSION;
+  publicInputCount: 4;
+  verifyingKeyDigest: Uint8Array;
+  configDigest: Uint8Array;
+}
+
 export const ROUND5_RULES_GEOMETRY: Readonly<RulesGeometryV1> = {
   worldRadius: 12_000,
   planetHashThreshold: ROUND5_PLANET_HASH_THRESHOLD,
@@ -118,6 +138,53 @@ function bounded(value: number | bigint, maximum: bigint, name: string): bigint 
     throw new RangeError(`${name} must be between 0 and ${maximum}.`);
   }
   return parsed;
+}
+
+function appendU64LittleEndian(output: number[], value: bigint): void {
+  let remaining = value;
+  for (let index = 0; index < 8; index += 1) {
+    output.push(Number(remaining & 0xffn));
+    remaining >>= 8n;
+  }
+}
+
+function digest32(value: Uint8Array, name: string): Uint8Array {
+  if (!(value instanceof Uint8Array) || value.length !== 32) {
+    throw new RangeError(`${name} must be exactly 32 bytes.`);
+  }
+  return value;
+}
+
+/// Computes the fixed-width digest that is independently reproduced by the
+/// immutable Sui Move CircuitConfig object. The raw verifying key is hashed,
+/// never embedded in a JSON identity tuple by reference.
+export function createCircuitConfigDigest(input: CircuitConfigV1Input): CircuitConfigV1Digest {
+  if (!(input.verifyingKeyBytes instanceof Uint8Array) || input.verifyingKeyBytes.length !== 392) {
+    throw new RangeError('verifyingKeyBytes must be the 392-byte BN254 interface-v1 Arkworks key.');
+  }
+  const actionKind = PROOF_ACTION_KIND[input.actionKind];
+  if (actionKind !== PROOF_ACTION_KIND.claim_home && actionKind !== PROOF_ACTION_KIND.move) {
+    throw new RangeError('CircuitConfig actionKind must be claim_home or move.');
+  }
+  const verifyingKeyDigest = sha256(input.verifyingKeyBytes);
+  const encoded = [...new TextEncoder().encode(CIRCUIT_CONFIG_DOMAIN)];
+  appendU64LittleEndian(encoded, BigInt(CIRCUIT_CONFIG_SCHEMA_VERSION));
+  encoded.push(actionKind);
+  appendU64LittleEndian(encoded, BigInt(PROOF_INTERFACE_VERSION));
+  encoded.push(PROOF_PUBLIC_SIGNAL_ORDER.length);
+  encoded.push(...digest32(input.circuitSourceDigest, 'circuitSourceDigest'));
+  encoded.push(...digest32(input.provingKeyDigest, 'provingKeyDigest'));
+  encoded.push(...verifyingKeyDigest);
+  encoded.push(...digest32(input.ceremonyTranscriptDigest, 'ceremonyTranscriptDigest'));
+  encoded.push(...digest32(input.artifactManifestDigest, 'artifactManifestDigest'));
+  return {
+    schemaVersion: CIRCUIT_CONFIG_SCHEMA_VERSION,
+    actionKind,
+    proofInterfaceVersion: PROOF_INTERFACE_VERSION,
+    publicInputCount: 4,
+    verifyingKeyDigest,
+    configDigest: sha256(Uint8Array.from(encoded)),
+  };
 }
 
 export function createRulesGeometryCommitment(geometry: RulesGeometryV1): bigint {

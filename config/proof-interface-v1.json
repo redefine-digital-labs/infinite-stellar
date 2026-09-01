@@ -51,6 +51,33 @@
     ],
     "byteLength": 128
   },
+  "circuitConfig": {
+    "schemaVersion": 1,
+    "domainLabel": "INFINITE_STELLAR_CIRCUIT_CONFIG_V1",
+    "proofInterfaceVersion": 1,
+    "publicInputCount": 4,
+    "verifyingKeyEncoding": "Arkworks canonical-compressed BN254 prepared-key input",
+    "verifyingKeyByteLength": 392,
+    "digestHash": "sha256",
+    "configDigestEncoding": [
+      "raw UTF-8 domain label",
+      "schema_version_u64_le",
+      "action_kind_u8",
+      "proof_interface_version_u64_le",
+      "public_input_count_u8",
+      "circuit_source_sha256_32",
+      "proving_key_sha256_32",
+      "verifying_key_sha256_32",
+      "ceremony_transcript_sha256_32",
+      "artifact_manifest_sha256_32"
+    ],
+    "seasonBinding": [
+      "circuit_config_object_id",
+      "config_digest",
+      "verifying_key_digest"
+    ],
+    "productionPolicy": "A production config must be created from code-pinned audited ceremony constants and frozen. No production constructor exists in this revision."
+  },
   "rulesGeometry": {
     "source": "config/dark-forest-v06-round5.json",
     "sourceSha256": "a01f97cc2657de4fe7a3e415654a895e54544045387b6bc252b4e4d8c51d1372",
@@ -81,7 +108,8 @@
     "compiler": "circom-v2.2.3",
     "prover": "snarkjs-v0.7.6",
     "productionEligible": false,
-    "remainingRequiredRelations": []
+    "remainingRequiredRelations": [],
+    "moveAdapterFixture": "packages/prover/test/fixtures/proof-actions-development.json"
   },
   "goldenVector": {
     "network": "sui:mainnet",

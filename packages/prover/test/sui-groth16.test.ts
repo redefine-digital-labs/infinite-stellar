@@ -5,6 +5,7 @@ import {
   type SnarkjsGroth16Proof,
   type SnarkjsGroth16VerificationKey,
 } from '../src/sui-groth16';
+import { createCircuitConfigDigest } from '../src/proof-intent';
 
 const fixture = JSON.parse(readFileSync(
   new URL('./fixtures/claim-home-sui-serialization.json', import.meta.url),
@@ -36,6 +37,24 @@ describe('snarkjs to Sui Groth16 serialization', () => {
     );
   });
 
+  it('locks the immutable Move CircuitConfig digest schema', () => {
+    const bytes32 = (value: number) => new Uint8Array(32).fill(value);
+    const result = createCircuitConfigDigest({
+      actionKind: 'claim_home',
+      circuitSourceDigest: bytes32(1),
+      provingKeyDigest: bytes32(2),
+      ceremonyTranscriptDigest: bytes32(3),
+      artifactManifestDigest: bytes32(4),
+      verifyingKeyBytes: Uint8Array.from(Buffer.from(EXPECTED_VK, 'hex')),
+    });
+    expect(Buffer.from(result.verifyingKeyDigest).toString('hex')).toBe(
+      'dc72eca67cb9f6afa2f048b7d7e8f2e3d8531d764eb76e818f31b6a9af771a39',
+    );
+    expect(Buffer.from(result.configDigest).toString('hex')).toBe(
+      '4656d9739ca529a66de155e879278e50bf8cb3606ebdeff30c2ea5e39a0131ef',
+    );
+  });
+
   it('rejects mismatched curve and public-input metadata before point conversion', async () => {
     const proof = { protocol: 'groth16', curve: 'bls12381' } as SnarkjsGroth16Proof;
     const verificationKey = { protocol: 'groth16', curve: 'bn128', nPublic: 4, IC: [] } as unknown as SnarkjsGroth16VerificationKey;
@@ -50,5 +69,25 @@ describe('snarkjs to Sui Groth16 serialization', () => {
       fixture.verificationKey,
       fixture.publicSignals,
     )).rejects.toThrow(/finite affine/);
+  });
+
+  it('rejects malformed immutable-config inputs before hashing', () => {
+    const bytes32 = new Uint8Array(32);
+    expect(() => createCircuitConfigDigest({
+      actionKind: 'move',
+      circuitSourceDigest: bytes32,
+      provingKeyDigest: bytes32,
+      ceremonyTranscriptDigest: bytes32,
+      artifactManifestDigest: bytes32,
+      verifyingKeyBytes: new Uint8Array(391),
+    })).toThrow(/392-byte/);
+    expect(() => createCircuitConfigDigest({
+      actionKind: 'capture' as 'move',
+      circuitSourceDigest: bytes32,
+      provingKeyDigest: bytes32,
+      ceremonyTranscriptDigest: bytes32,
+      artifactManifestDigest: bytes32,
+      verifyingKeyBytes: new Uint8Array(392),
+    })).toThrow(/claim_home or move/);
   });
 });

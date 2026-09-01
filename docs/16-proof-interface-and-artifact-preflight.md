@@ -5,10 +5,10 @@
 This document freezes Infinite Stellar proof interface v1 for cross-language
 implementation. The repository includes development-only `claim_home` and
 `move` relations that cover the intended v1 geometry and action predicates,
-plus a deterministic Sui serialization bridge. They remain unaudited
-development circuits; no production verifying key, production trusted setup,
-or audited verifier exists. Ranked writes remain fail-closed until every
-production gate in this document passes.
+plus a deterministic Sui serialization bridge and test-only proof-consuming
+Move adapters. They remain unaudited development circuits; no production
+verifying key, production trusted setup, or audited verifier exists. Ranked
+writes remain fail-closed until every production gate in this document passes.
 
 The machine-readable authority is
 [`config/proof-interface-v1.json`](../config/proof-interface-v1.json). The
@@ -98,9 +98,12 @@ The action commitment is `poseidon_bn254` over exactly these sixteen fields:
 15  rules_geometry_commitment
 ```
 
-The immutable package and season `CircuitConfig` separately pin package,
-circuit, verifying key, and artifact identity. Production entry points must
-read those authorities and reject a mismatch; callers cannot choose them.
+Each Season pins the exact immutable claim/move `CircuitConfig` object ID,
+config digest, and verifying-key digest. `CircuitConfig` schema v1 also fixes
+the action kind, proof-interface version, public-input count, raw Arkworks key,
+and SHA-256 digests of circuit source, proving key, verifying key, ceremony
+transcript, and artifact manifest. Production entry points read those
+authorities and reject a mismatch; callers cannot choose or supply key bytes.
 Season and Seat IDs are globally unique Sui object IDs and bind the tuple to the
 intended deployed object graph.
 
@@ -119,6 +122,11 @@ Each signal is serialized as one 32-byte little-endian canonical scalar and the
 four values are concatenated without a length prefix. The final byte length is
 128. The TypeScript and Move tests lock the mainnet golden action commitment and
 the SHA-256 digest of the serialized public inputs.
+
+The numeric location field has two intentionally distinct byte views. Groth16
+uses the little-endian scalar encoding above. Planet identity and Round-5
+byte-indexed generation use the same fixed-width 32-byte big-endian location ID
+shown by the client. Converting one to the other is explicit and vector-tested.
 
 ## Circuit obligations
 
@@ -152,15 +160,21 @@ exercise the exact four-signal interface with real Groth16 proofs:
 - TypeScript generates the fixtures, Circom generates the witness, snarkjs
   proves and self-verifies, and TypeScript serializes the proof/VK into
   Arkworks canonical-compressed bytes accepted by Sui's native verifier;
+- a tracked development-only fixture binds the exact claim/move configs to a
+  deterministic Move Season/Seat object graph; Move recomputes every public
+  input, creates a Founding Planet, dispatches a fleet, increments its source
+  proof nonce, and rejects replay, sender mutation, expiry, and config
+  substitution;
 - wrong coordinate preimages, negative-zero encodings, non-home planets,
   inconsistent geometry, non-power-of-two Perlin scales, rarity mutations,
   out-of-range routes, public-input mutation, and action mutation are rejected.
 
 These are deliberately not production circuits. Independent review/audit,
 expanded differential/property testing, performance evidence, a reproducible
-container build, production Phase 2 ceremony, and immutable key pinning remain
-blocking gates. Development artifacts use public deterministic entropy, are
-Git-ignored, and are rejected by production manifest selection.
+container build, production Phase 2 ceremony, and audited production-config
+activation remain blocking gates. Development build artifacts are disposable
+and Git-ignored; their exported bridge fixture is labeled non-production and
+runtime code has no constructor that can approve it.
 
 ## Artifact manifest v1
 

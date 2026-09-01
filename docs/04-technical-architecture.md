@@ -70,12 +70,17 @@ The official client may present these systems as one journey. Onchain authorizat
 
 `CircuitConfig` is also frozen and contains:
 
-- Circuit version and domain.
-- Curve identifier.
-- Prepared verifying key or its canonical reference.
-- R1CS, WASM, proving-key, and verifying-key hashes.
-- Public-input schema version.
-- Field-encoding version.
+- Config schema, action kind, proof-interface version, and public-input count.
+- The raw `392`-byte Arkworks BN254 key for the four-input interface.
+- Circuit-source, proving-key, verifying-key, ceremony-transcript, and artifact-
+  manifest SHA-256 digests.
+- A fixed-width domain-separated config digest and production-approval bit.
+
+Each `SeasonManifest` stores the network field plus the exact claim/move config
+object IDs, config digests, and verifying-key digests. The current package has
+no runtime constructor capable of setting production approval; a later audited
+revision must construct configs only from code-pinned ceremony constants and
+freeze them before any ranked Season can be created.
 
 `SeasonManifest` references the exact engine package, Soulidity dependency/interface, accepted projection and display-license policy, rules, circuit, reference-client core, and metadata hashes. It is the sole authority for base enrollment close, universe opening, `home_claim_open_at`, competitive start, `home_claim_close_at`, recovery close, Last Light activation, movement close, season end, settlement window, and record-finalization timestamps. It also freezes a nonzero `seed_observation_delay_ms`, `minimum_home_claim_window_ms`, `max_home_availability_tick_gap_ms`, `max_ranked_seats`, the enrollment-capacity object, enrollment-registry parent IDs, shard count/function/key-encoding version, ranked-scope/league policy, the `Commander` role-schema ID, recovery domain/budget, bounded Beacon candidate-domain construction and commitment, maximum extension, allowed extension causes/windows, cancellation/refund policy, and legal runtime-transition schema. Manifest validation requires `0 < max_home_availability_tick_gap_ms < minimum_home_claim_window_ms`, so one late tick after a completely unevidenced window cannot alone authorize player elimination.
 
@@ -228,7 +233,8 @@ Static geometry belongs in the circuit. Current energy, ownership, time, queue c
 
 Sui's Groth16 Move API currently supports at most eight public inputs. Circuit outputs are public signals and must be counted. The historical Dark Forest v0.6 movement circuit exposes seven explicit public inputs and three public outputs, so it cannot be adopted unchanged under this limit.
 
-The new circuit should compress the action into a domain-separated commitment. The logical payload is:
+Proof interface v1 compresses the action into a domain-separated commitment.
+The logical payload is:
 
 ```text
 domain
@@ -260,7 +266,7 @@ action_commitment
 rules_geometry_commitment
 ```
 
-`rules_geometry_commitment` is derived inside the circuit from the schema/domain, world radius, exact planet-hash threshold, location/space keys, Perlin scale and mirrors, and the inclusive/exclusive home band. Move recomputes the same Poseidon value from immutable `SeasonManifest` fields; an unconstrained configuration hash is not acceptable. The exact 16-field Poseidon action tuple, identifier limbs, four-signal order, BN254 limits, little-endian scalar serialization, Arkworks point serialization, and mainnet golden vector are normative in [`16-proof-interface-and-artifact-preflight.md`](16-proof-interface-and-artifact-preflight.md) and [`config/proof-interface-v1.json`](../config/proof-interface-v1.json). TypeScript, Circom, and Move agree on that interface, and a tracked development vector verifies in Sui's native Groth16 implementation. Production artifacts, ceremony keys, independent audit, and key pinning remain unavailable before any ranked write.
+`rules_geometry_commitment` is derived inside the circuit from the schema/domain, world radius, exact planet-hash threshold, location/space keys, Perlin scale and mirrors, and the inclusive/exclusive home band. Move recomputes the same Poseidon value from immutable `SeasonManifest` fields; an unconstrained configuration hash is not acceptable. The exact 16-field Poseidon action tuple, identifier limbs, four-signal order, BN254 limits, little-endian scalar serialization, Arkworks point serialization, and mainnet golden vector are normative in [`16-proof-interface-and-artifact-preflight.md`](16-proof-interface-and-artifact-preflight.md) and [`config/proof-interface-v1.json`](../config/proof-interface-v1.json). TypeScript, Circom, and Move agree on that interface. Tracked development proofs pass through config binding and Sui-native verification before creating a Founding Planet or nonce-bound Voyage. Production artifacts, ceremony keys, independent audit, and production-config activation remain unavailable before any ranked write.
 
 ### Circuit stack
 

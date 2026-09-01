@@ -1,25 +1,25 @@
 # Infinite Stellar Current Phase
 
 - **Status:** Complete
-- **Phase:** Production circuit relation and Sui proof-byte bridge
-- **Goal:** Complete the Round-5 `claim_home` and `move` geometry relations, including Perlin/home bands and manifest-pinned parameters, then implement deterministic snarkjs-to-Sui Groth16 byte serialization plus a fail-closed Move verifier seam.
+- **Phase:** Immutable circuit configuration and proof-consuming Move actions
+- **Goal:** Pin per-action circuit, verification-key, and ceremony identity in immutable `CircuitConfig` objects and each `SeasonManifest`, then add `claim_home` and `move` adapters that recompute the four public inputs, verify Groth16 bytes, consume replay state, and only then construct package-internal witnesses.
 - **Reference:** Official Dark Forest v0.6 posts and the pinned post-Round-5 snapshot `darkforest-eth/darkforest-v0.6@d1e25ead311697ecaa27ff648dac16a0d8cea15c`. The reference is GPL-3.0; this repository uses an independently written compatibility implementation and original presentation.
-- **Branch:** `codex/dark-forest-parity` from committed parity slice `8d3b559399230d9f60f7ae8562ef17b596a89674`.
-- **In scope:** Exact Round-5 Perlin and home-band constraints; manifest-pinned geometry values committed inside the four-signal interface; canonical Groth16 proof/public-input serialization for Sui's Arkworks API; cross-language golden vectors; a test-only or fail-closed Move verifier seam; adversarial relation/serialization tests; performance evidence; documentation; full validation; authorized commit and push.
-- **Non-goals:** No production Phase 2 ceremony or key generation, claim of independent circuit audit, production verifier activation, Soul ABI guess, ranked/mainnet signing, mainnet publish/write, Vercel deployment, or public launch.
-- **Production boundary:** All generated Groth16 material remains development-only and ignored. The production verifier must remain impossible to construct unless a later audited package pins a ceremony-backed prepared verifying key. The unfinished Soulidity ABI, signed transaction builders, artifact custody, independent audits, operations, and legal/name clearance remain separate blockers.
-- **Acceptance:** Circom recomputes the exact Round-5 location hash and Perlin/home classification from private coordinates under manifest-pinned geometry; valid claim/move witnesses prove and all mutated geometry, intent, distance, and canonical-encoding cases fail; snarkjs proofs serialize deterministically into Sui-compatible Arkworks bytes with TypeScript/Move golden vectors; the Move seam verifies only a pinned test fixture and stays production fail-closed; all TypeScript, Move, circuit, lint, build, documentation, dependency, diff, and secret-safety gates pass.
-- **Deployment:** Source changes will be committed and pushed to `origin/codex/dark-forest-parity` after validation. No Vercel deployment or onchain write is authorized. The earlier sealed testnet canary remains unchanged.
-- **Exact next action:** Implement immutable per-action `CircuitConfig` and ceremony-key digest topology, then add proof-consuming `claim_home` and `move` entry-point adapters while continuing to reject every development key until the independently audited Phase 2 ceremony is complete.
-- **Current handoff:** `docs/codex/handoffs/2026-08-31-production-circuit-sui-proof-byte-bridge.md`
-- **Previous handoff:** `docs/codex/handoffs/2026-08-31-circuit-candidate-multiplayer-rehearsal.md`
+- **Branch:** `codex/dark-forest-parity` from committed proof-byte bridge `5407e5051f49e41fdd18b71abe1b9496cbb5c137`.
+- **In scope:** Immutable per-action config metadata and digests; exact Season config binding; public-input/action recomputation; Sui native proof verification; canonical location-hash storage; per-source proof nonce consumption; deadline and object-intent checks; test-only real development proof flows; adversarial config/proof/replay tests; SDK/config documentation; full validation; authorized commit and push.
+- **Non-goals:** No production Phase 2 ceremony or key generation, claim of independent circuit audit, production config activation, Soul ABI guess, reveal/capture circuit completion, ranked/mainnet signing, mainnet publish/write, Vercel deployment, or public launch.
+- **Production boundary:** Test-only development configs may prove the complete adapter path, but production `CircuitConfig` construction and ranked proof actions must remain impossible until audited ceremony artifacts and their digests are code-pinned. The unfinished Soulidity ABI, signed transaction builders, artifact custody, independent audits, operations, and legal/name clearance remain separate blockers.
+- **Acceptance:** A Season binds exact immutable claim/move config IDs, config digests, and verifying-key digests; callers cannot substitute action/config/key metadata; adapters reconstruct intent and public inputs from canonical objects/arguments, reject expired or mutated proofs, and atomically consume a source-Planet nonce; real development proof fixtures exercise claim then move in Move tests without exposing a runtime development bypass; all Node 24 workspace, Move, circuit, lint, build, documentation, dependency, diff, and secret-safety gates pass.
+- **Deployment:** Validated source will be committed and pushed to `origin/codex/dark-forest-parity`. No Vercel deployment or onchain write is authorized. The earlier sealed testnet canary remains unchanged.
+- **Exact next action:** Specify and implement proof-verified natural Planet initialization and atomic `move_new` so a player can discover and target an uninitialized coordinate without trusting caller-supplied Perlin or stats.
+- **Current handoff:** `docs/codex/handoffs/2026-09-01-circuit-config-proof-actions.md`
+- **Previous handoff:** `docs/codex/handoffs/2026-08-31-production-circuit-sui-proof-byte-bridge.md`
 
 The prior production-testnet release handoff remains the recovery point for the
 sealed canary. Do not modify or enable it until the production Soul, proof, and
 artifact-custody adapters are frozen, audited, and separately authorized.
 
-This phase completed the exact Round-5 Perlin/home geometry relations, one
-TypeScript/Circom/Move rules commitment, canonical snarkjs-to-Sui Arkworks byte
-serialization, and a Sui-native golden verification vector. Production action
-readiness remains fail-closed until immutable circuit/key configuration and
-audited ceremony material are wired into the Move entry points.
+This phase bound exact claim/move circuit configs into each Season and routed
+real development Groth16 proofs through Founding Planet creation and nonce-bound
+fleet dispatch. Production action readiness remains fail-closed until audited
+ceremony constants are code-pinned and explicitly activated. Natural Planet
+initialization/`move_new` is the next gameplay proof gap.

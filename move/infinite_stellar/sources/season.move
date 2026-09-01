@@ -3,6 +3,7 @@ module infinite_stellar::season;
 use sui::clock::{Self as clock, Clock};
 use sui::event;
 use sui::random::{Self as random, Random};
+use infinite_stellar::proof_intent;
 use infinite_stellar::rules_geometry;
 
 const VERSION: u64 = 1;
@@ -57,6 +58,13 @@ public struct SeasonManifest has key {
     home_perlin_min: u8,
     home_perlin_max: u8,
     rules_geometry_commitment: u256,
+    proof_network_field: u256,
+    claim_home_circuit_config_id: ID,
+    claim_home_circuit_config_digest: vector<u8>,
+    claim_home_verifying_key_digest: vector<u8>,
+    move_circuit_config_id: ID,
+    move_circuit_config_digest: vector<u8>,
+    move_verifying_key_digest: vector<u8>,
     enrollment_registry_id: ID,
     runtime_id: ID,
     planet_registry_id: ID,
@@ -87,6 +95,13 @@ public struct SeasonCreated has copy, drop {
     max_ranked_seats: u64,
     world_radius: u64,
     rules_geometry_commitment: u256,
+    proof_network_field: u256,
+    claim_home_circuit_config_id: ID,
+    claim_home_circuit_config_digest: vector<u8>,
+    claim_home_verifying_key_digest: vector<u8>,
+    move_circuit_config_id: ID,
+    move_circuit_config_digest: vector<u8>,
+    move_verifying_key_digest: vector<u8>,
 }
 
 public struct UniverseOpened has copy, drop {
@@ -121,6 +136,13 @@ public(package) fun new_season(
     perlin_mirror_y: bool,
     home_perlin_min: u8,
     home_perlin_max: u8,
+    proof_network_field: u256,
+    claim_home_circuit_config_id: ID,
+    claim_home_circuit_config_digest: vector<u8>,
+    claim_home_verifying_key_digest: vector<u8>,
+    move_circuit_config_id: ID,
+    move_circuit_config_digest: vector<u8>,
+    move_verifying_key_digest: vector<u8>,
     ctx: &mut TxContext,
 ): (SeasonManifest, SeasonRuntime, SeasonAdminCap) {
     assert!(max_ranked_seats > 0, EInvalidManifest);
@@ -144,6 +166,23 @@ public(package) fun new_season(
         home_claim_close_at_ms - scheduled_not_before_at_ms >= minimum_home_claim_window_ms,
         EInvalidManifest,
     );
+    proof_intent::assert_supported_network(proof_network_field);
+    let unbound_configs = claim_home_circuit_config_id == @0x0.to_id() &&
+        move_circuit_config_id == @0x0.to_id();
+    if (unbound_configs) {
+        assert!(claim_home_circuit_config_digest.is_empty(), EInvalidManifest);
+        assert!(claim_home_verifying_key_digest.is_empty(), EInvalidManifest);
+        assert!(move_circuit_config_digest.is_empty(), EInvalidManifest);
+        assert!(move_verifying_key_digest.is_empty(), EInvalidManifest);
+    } else {
+        assert!(claim_home_circuit_config_id != @0x0.to_id(), EInvalidManifest);
+        assert!(move_circuit_config_id != @0x0.to_id(), EInvalidManifest);
+        assert!(claim_home_circuit_config_id != move_circuit_config_id, EInvalidManifest);
+        assert!(claim_home_circuit_config_digest.length() == 32, EInvalidManifest);
+        assert!(claim_home_verifying_key_digest.length() == 32, EInvalidManifest);
+        assert!(move_circuit_config_digest.length() == 32, EInvalidManifest);
+        assert!(move_verifying_key_digest.length() == 32, EInvalidManifest);
+    };
     let geometry_commitment = rules_geometry::commitment(
         world_radius,
         planet_hash_threshold,
@@ -182,6 +221,13 @@ public(package) fun new_season(
         home_perlin_min,
         home_perlin_max,
         rules_geometry_commitment: geometry_commitment,
+        proof_network_field,
+        claim_home_circuit_config_id,
+        claim_home_circuit_config_digest,
+        claim_home_verifying_key_digest,
+        move_circuit_config_id,
+        move_circuit_config_digest,
+        move_verifying_key_digest,
         enrollment_registry_id: @0x0.to_id(),
         runtime_id: runtime_uid.to_inner(),
         planet_registry_id: @0x0.to_id(),
@@ -234,6 +280,13 @@ public(package) fun emit_season_created(
         max_ranked_seats,
         world_radius: manifest.world_radius,
         rules_geometry_commitment: manifest.rules_geometry_commitment,
+        proof_network_field: manifest.proof_network_field,
+        claim_home_circuit_config_id: manifest.claim_home_circuit_config_id,
+        claim_home_circuit_config_digest: manifest.claim_home_circuit_config_digest,
+        claim_home_verifying_key_digest: manifest.claim_home_verifying_key_digest,
+        move_circuit_config_id: manifest.move_circuit_config_id,
+        move_circuit_config_digest: manifest.move_circuit_config_digest,
+        move_verifying_key_digest: manifest.move_verifying_key_digest,
     });
 }
 
@@ -473,6 +526,25 @@ public fun perlin_mirror_y(self: &SeasonManifest): bool { self.perlin_mirror_y }
 public fun home_perlin_min(self: &SeasonManifest): u8 { self.home_perlin_min }
 public fun home_perlin_max(self: &SeasonManifest): u8 { self.home_perlin_max }
 public fun rules_geometry_commitment(self: &SeasonManifest): u256 { self.rules_geometry_commitment }
+public fun proof_network_field(self: &SeasonManifest): u256 { self.proof_network_field }
+public fun claim_home_circuit_config_id(self: &SeasonManifest): ID {
+    self.claim_home_circuit_config_id
+}
+public fun claim_home_circuit_config_digest(self: &SeasonManifest): &vector<u8> {
+    &self.claim_home_circuit_config_digest
+}
+public fun claim_home_verifying_key_digest(self: &SeasonManifest): &vector<u8> {
+    &self.claim_home_verifying_key_digest
+}
+public fun move_circuit_config_id(self: &SeasonManifest): ID {
+    self.move_circuit_config_id
+}
+public fun move_circuit_config_digest(self: &SeasonManifest): &vector<u8> {
+    &self.move_circuit_config_digest
+}
+public fun move_verifying_key_digest(self: &SeasonManifest): &vector<u8> {
+    &self.move_verifying_key_digest
+}
 public fun enrollment_registry_id(self: &SeasonManifest): ID { self.enrollment_registry_id }
 public fun planet_registry_id(self: &SeasonManifest): ID { self.planet_registry_id }
 public fun universe_opened(self: &SeasonRuntime): bool { self.universe_opened }
@@ -520,8 +592,42 @@ public fun new_season_for_testing(
         false,
         13,
         14,
+        proof_intent::mainnet_network_field(),
+        @0x0.to_id(),
+        vector[],
+        vector[],
+        @0x0.to_id(),
+        vector[],
+        vector[],
         ctx,
     )
+}
+
+#[test_only]
+public fun bind_circuit_configs_for_testing(
+    manifest: &mut SeasonManifest,
+    claim_home_circuit_config_id: ID,
+    claim_home_circuit_config_digest: vector<u8>,
+    claim_home_verifying_key_digest: vector<u8>,
+    move_circuit_config_id: ID,
+    move_circuit_config_digest: vector<u8>,
+    move_verifying_key_digest: vector<u8>,
+) {
+    assert!(manifest.claim_home_circuit_config_id == @0x0.to_id(), EInvalidManifest);
+    assert!(manifest.move_circuit_config_id == @0x0.to_id(), EInvalidManifest);
+    assert!(claim_home_circuit_config_id != @0x0.to_id(), EInvalidManifest);
+    assert!(move_circuit_config_id != @0x0.to_id(), EInvalidManifest);
+    assert!(claim_home_circuit_config_id != move_circuit_config_id, EInvalidManifest);
+    assert!(claim_home_circuit_config_digest.length() == 32, EInvalidManifest);
+    assert!(claim_home_verifying_key_digest.length() == 32, EInvalidManifest);
+    assert!(move_circuit_config_digest.length() == 32, EInvalidManifest);
+    assert!(move_verifying_key_digest.length() == 32, EInvalidManifest);
+    manifest.claim_home_circuit_config_id = claim_home_circuit_config_id;
+    manifest.claim_home_circuit_config_digest = claim_home_circuit_config_digest;
+    manifest.claim_home_verifying_key_digest = claim_home_verifying_key_digest;
+    manifest.move_circuit_config_id = move_circuit_config_id;
+    manifest.move_circuit_config_digest = move_circuit_config_digest;
+    manifest.move_verifying_key_digest = move_verifying_key_digest;
 }
 
 #[test_only]
@@ -627,7 +733,7 @@ public fun destroy_for_testing(
     runtime: SeasonRuntime,
     admin_cap: SeasonAdminCap,
 ) {
-    let SeasonManifest { id, version: _, league: _, enrollment_close_at_ms: _, universe_open_at_ms: _, home_claim_open_at_ms: _, home_claim_close_at_ms: _, season_end_at_ms: _, seed_observation_delay_ms: _, minimum_home_claim_window_ms: _, max_home_availability_tick_gap_ms: _, max_ranked_seats: _, world_radius: _, planet_hash_threshold: _, location_hash_key: _, space_type_key: _, perlin_scale: _, perlin_mirror_x: _, perlin_mirror_y: _, home_perlin_min: _, home_perlin_max: _, rules_geometry_commitment: _, enrollment_registry_id: _, runtime_id: _, planet_registry_id: _ } = manifest;
+    let SeasonManifest { id, version: _, league: _, enrollment_close_at_ms: _, universe_open_at_ms: _, home_claim_open_at_ms: _, home_claim_close_at_ms: _, season_end_at_ms: _, seed_observation_delay_ms: _, minimum_home_claim_window_ms: _, max_home_availability_tick_gap_ms: _, max_ranked_seats: _, world_radius: _, planet_hash_threshold: _, location_hash_key: _, space_type_key: _, perlin_scale: _, perlin_mirror_x: _, perlin_mirror_y: _, home_perlin_min: _, home_perlin_max: _, rules_geometry_commitment: _, proof_network_field: _, claim_home_circuit_config_id: _, claim_home_circuit_config_digest: _, claim_home_verifying_key_digest: _, move_circuit_config_id: _, move_circuit_config_digest: _, move_verifying_key_digest: _, enrollment_registry_id: _, runtime_id: _, planet_registry_id: _ } = manifest;
     object::delete(id);
     let SeasonRuntime { id, season_id: _, universe_opened: _, universe_opened_at_ms: _, universe_seed: _, home_claim_not_before_at_ms: _, paused: _, home_availability_last_tick_at_ms: _, accumulated_home_claimable_ms: _, home_window_resolution: _, cancelled: _, settlement_started: _ } = runtime;
     object::delete(id);
