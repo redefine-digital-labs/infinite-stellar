@@ -1,10 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CanonicalSoul, PlayerSuiClient } from '@infinite-stellar/game-sdk';
 import { MAINNET_DEPLOYMENT } from './deployment';
-import { submitRankedEnrollment } from './use-ranked-enrollment';
+import { loadPendingEnrollment, submitRankedEnrollment } from './use-ranked-enrollment';
 
 const id = (suffix: string) => `0x${suffix.padStart(64, '0')}`;
 const CONTROLLER = id('a1');
+
+afterEach(() => window.localStorage.clear());
 
 function soul(owner = CONTROLLER, listed = false): CanonicalSoul {
   return {
@@ -59,5 +61,20 @@ describe('ranked enrollment submission guard', () => {
       execute,
     })).rejects.toMatchObject({ code: 'SOUL_ADAPTER_UNAVAILABLE' });
     expect(execute).not.toHaveBeenCalled();
+  });
+
+  it('does not recover a malformed or cross-controller pending record', () => {
+    const key = `infinite-stellar:ranked-pending:v1:mainnet:${CONTROLLER}`;
+    window.localStorage.setItem(key, JSON.stringify({
+      schemaVersion: 1,
+      kind: 'enroll',
+      digest: 'not-base58',
+      seasonId: id('c1'),
+      controller: id('ff'),
+      soulId: id('b1'),
+      soulStateId: id('b2'),
+      createdAtMs: Date.now(),
+    }));
+    expect(loadPendingEnrollment(CONTROLLER)).toBeNull();
   });
 });

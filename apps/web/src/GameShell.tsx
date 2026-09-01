@@ -20,6 +20,7 @@ import { useProofReadiness } from './use-proof-readiness';
 import type { RankedGatewaySnapshot } from './use-ranked-gateway';
 import type { CanonicalSoul } from '@infinite-stellar/game-sdk';
 import type { RankedEnrollmentState } from './use-ranked-enrollment';
+import type { RankedProjectionSnapshot } from './use-ranked-projection';
 
 export interface GameShellProps {
   walletAddress?: string;
@@ -30,6 +31,8 @@ export interface GameShellProps {
   onRefreshRanked?: () => void;
   rankedEnrollment?: RankedEnrollmentState;
   onEnrollRanked?: (soul: CanonicalSoul) => void;
+  rankedProjection?: RankedProjectionSnapshot;
+  onRefreshProjection?: () => void;
 }
 
 const DISCONNECTED_RANKED_GATEWAY: RankedGatewaySnapshot = {
@@ -50,6 +53,8 @@ export function GameShell({
   onRefreshRanked,
   rankedEnrollment = { status: 'idle' },
   onEnrollRanked,
+  rankedProjection = { phase: 'disabled' },
+  onRefreshProjection,
 }: GameShellProps) {
   const journey = usePlayerJourney(walletAddress);
   const { session } = journey;
@@ -171,6 +176,27 @@ export function GameShell({
                   ✓ Season Seat {rankedGateway.seat.seatId.slice(0, 10)}… verified from BCS
                 </span>
               )}
+              {rankedGateway.seat && rankedProjection.phase === 'loading' && (
+                <span className="gate-wait">○ Reconstructing checkpointed Planet and Voyage state…</span>
+              )}
+              {rankedGateway.seat && rankedProjection.phase === 'loaded' && rankedProjection.projection && (
+                <span className="gate-ok">
+                  ✓ {rankedProjection.projection.planets.length} Planets ·{' '}
+                  {rankedProjection.projection.voyages.length} active Voyages · checkpoint{' '}
+                  {rankedProjection.projection.maxEventCheckpoint ?? 'genesis'} · snapshot{' '}
+                  {rankedProjection.projection.snapshotFingerprint.slice(0, 10)}…
+                </span>
+              )}
+              {rankedGateway.seat && rankedProjection.phase === 'error' && (
+                <div className="gate-soul">
+                  <span className="gate-wait">○ Universe read rejected: {rankedProjection.error}</span>
+                  {onRefreshProjection && (
+                    <button className="button button-secondary" type="button" onClick={onRefreshProjection}>
+                      Retry universe read
+                    </button>
+                  )}
+                </div>
+              )}
               {rankedGateway.phase === 'loaded' && !rankedGateway.seat && (
                 <span className={rankedGateway.discoveryComplete ? 'gate-ok' : 'gate-wait'}>
                   {rankedGateway.discoveryComplete ? '✓' : '○'} {rankedGateway.souls.length} eligible
@@ -187,12 +213,15 @@ export function GameShell({
                       className="button button-secondary"
                       type="button"
                       disabled={rankedEnrollment.status === 'simulating'
+                        || rankedEnrollment.status === 'recovering'
                         || rankedEnrollment.status === 'awaiting-signature'
                         || rankedEnrollment.status === 'finalizing'}
                       onClick={() => onEnrollRanked(soul)}
                     >
                       {rankedEnrollment.soulStateId === soul.stateId
-                        ? rankedEnrollment.status === 'simulating'
+                        ? rankedEnrollment.status === 'recovering'
+                          ? 'Recovering finality…'
+                          : rankedEnrollment.status === 'simulating'
                           ? 'Checking transaction…'
                           : rankedEnrollment.status === 'awaiting-signature'
                             ? 'Approve in wallet…'

@@ -10,6 +10,7 @@ import { GameShell } from './GameShell';
 import { MAINNET_DEPLOYMENT, SOULIDITY_MAINNET_PIN } from './deployment';
 import { useRankedGateway } from './use-ranked-gateway';
 import { useRankedEnrollment } from './use-ranked-enrollment';
+import { useRankedProjection } from './use-ranked-projection';
 
 export function App() {
   const account = useCurrentAccount();
@@ -34,6 +35,11 @@ export function App() {
     execute,
     ranked.refresh,
   );
+  const projection = useRankedProjection(
+    client,
+    MAINNET_DEPLOYMENT,
+    ranked.snapshot.seat,
+  );
 
   return (
     <GameShell
@@ -45,6 +51,8 @@ export function App() {
       onRefreshRanked={ranked.refresh}
       rankedEnrollment={enrollment.state}
       onEnrollRanked={enrollment.enroll}
+      rankedProjection={projection.snapshot}
+      onRefreshProjection={projection.refresh}
     />
   );
 }

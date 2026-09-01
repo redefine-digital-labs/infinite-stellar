@@ -6,6 +6,7 @@ import {
   PlayerTransactionExecutionError,
   deriveSeasonSeatId,
   readPlayerSeatBundle,
+  recoverPlayerTransactionByDigest,
   simulatePlayerTransaction,
   submitAndFinalizePlayerTransaction,
   type InfiniteStellarDeployment,
@@ -388,6 +389,7 @@ describe('production Sui player runtime', () => {
     } as unknown as PlayerSuiClient;
     const execute = vi.fn().mockResolvedValue(successfulTransaction([PLANET_ID]));
     const onPhase = vi.fn();
+    const onSubmitted = vi.fn();
 
     const result = await submitAndFinalizePlayerTransaction({
       client,
@@ -400,6 +402,7 @@ describe('production Sui player runtime', () => {
         seatId,
       },
       onPhase,
+      onSubmitted,
     });
 
     expect(result).toMatchObject({
@@ -417,6 +420,7 @@ describe('production Sui player runtime', () => {
       'awaiting-signature',
       'finalizing',
     ]);
+    expect(onSubmitted).toHaveBeenCalledWith(DIGEST);
   });
 
   it('does not treat wallet resolution, wrong events, or missing changed objects as success', async () => {
@@ -480,6 +484,56 @@ describe('production Sui player runtime', () => {
       deployment: DEPLOYMENT,
       expectation: { kind: 'claim_home', seasonId: MANIFEST_ID, seatId },
     })).rejects.toMatchObject({ code: 'RECONCILIATION_FAILED' });
+  });
+
+  it('recovers an already-submitted digest without simulating or invoking a wallet again', async () => {
+    const seatId = deriveSeasonSeatId(DEPLOYMENT, CONTROLLER);
+    const event: SuiClientTypes.Event = {
+      packageId: PACKAGE_ID,
+      module: 'planet',
+      sender: CONTROLLER,
+      eventType: `${PACKAGE_ID}::planet::FoundingPlanetClaimed`,
+      bcs: FoundingPlanetClaimedEventBcs.serialize({
+        season_id: MANIFEST_ID,
+        seat_id: seatId,
+        planet_id: PLANET_ID,
+      }).toBytes(),
+      json: null,
+    };
+    const waitForTransaction = vi.fn().mockResolvedValue({
+      ...successfulTransaction([PLANET_ID], [event], true),
+      protoJson: undefined,
+    });
+
+    const recovered = await recoverPlayerTransactionByDigest({
+      client: { waitForTransaction } as unknown as PlayerSuiClient,
+      digest: DIGEST,
+      deployment: DEPLOYMENT,
+      expectation: { kind: 'claim_home', seasonId: MANIFEST_ID, seatId },
+    });
+
+    expect(recovered).toMatchObject({
+      digest: DIGEST,
+      checkpoint: '42',
+      event: { createdObjectId: PLANET_ID, seatId },
+    });
+    expect(recovered).not.toHaveProperty('simulation');
+    expect(waitForTransaction).toHaveBeenCalledOnce();
+  });
+
+  it('rejects malformed recovery digests before any chain request', async () => {
+    const waitForTransaction = vi.fn();
+    await expect(recoverPlayerTransactionByDigest({
+      client: { waitForTransaction } as unknown as PlayerSuiClient,
+      digest: 'not-a-sui-digest',
+      deployment: DEPLOYMENT,
+      expectation: {
+        kind: 'claim_home',
+        seasonId: MANIFEST_ID,
+        seatId: deriveSeasonSeatId(DEPLOYMENT, CONTROLLER),
+      },
+    })).rejects.toMatchObject({ code: 'FINALITY_FAILED' });
+    expect(waitForTransaction).not.toHaveBeenCalled();
   });
 
   it('reconciles a move only when the finalized route matches exactly', async () => {

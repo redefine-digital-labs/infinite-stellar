@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { CanonicalSoul } from '@infinite-stellar/game-sdk';
+import type {
+  CanonicalSoul,
+  PlayerSeatBundle,
+  RankedUniverseProjection,
+} from '@infinite-stellar/game-sdk';
 import { GameShell } from './GameShell';
 
 const id = (suffix: string) => `0x${suffix.padStart(64, '0')}`;
@@ -147,5 +151,29 @@ describe('Infinite Stellar player shell', () => {
     expect(screen.getByRole('heading', { name: /nothing finalized/i })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /retry from safe state/i }));
     expect(screen.getByRole('button', { name: /create season seat/i })).toBeInTheDocument();
+  });
+
+  it('shows a digest-anchored read-only universe for an existing ranked Seat', async () => {
+    const user = userEvent.setup();
+    const seat = { status: 'enrolled', seatId: id('31') } as unknown as PlayerSeatBundle;
+    const projection = {
+      planets: [{}, {}],
+      voyages: [{}],
+      maxEventCheckpoint: '4242',
+      snapshotFingerprint: 'a1'.repeat(32),
+    } as unknown as RankedUniverseProjection;
+    render(<GameShell
+      walletAddress={canonicalSoul.currentOwner}
+      rankedGateway={{
+        phase: 'loaded', controller: canonicalSoul.currentOwner,
+        seat, souls: [], discoveryComplete: true, scannedSoulEvents: 0,
+        blockers: ['PROOF_VERIFIER_CLOSED'], writesReady: false,
+      }}
+      rankedProjection={{ phase: 'loaded', seatId: seat.seatId, projection }}
+    />);
+
+    await user.click(screen.getByRole('button', { name: /check mainnet readiness/i }));
+    expect(screen.getByText(/2 Planets · 1 active Voyages · checkpoint 4242/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /enroll this soul/i })).not.toBeInTheDocument();
   });
 });

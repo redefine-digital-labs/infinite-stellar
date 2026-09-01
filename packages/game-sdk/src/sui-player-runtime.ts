@@ -166,6 +166,8 @@ export interface FinalizedPlayerTransaction {
   simulation: PlayerTransactionSimulation;
 }
 
+export type RecoveredPlayerTransaction = Omit<FinalizedPlayerTransaction, 'simulation'>;
+
 export interface SubmitPlayerTransactionInput {
   client: PlayerSuiClient;
   transaction: Transaction;
@@ -175,6 +177,16 @@ export interface SubmitPlayerTransactionInput {
   deployment: InfiniteStellarDeployment;
   expectation: PlayerActionExpectation;
   onPhase?: (phase: 'simulating' | 'awaiting-signature' | 'finalizing') => void;
+  onSubmitted?: (digest: string) => void;
+  timeoutMs?: number;
+  pollScheduleMs?: number[];
+}
+
+export interface RecoverPlayerTransactionInput {
+  client: Pick<SuiGrpcClient, 'waitForTransaction'>;
+  digest: string;
+  deployment: InfiniteStellarDeployment;
+  expectation: PlayerActionExpectation;
   timeoutMs?: number;
   pollScheduleMs?: number[];
 }
@@ -455,11 +467,38 @@ export async function submitAndFinalizePlayerTransaction(
   }
 
   const submittedDigest = submitted.Transaction.digest;
-  input.onPhase?.('finalizing');
+  try {
+    input.onSubmitted?.(submittedDigest);
+    input.onPhase?.('finalizing');
+  } catch {
+    // Once submitted, UI observer/storage failures must never interrupt finality reconciliation.
+  }
+  const reconciled = await waitAndReconcilePlayerTransaction({
+    client: input.client,
+    digest: submittedDigest,
+    deployment: input.deployment,
+    expectation: input.expectation,
+    timeoutMs: input.timeoutMs,
+    pollScheduleMs: input.pollScheduleMs,
+  });
+  return { ...reconciled, simulation };
+}
+
+const SUI_DIGEST = /^[1-9A-HJ-NP-Za-km-z]{32,64}$/;
+
+async function waitAndReconcilePlayerTransaction(
+  input: RecoverPlayerTransactionInput,
+): Promise<RecoveredPlayerTransaction> {
+  if (!SUI_DIGEST.test(input.digest)) {
+    throw new PlayerTransactionExecutionError(
+      'FINALITY_FAILED',
+      'Recovery requires an exact base58 Sui transaction digest.',
+    );
+  }
   let finalized;
   try {
     finalized = await input.client.waitForTransaction({
-      digest: submittedDigest,
+      digest: input.digest,
       timeout: input.timeoutMs ?? 60_000,
       pollSchedule: input.pollScheduleMs ?? [0, 250, 500, 1_000, 2_000, 4_000],
       include: { effects: true, events: true, objectTypes: true },
@@ -476,7 +515,7 @@ export async function submitAndFinalizePlayerTransaction(
   }
   const transaction = finalized.Transaction;
   if (
-    transaction.digest !== submittedDigest ||
+    transaction.digest !== input.digest ||
     transaction.checkpoint === null ||
     transaction.timestampMs === null ||
     !transaction.effects ||
@@ -507,7 +546,6 @@ export async function submitAndFinalizePlayerTransaction(
       timestampMs: transaction.timestampMs,
       changedObjectIds,
       event,
-      simulation,
     };
   } catch (error) {
     throw new PlayerTransactionExecutionError(
@@ -516,6 +554,12 @@ export async function submitAndFinalizePlayerTransaction(
       { cause: error },
     );
   }
+}
+
+export async function recoverPlayerTransactionByDigest(
+  input: RecoverPlayerTransactionInput,
+): Promise<RecoveredPlayerTransaction> {
+  return waitAndReconcilePlayerTransaction(input);
 }
 
 function objectVersion(object: SuiClientTypes.Object<{ content: true; previousTransaction: true }>): ChainObjectVersion {

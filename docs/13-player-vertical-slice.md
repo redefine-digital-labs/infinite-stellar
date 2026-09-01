@@ -60,7 +60,8 @@ The journey persists by controller address as AES-GCM-authenticated ciphertext i
 | Founding Planet search | Local browser operation | Deterministic fixture search | No private coordinates stored | Demo fixture only |
 | Strategy frontier mining | Cancellable browser Worker with visible progress | Exact MiMC/Perlin coordinate evaluation and deterministic square-spiral chunks | No strategic write required | Local sandbox integrated; development proof candidates connected; production artifacts unavailable |
 | Home claim | Approval, artifact preflight, proof generation, and finality UX | Fail-closed production builder | Proof-bound atomic activation | Development candidate available; production relation/verifier unavailable |
-| Active dashboard | Real client projection of local session | Typed Active snapshot | Canonical state exists in Move | Demo projection; production chain read not implemented |
+| Active dashboard | Real client projection of local session | Typed Active snapshot | Canonical state exists in Move | Demo command map; ranked status route reads chain state but does not yet merge the private map |
+| Ranked universe read | Existing-Seat status route | Exact Manifest/Runtime/Planet/Voyage BCS, checkpoint events, digest fingerprint, and bounded replay | Shared canonical objects and immutable creation/terminal events | Direct-read fallback integrated; production indexer and private-map merge unavailable |
 | Movement, combat, upgrades, artifacts, ships, junk, capture, reveal, score, Last Light | Playable local strategy console | Deterministic compatibility simulator | Typed fixture-proof state machines | Local sandbox integrated; signed production builders unavailable |
 
 ## Architecture
@@ -105,6 +106,7 @@ packages/game-sdk/
   src/sui-gateway.ts          Sui transaction builders and hard gates
   src/soulidity-reader.ts     canonical shared Soul BCS/event discovery
   src/sui-player-runtime.ts   Seat bundle read, simulation, finality reconciliation
+  src/ranked-projection.ts    bounded checkpoint-event and object-digest universe read
 ```
 
 ## Run and validate
