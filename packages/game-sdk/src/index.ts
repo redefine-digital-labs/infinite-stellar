@@ -4,6 +4,7 @@ export * from './miner';
 export * from './persistence';
 export * from './projection';
 export * from './ranked-projection';
+export * from './ranked-map';
 export * from './routing';
 export * from './round5-rules';
 export * from './round5-universe';

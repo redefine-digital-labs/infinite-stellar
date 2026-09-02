@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type {
   CanonicalSoul,
   PlayerSeatBundle,
+  RankedMapView,
   RankedUniverseProjection,
 } from '@infinite-stellar/game-sdk';
 import { GameShell } from './GameShell';
@@ -175,5 +176,53 @@ describe('Infinite Stellar player shell', () => {
     await user.click(screen.getByRole('button', { name: /check mainnet readiness/i }));
     expect(screen.getByText(/2 Planets · 1 active Voyages · checkpoint 4242/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /enroll this soul/i })).not.toBeInTheDocument();
+  });
+
+  it('routes an existing Seat into the chain-backed private command map', async () => {
+    const user = userEvent.setup();
+    const seat = {
+      status: 'enrolled',
+      seatId: id('31'),
+      seat: { soulId: id('32') },
+    } as unknown as PlayerSeatBundle;
+    const map = {
+      identity: { seatId: seat.seatId },
+      worldRadius: 10_000,
+      snapshotFingerprint: 'b2'.repeat(32),
+      maxEventCheckpoint: null,
+      hiddenChainPlanets: 0,
+      hiddenVoyages: 0,
+      unmaterializedPlanets: 0,
+      voyages: [],
+      planets: [{
+        objectId: id('41'), locationId: '1'.repeat(64), x: 73, y: 6421,
+        perlin: 13, biomebase: 14, owner: 'player', materialized: true,
+        isHome: true, level: 0, planetType: 'Regular', spaceType: 'Nebula',
+        energy: 50_000n, energyCapacity: 100_000n, energyGrowth: 417n,
+        range: 99n, speed: 75n, defense: 400n, silver: 0n,
+        silverCapacity: 0n, silverGrowth: 0n, spaceJunk: 0n,
+        destroyed: false, proofNonce: 1n, artifactIds: [], activeArtifactId: null,
+        chain: {},
+      }],
+    } as unknown as RankedMapView;
+    render(<GameShell
+      walletAddress={canonicalSoul.currentOwner}
+      rankedGateway={{
+        phase: 'loaded', controller: canonicalSoul.currentOwner,
+        seat, souls: [], discoveryComplete: true, scannedSoulEvents: 0,
+        blockers: ['PROOF_VERIFIER_CLOSED'], writesReady: false,
+      }}
+      rankedMap={{
+        phase: 'loaded', seatId: seat.seatId, hasPrivateRecord: true,
+        protection: 'indexeddb-aes-gcm', map,
+      }}
+    />);
+
+    await user.click(screen.getByRole('button', { name: /check mainnet readiness/i }));
+    expect(screen.getByRole('region', { name: /ranked infinite stellar universe/i })).toBeInTheDocument();
+    expect(screen.getByText(/chain-authoritative read/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /is-11111, level 0, player, onchain/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /launch fleet/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/ranked writes remain sealed/i)).toBeInTheDocument();
   });
 });

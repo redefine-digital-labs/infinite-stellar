@@ -21,6 +21,8 @@ import type { RankedGatewaySnapshot } from './use-ranked-gateway';
 import type { CanonicalSoul } from '@infinite-stellar/game-sdk';
 import type { RankedEnrollmentState } from './use-ranked-enrollment';
 import type { RankedProjectionSnapshot } from './use-ranked-projection';
+import type { RankedMapSnapshot } from './use-ranked-map';
+import { RankedUniverseConsole } from './RankedUniverseConsole';
 
 export interface GameShellProps {
   walletAddress?: string;
@@ -33,6 +35,8 @@ export interface GameShellProps {
   onEnrollRanked?: (soul: CanonicalSoul) => void;
   rankedProjection?: RankedProjectionSnapshot;
   onRefreshProjection?: () => void;
+  rankedMap?: RankedMapSnapshot;
+  onRefreshRankedMap?: () => void;
 }
 
 const DISCONNECTED_RANKED_GATEWAY: RankedGatewaySnapshot = {
@@ -55,19 +59,25 @@ export function GameShell({
   onEnrollRanked,
   rankedProjection = { phase: 'disabled' },
   onRefreshProjection,
+  rankedMap = { phase: 'disabled' },
+  onRefreshRankedMap,
 }: GameShellProps) {
   const journey = usePlayerJourney(walletAddress);
   const { session } = journey;
   const selectedSoul = session.souls.find((soul) => soul.id === session.selectedSoulId);
   const candidate = session.search.candidate;
   const proofReadiness = useProofReadiness();
+  const rankedMapActive = Boolean(
+    session.stage === 'unavailable' && rankedGateway.seat &&
+    rankedMap.phase === 'loaded' && rankedMap.map,
+  );
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [session.stage]);
 
   return (
-    <div className={`app-frame ${session.stage === 'active' ? 'is-strategy-active' : ''}`}>
+    <div className={`app-frame ${session.stage === 'active' || rankedMapActive ? 'is-strategy-active' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to mission control</a>
       <div className="stellar-noise" aria-hidden="true" />
       <header className="topbar">
@@ -90,7 +100,7 @@ export function GameShell({
         </div>
       </header>
 
-      <main id="main-content" className={`main-stage stage-${session.stage}`}>
+      <main id="main-content" className={`main-stage stage-${rankedMapActive ? 'active' : session.stage}`}>
         {session.stage !== 'welcome' && session.stage !== 'unavailable' && (
           <div className="mission-meta">
             <div>
@@ -146,7 +156,18 @@ export function GameShell({
           </section>
         )}
 
-        {session.stage === 'unavailable' && (
+        {rankedMapActive && rankedMap.map && rankedGateway.seat && (
+          <RankedUniverseConsole
+            map={rankedMap.map}
+            hasPrivateRecord={rankedMap.hasPrivateRecord ?? false}
+            protection={rankedMap.protection}
+            soulId={rankedGateway.seat.seat.soulId}
+            onRefresh={onRefreshRankedMap ?? onRefreshRanked ?? (() => undefined)}
+            onBack={journey.restart}
+          />
+        )}
+
+        {session.stage === 'unavailable' && !rankedMapActive && (
           <section className="center-panel narrow-panel" aria-labelledby="unavailable-title">
             <StatusPill tone="warn">FAIL-CLOSED</StatusPill>
             <Eyebrow>SUI MAINNET PRODUCTION GATE</Eyebrow>
@@ -193,6 +214,22 @@ export function GameShell({
                   {onRefreshProjection && (
                     <button className="button button-secondary" type="button" onClick={onRefreshProjection}>
                       Retry universe read
+                    </button>
+                  )}
+                </div>
+              )}
+              {rankedGateway.seat && rankedMap.phase === 'restoring' && (
+                <span className="gate-wait">○ Authenticating the Seat-scoped encrypted private map…</span>
+              )}
+              {rankedGateway.seat && rankedMap.phase === 'loading' && (
+                <span className="gate-wait">○ Point-reading privately known Planet and Voyage objects…</span>
+              )}
+              {rankedGateway.seat && rankedMap.phase === 'error' && (
+                <div className="gate-soul">
+                  <span className="gate-wait">○ Private map rejected: {rankedMap.error}</span>
+                  {onRefreshRankedMap && (
+                    <button className="button button-secondary" type="button" onClick={onRefreshRankedMap}>
+                      Retry private map
                     </button>
                   )}
                 </div>

@@ -344,10 +344,21 @@ export interface RankedUniverseProjection {
   snapshotFingerprint: string;
 }
 
+export interface RankedKnownUniverseProjection extends RankedUniverseProjection {
+  coverage: 'known-private-locations';
+  requestedPlanetIds: string[];
+  missingPlanetIds: string[];
+}
+
 export interface RankedProjectionOptions {
   pageSize?: number;
   maxPagesPerModule?: number;
   signal?: AbortSignal;
+}
+
+export interface RankedKnownProjectionOptions {
+  signal?: AbortSignal;
+  maxPlanetIds?: number;
 }
 
 interface DispatchEvent {
@@ -656,7 +667,7 @@ function parseVoyage(
   object: SuiClientTypes.Object<{ content: true; previousTransaction: true }>,
   id: string,
   seasonId: string,
-  dispatch: DispatchEvent,
+  dispatch?: DispatchEvent,
 ): VoyageProjection {
   let value;
   try {
@@ -685,13 +696,24 @@ function parseVoyage(
   if (
     normalizeSuiAddress(value.id) !== id || result.seasonId !== seasonId ||
     result.publicInputDigest.length !== 32 || result.arrivalAtSeconds < result.departureAtSeconds ||
-    result.playerSeatId !== dispatch.playerSeatId || result.fromPlanetId !== dispatch.fromPlanetId ||
-    result.toPlanetId !== dispatch.toPlanetId || result.arrivalAtSeconds !== dispatch.arrivalAtSeconds ||
-    result.isAbandon !== dispatch.isAbandon
+    (dispatch !== undefined && (
+      result.playerSeatId !== dispatch.playerSeatId || result.fromPlanetId !== dispatch.fromPlanetId ||
+      result.toPlanetId !== dispatch.toPlanetId || result.arrivalAtSeconds !== dispatch.arrivalAtSeconds ||
+      result.isAbandon !== dispatch.isAbandon
+    ))
   ) {
     throw new RankedProjectionError('OBJECT_INVALID', `Voyage ${id} does not match its dispatch event or Season.`);
   }
   return result;
+}
+
+function optionalSharedObject(
+  value: SuiClientTypes.Object<{ content: true; previousTransaction: true }> | Error | undefined,
+  id: string,
+  type: string,
+): SuiClientTypes.Object<{ content: true; previousTransaction: true }> | null {
+  if (value instanceof ObjectError && value.reason === 'notFound') return null;
+  return sharedObject(value, id, type);
 }
 
 async function scanModule(
@@ -965,5 +987,157 @@ export async function readRankedUniverseProjection(
     maxEventCheckpoint: discovery.maxEventCheckpoint,
     scannedEvents: discovery.scannedEvents,
     snapshotFingerprint,
+  };
+}
+
+/**
+ * Reads only deterministic Planet IDs derived from the controller's private
+ * coordinate vault. This is the scalable player-map path: it does not enumerate
+ * or upload private coordinates and does not replay global event history.
+ */
+export async function readRankedKnownUniverseProjection(
+  client: Pick<SuiGrpcClient, 'getObjects'>,
+  deployment: InfiniteStellarDeployment,
+  rawPlanetIds: readonly string[],
+  options: RankedKnownProjectionOptions = {},
+): Promise<RankedKnownUniverseProjection> {
+  const pins = projectionPins(deployment);
+  const maximum = options.maxPlanetIds ?? 5_000;
+  if (!Number.isSafeInteger(maximum) || maximum < 1) {
+    throw new RankedProjectionError('INVALID_DEPLOYMENT', 'The known-Planet read bound must be a positive safe integer.');
+  }
+  if (rawPlanetIds.length > maximum) {
+    throw new RankedProjectionError(
+      'PROJECTION_INCOMPLETE',
+      `The private map contains ${rawPlanetIds.length} Planet IDs; the configured bound is ${maximum}.`,
+    );
+  }
+  const requestedPlanetIds = [...new Set(rawPlanetIds.map((id) => canonical(id, 'Known Planet ID')))].sort();
+  if (requestedPlanetIds.length !== rawPlanetIds.length) {
+    throw new RankedProjectionError('OBJECT_INVALID', 'The private map contains duplicate Planet IDs.');
+  }
+
+  const coreValues = await objects(client, [pins.seasonId, pins.runtimeId], options.signal);
+  const manifestObject = sharedObject(
+    coreValues[0], pins.seasonId, `${pins.typeOrigin}::season::SeasonManifest`,
+  );
+  const runtimeObject = sharedObject(
+    coreValues[1], pins.runtimeId, `${pins.typeOrigin}::season::SeasonRuntime`,
+  );
+  const manifest = parseManifest(manifestObject, pins, deployment);
+  const runtime = parseRuntime(runtimeObject, pins);
+
+  const initialPlanetObjects = new Map<string, SuiClientTypes.Object<{ content: true; previousTransaction: true }> | null>();
+  const planets: PlanetProjection[] = [];
+  const missingPlanetIds: string[] = [];
+  for (let offset = 0; offset < requestedPlanetIds.length; offset += MAX_PAGE_SIZE) {
+    const ids = requestedPlanetIds.slice(offset, offset + MAX_PAGE_SIZE);
+    const values = await objects(client, ids, options.signal);
+    for (let index = 0; index < ids.length; index += 1) {
+      const id = ids[index]!;
+      const object = optionalSharedObject(values[index], id, `${pins.typeOrigin}::planet::Planet`);
+      initialPlanetObjects.set(id, object);
+      if (!object) {
+        missingPlanetIds.push(id);
+      } else {
+        planets.push(parsePlanet(object, id, pins.seasonId));
+      }
+    }
+  }
+
+  const pendingByVoyage = new Map<string, { targetPlanetId: string; pending: PendingVoyageProjection }>();
+  for (const planet of planets) {
+    for (const pending of planet.pendingVoyages) {
+      if (pendingByVoyage.has(pending.voyageId)) {
+        throw new RankedProjectionError('OBJECT_INVALID', `Voyage ${pending.voyageId} is pending on multiple known Planets.`);
+      }
+      pendingByVoyage.set(pending.voyageId, { targetPlanetId: planet.objectId, pending });
+    }
+  }
+  const voyageIds = [...pendingByVoyage.keys()].sort();
+  const initialVoyageObjects = new Map<string, SuiClientTypes.Object<{ content: true; previousTransaction: true }>>();
+  const voyages: VoyageProjection[] = [];
+  for (let offset = 0; offset < voyageIds.length; offset += MAX_PAGE_SIZE) {
+    const ids = voyageIds.slice(offset, offset + MAX_PAGE_SIZE);
+    const values = await objects(client, ids, options.signal);
+    for (let index = 0; index < ids.length; index += 1) {
+      const id = ids[index]!;
+      const object = sharedObject(values[index], id, `${pins.typeOrigin}::voyage::Voyage`);
+      const voyage = parseVoyage(object, id, pins.seasonId);
+      const target = pendingByVoyage.get(id)!;
+      if (
+        voyage.toPlanetId !== target.targetPlanetId ||
+        voyage.playerSeatId !== target.pending.playerSeatId ||
+        voyage.arrivalAtSeconds !== target.pending.arrivalAtSeconds
+      ) {
+        throw new RankedProjectionError(
+          'OBJECT_INVALID',
+          `Voyage ${id} does not match its known target Planet pending-arrival record.`,
+        );
+      }
+      initialVoyageObjects.set(id, object);
+      voyages.push(voyage);
+    }
+  }
+
+  const rereadIds = [pins.seasonId, pins.runtimeId, ...requestedPlanetIds, ...voyageIds];
+  const finalValues: (SuiClientTypes.Object<{ content: true; previousTransaction: true }> | Error)[] = [];
+  for (let offset = 0; offset < rereadIds.length; offset += MAX_PAGE_SIZE) {
+    finalValues.push(...await objects(client, rereadIds.slice(offset, offset + MAX_PAGE_SIZE), options.signal));
+  }
+  const finalManifest = sharedObject(
+    finalValues[0], pins.seasonId, `${pins.typeOrigin}::season::SeasonManifest`,
+  );
+  const finalRuntime = sharedObject(
+    finalValues[1], pins.runtimeId, `${pins.typeOrigin}::season::SeasonRuntime`,
+  );
+  if (!sameVersion(manifestObject, finalManifest) || !sameVersion(runtimeObject, finalRuntime)) {
+    throw new RankedProjectionError('PROJECTION_RACE', 'Season core changed during the private-map read.');
+  }
+  let finalIndex = 2;
+  for (const id of requestedPlanetIds) {
+    const finalObject = optionalSharedObject(
+      finalValues[finalIndex], id, `${pins.typeOrigin}::planet::Planet`,
+    );
+    finalIndex += 1;
+    const initialObject = initialPlanetObjects.get(id) ?? null;
+    if (
+      (initialObject === null) !== (finalObject === null) ||
+      (initialObject !== null && finalObject !== null && !sameVersion(initialObject, finalObject))
+    ) {
+      throw new RankedProjectionError('PROJECTION_RACE', `Planet ${id} changed during the private-map read.`);
+    }
+  }
+  for (const id of voyageIds) {
+    const finalObject = sharedObject(
+      finalValues[finalIndex], id, `${pins.typeOrigin}::voyage::Voyage`,
+    );
+    finalIndex += 1;
+    if (!sameVersion(initialVoyageObjects.get(id)!, finalObject)) {
+      throw new RankedProjectionError('PROJECTION_RACE', `Voyage ${id} changed during the private-map read.`);
+    }
+  }
+
+  const refs = [manifest, runtime, ...planets, ...voyages]
+    .map((value) => `${value.objectId}:${value.version}:${value.digest}:${value.previousTransaction ?? ''}`)
+    .sort();
+  const snapshotFingerprint = bytesToHex(sha256(new TextEncoder().encode([
+    'infinite-stellar/ranked-known-projection/v1',
+    ...requestedPlanetIds,
+    ...missingPlanetIds.map((id) => `missing:${id}`),
+    ...refs,
+  ].join('\0'))));
+
+  return {
+    coverage: 'known-private-locations',
+    manifest,
+    runtime,
+    planets: planets.sort((left, right) => left.objectId.localeCompare(right.objectId)),
+    voyages: voyages.sort((left, right) => left.objectId.localeCompare(right.objectId)),
+    maxEventCheckpoint: null,
+    scannedEvents: 0,
+    snapshotFingerprint,
+    requestedPlanetIds,
+    missingPlanetIds: missingPlanetIds.sort(),
   };
 }

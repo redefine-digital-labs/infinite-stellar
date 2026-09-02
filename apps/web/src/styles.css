@@ -2900,3 +2900,89 @@ code {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Ranked map: exact chain resources over a Seat-scoped encrypted coordinate
+   vault. Unmaterialized points are local discoveries, never chain claims. */
+
+.ranked-universe-console .map-planet.is-unmaterialized {
+  border-style: dashed;
+  opacity: 0.62;
+  filter: saturate(0.55);
+}
+
+.ranked-universe-console .map-planet.is-unmaterialized::after {
+  position: absolute;
+  inset: -0.4rem;
+  border: 1px dashed rgba(164, 190, 176, 0.22);
+  border-radius: 50%;
+  content: "";
+}
+
+.ranked-map-empty {
+  position: absolute;
+  z-index: 8;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  gap: 0.55rem;
+  width: min(32rem, calc(100vw - 2rem));
+  padding: 1.35rem;
+  color: var(--muted);
+  text-align: center;
+  border: 1px solid rgba(151, 211, 181, 0.18);
+  border-radius: 0.5rem;
+  background: rgba(4, 12, 8, 0.82);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(18px);
+  transform: translate(-50%, -50%);
+}
+
+.ranked-map-empty strong {
+  color: var(--text);
+  font-family: Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 400;
+}
+
+.ranked-map-empty span,
+.ranked-command-lock span {
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.ranked-status-panel .mission-title {
+  font-size: clamp(2rem, 3.5vw, 3.25rem);
+}
+
+.ranked-command-content > p {
+  margin: 0;
+  padding: 1rem;
+  color: var(--muted);
+}
+
+.ranked-command-lock {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem;
+  color: var(--muted);
+  border-top: 1px solid rgba(151, 211, 181, 0.1);
+  background: rgba(255, 174, 91, 0.035);
+}
+
+.ranked-command-lock strong {
+  color: var(--amber);
+  font-family: ui-monospace, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ranked-panel-dock {
+  grid-template-columns: repeat(2, minmax(8rem, 1fr));
+}
+
+@media (max-width: 560px) {
+  .ranked-panel-dock {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -339,6 +339,24 @@ The indexer also projects controller-to-Seat routing, lifecycle, universe-openin
 
 The indexer stores a durable checkpoint cursor and supports a full rebuild from checkpoint data. A release cannot depend on database rows that cannot be reproduced. The client should expose the checkpoint or transaction digest behind important state so advanced users can verify it.
 
+Private gameplay map reconstruction does not wait for a global Planet index. For
+each authenticated local coordinate, the client recomputes the manifest-pinned
+MiMC location commitment, Perlin value, radius and rarity predicates, then uses
+the Sui `derived_object` key encoding to derive the exact Planet object ID under
+the pinned `PlanetRegistry`. It batch-reads only those Planet objects and the
+pending Voyage IDs referenced by their bounded destination queues. Missing
+Planet objects remain explicitly unmaterialized local discoveries. Existing
+objects supply all ownership, resources, upgrades, artifacts, capture state,
+and nonces; the client never imports those fields from local storage. It
+re-reads the complete known object set and rejects a mixed-version snapshot.
+
+The encrypted coordinate vault is namespaced and authenticated by chain ID,
+callable package, type origin, Season, PlanetRegistry, fixed Seat, controller,
+and schema. Coordinates never enter the indexer request, analytics, logs, or
+telemetry. The public indexer remains necessary for leaderboards, globally
+revealed locations, history, discovery-free spectator views, and operational
+monitoring, but its outage cannot erase or redefine a controller's private map.
+
 ## Canonical math and test vectors
 
 Cross-language drift is a consensus-adjacent risk. Create one versioned vector corpus covering:

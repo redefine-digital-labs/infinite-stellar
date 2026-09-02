@@ -1,8 +1,9 @@
 import { bcs } from '@mysten/sui/bcs';
-import type { SuiClientTypes } from '@mysten/sui/client';
+import { ObjectError, type SuiClientTypes } from '@mysten/sui/client';
 import { describe, expect, it, vi } from 'vitest';
 import {
   readRankedUniverseProjection,
+  readRankedKnownUniverseProjection,
   type InfiniteStellarDeployment,
   type RankedProjectionClient,
 } from '../src';
@@ -391,5 +392,63 @@ describe('ranked universe projection', () => {
   it('rejects a snapshot when the core changes during the aggregate read', async () => {
     await expect(readRankedUniverseProjection(client({ race: true }).client, DEPLOYMENT))
       .rejects.toMatchObject({ code: 'PROJECTION_RACE' });
+  });
+
+  it('point-reads only privately known Planet IDs and their pending Voyages', async () => {
+    const missing = id('99');
+    const fixtures = new Map([
+      [SEASON, manifestObject()],
+      [RUNTIME, runtimeObject()],
+      [HOME, planetObject(HOME, false)],
+      [TARGET, planetObject(TARGET, true)],
+      [VOYAGE, voyageObject()],
+    ]);
+    const getObjects = vi.fn(async ({ objectIds }: { objectIds: string[] }) => ({
+      objects: objectIds.map((objectId) => fixtures.get(objectId) ?? new ObjectError(
+        'NOT_FOUND',
+        `${objectId} was not found`,
+        { reason: 'notFound', objectId },
+      )),
+    }));
+    const projection = await readRankedKnownUniverseProjection(
+      { getObjects } as never,
+      DEPLOYMENT,
+      [HOME, TARGET, missing],
+    );
+    expect(projection).toMatchObject({
+      coverage: 'known-private-locations',
+      requestedPlanetIds: [HOME, TARGET, missing].sort(),
+      missingPlanetIds: [missing],
+      scannedEvents: 0,
+      maxEventCheckpoint: null,
+    });
+    expect(projection.planets.map(({ objectId }) => objectId)).toEqual([HOME, TARGET]);
+    expect(projection.voyages.map(({ objectId }) => objectId)).toEqual([VOYAGE]);
+    expect(getObjects).toHaveBeenCalledTimes(4);
+  });
+
+  it('rejects a point-read snapshot when a known Planet changes during reconciliation', async () => {
+    let homeReads = 0;
+    const getObjects = vi.fn(async ({ objectIds }: { objectIds: string[] }) => ({
+      objects: objectIds.map((objectId) => {
+        if (objectId === SEASON) return manifestObject();
+        if (objectId === RUNTIME) return runtimeObject();
+        if (objectId === HOME) {
+          homeReads += 1;
+          return object(
+            HOME,
+            `${ORIGIN}::planet::Planet`,
+            planetObject(HOME, false).content,
+            homeReads > 1 ? '22222222222222222222222222222222' : DIGEST,
+          );
+        }
+        return new ObjectError('NOT_FOUND', 'not found', { reason: 'notFound', objectId });
+      }),
+    }));
+    await expect(readRankedKnownUniverseProjection(
+      { getObjects } as never,
+      DEPLOYMENT,
+      [HOME],
+    )).rejects.toMatchObject({ code: 'PROJECTION_RACE' });
   });
 });
