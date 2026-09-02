@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "surface": "vercel",
+  "environment": "production",
+  "project": "infinite-stellar",
+  "deployedAt": "2026-09-02T05:29:51Z",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "branch": "codex/dark-forest-parity",
+    "commit": "e57b78fb61e7154b6ea204cf497613c0567b1194"
+  },
+  "deployment": {
+    "id": "dpl_3AaZeR4b5pSiKVsvSPXtQBG6hxxa",
+    "status": "READY",
+    "immutableUrl": "https://infinite-stellar-f6py0b0wg-soulidity-ai.vercel.app",
+    "productionAlias": "https://infinite-stellar.vercel.app"
+  },
+  "capability": {
+    "localRound5Simulation": true,
+    "canonicalSoulidityMainnetRead": true,
+    "deterministicSeatFirstRoute": true,
+    "authenticatedEncryptedPrivateMap": true,
+    "deterministicKnownPlanetPointReads": true,
+    "boundedKnownVoyagePointReads": true,
+    "chainAuthoritativePrivateMapMerge": true,
+    "fullScreenRankedReadRoute": true,
+    "publicCheckpointIndexer": false,
+    "rankedMainnetWrites": false,
+    "suiTransactionOrSoulHistoryFromDemo": false
+  },
+  "verification": {
+    "nodeVersion": "24.x",
+    "typecheck": "passed",
+    "lint": "passed",
+    "typescriptTests": 146,
+    "moveTests": 72,
+    "productionBuild": "passed",
+    "dependencyVulnerabilities": 0,
+    "httpStatus": 200,
+    "securityHeaders": "passed",
+    "mainnetRpcAllowedByCsp": true,
+    "rankedMapAdversarialCoverage": [
+      "exact chain, package, Season, Seat, and controller namespace binding",
+      "cross-controller ciphertext substitution rejection",
+      "deterministic Planet ID recomputation",
+      "coordinate and ruleset tamper rejection",
+      "chain-only ownership and resource authority",
+      "bounded known Voyage discovery",
+      "mixed-version Planet and Voyage race rejection",
+      "stale request suppression and retry"
+    ],
+    "browserSmoke": [
+      "load production alias and verify title",
+      "show the canonical Sui mainnet fail-closed route",
+      "show the missing Infinite Stellar mainnet package",
+      "show proof, audit, operations, and multisig blockers",
+      "expose zero ranked enrollment buttons"
+    ]
+  },
+  "mainnetReleaseGate": {
+    "canonicalSoulidityAbi": "verified",
+    "publishDryRun": "passed",
+    "moduleCount": 15,
+    "simulatedNetGasMist": "544308000",
+    "productionProofVerifiersReady": false,
+    "independentAuditComplete": false,
+    "multisigPolicyPinned": false,
+    "gameTransactionSubmitted": false,
+    "decision": "blocked_fail_closed"
+  }
+}
