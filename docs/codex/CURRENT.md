@@ -1,7 +1,7 @@
 # Infinite Stellar Current Phase
 
 - **Status:** In progress. The full multiplayer/mainnet objective is not complete.
-- **Phase:** Natural local home search is deployed; adding the owner's requested fresh playtest on every deployment.
+- **Phase:** Natural local home search and fresh initialization per deployment are implemented, verified and deployed.
 - **Worktree / branch:** `/Users/naoer/Documents/Claude/Projects/infinite-stellar`, `codex/dark-forest-parity`.
 - **Authorization:** GitHub/Vercel delivery and production-valid mainnet engineering are authorized. GPL and MIT reuse are allowed with attribution and applicable source obligations. This does not waive ceremony, audits, custody, signer approvals or rights/operations gates.
 - **Owner direction:** Preserve DF's mature gameplay, planet visuals, zoom/detail hierarchy, controls and entry flow. Concentrate innovation on Soul integration/history/season continuity and operating cadence. Stable product facts are in `PROJECT_MEMORY.md`.
@@ -16,5 +16,6 @@
 - **Remaining fidelity:** Original special-facility renderer is not integrated; universe geography still uses the explicitly pinned public Round-5 keys and local radius, not a deployed ranked manifest. Soul candidates/Seat enrollment remain demo fixtures. Real proof/finality, special-action adapters and partially known Voyage feedback are unfinished.
 - **Next executable action:** Finish and verify actual ranked proof preparation with the Circom witness/prover, then connect proof/pending/finality for home/move/move-new with exact chain authority and every release gate intact. Do not treat natural local mining as a proof-backed ranked claim. Complete special actions and confirmed season operations within the unchanged full objective.
 - **Intermediate natural release:** Source `31d4459647cadf5551a9f315317c485403c81e84`, READY `dpl_9T54gNMKPfovhkxq2E3gAECB1M34`. The owner requested per-deployment local initialization immediately afterward; that addition is being validated.
+- **Latest release:** Source `3a6826da127b846eb21ac8f9cb52261dfcc7c42c`, READY `dpl_5EfcU2Ho6sokh682gbSUzcKFct2i` at the production alias. Evidence: `ops/deployments/vercel-production-2026-09-05-natural-home-reset.json`. Actual alias reload starts fresh instead of restoring its former two-Planet game. Real Worker finds IS-4BF54 with 6,144 searched units²; same-build reload retains it and energy grows. No new browser errors/warnings; HTTP/security headers pass.
 - **Rollback:** Previous deployment is available. Following the owner's policy, deploying a rollback build also starts a fresh local playtest. Never alter ranked vaults, wallet/Soul or chain data. No chain rollback is needed.
 - **Current handoff:** `docs/codex/handoffs/2026-09-05-natural-home-search.md`.

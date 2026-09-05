@@ -54,7 +54,13 @@ This supersedes the earlier cross-deployment demo-continuity policy.
 
 Natural-search source `31d4459` reached READY deployment
 `dpl_9T54gNMKPfovhkxq2E3gAECB1M34` before the reset-policy addition. Final
-combined release evidence belongs in CURRENT.md.
+combined source `3a6826d` is READY as `dpl_5EfcU2Ho6sokh682gbSUzcKFct2i`.
+Full validation passes 302 tests (136 web, 128 SDK, 38 prover), types/lint/build.
+Production alias with an older two-Planet save now starts at welcome. Real
+Worker search found 4BF54 with 6,144 searched units²; another refresh retains
+it with energy growing from 54,980 to 62,631. HTTP/security headers pass, with
+no new browser warnings/errors. Evidence:
+`ops/deployments/vercel-production-2026-09-05-natural-home-reset.json`.
 
 Rollback: previous entry deployment `dpl_AnUCr63FyzusegXHg58wAi8GnPcz`.
 A newly built rollback also initializes a fresh local playtest under the

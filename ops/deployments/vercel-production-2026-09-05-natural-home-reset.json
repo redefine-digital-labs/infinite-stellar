@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "surface": "vercel",
+  "environment": "production",
+  "project": "infinite-stellar",
+  "createdAt": "2026-09-05T13:49:51.219Z",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "branch": "codex/dark-forest-parity",
+    "commit": "3a6826da127b846eb21ac8f9cb52261dfcc7c42c"
+  },
+  "deployment": {
+    "id": "dpl_5EfcU2Ho6sokh682gbSUzcKFct2i",
+    "status": "READY",
+    "immutableUrl": "https://infinite-stellar-g088jfkb2-soulidity-ai.vercel.app",
+    "productionAlias": "https://infinite-stellar.vercel.app"
+  },
+  "capability": {
+    "naturalWorkerHomeSearch": true,
+    "exactHomeGeometryValidation": true,
+    "noRuntimeFixtureGeography": true,
+    "completedSearchPersistence": true,
+    "cancellableSearch": true,
+    "freshLocalPlaytestPerDeployment": true,
+    "sameBuildRefreshResume": true,
+    "rankedMainnetWrites": false
+  },
+  "verification": {
+    "node": "24.20.0",
+    "typecheck": "passed",
+    "lint": "passed",
+    "documentationLint": "passed",
+    "typescriptTests": {
+      "web": 136,
+      "gameSdk": 128,
+      "prover": 38,
+      "total": 302
+    },
+    "productionBuild": "passed",
+    "httpStatus": 200,
+    "securityHeaders": "passed",
+    "browserSmoke": [
+      "Fresh localhost Workers found BA7DE/5BF92 with 16,384 searched units squared each.",
+      "Paused/resumed third local search found 33073 with 4,096 searched units squared.",
+      "BA7DE exploration revealed four natural neighbors; reload retained five planets and 67,584 searched units squared.",
+      "Production alias with old two-planet save now starts at welcome after deploying the new namespace.",
+      "Production real Worker found 4BF54 with 6,144 searched units squared.",
+      "Same deployment refresh restored 4BF54, identical searched coverage and energy increased from 54,980 to 62,631.",
+      "No production browser warnings/errors captured since 2026-09-05T13:50:20Z."
+    ],
+    "scopeNote": "Local playtest authority only. Real home mining is not a submitted Sui proof. Demo Soul/Seat remains; all ranked release gates are unchanged."
+  },
+  "resetPolicy": {
+    "ownerAuthorized": true,
+    "mechanism": "Unique public playtest namespace embedded at production build time",
+    "olderBuildSaves": "Not imported; old encrypted records left inactive",
+    "sameBuild": "Resume encrypted search/game state",
+    "walletSoulRankedOrChainData": "Untouched"
+  },
+  "intermediateNaturalRelease": {
+    "sourceCommit": "31d4459647cadf5551a9f315317c485403c81e84",
+    "deploymentId": "dpl_9T54gNMKPfovhkxq2E3gAECB1M34",
+    "status": "READY"
+  },
+  "mainnetReleaseGate": {
+    "productionProofVerifiersReady": false,
+    "gameTransactionSubmitted": false,
+    "decision": "blocked_fail_closed"
+  },
+  "rollback": {
+    "sourceCommit": "e24662f8ec79d4e334d00cf0d7bf1c70a175c9bf",
+    "deploymentId": "dpl_AnUCr63FyzusegXHg58wAi8GnPcz",
+    "chainStateChanged": false,
+    "policy": "A newly built rollback also starts a fresh local playtest; never reset wallet, Soul, ranked or chain data."
+  }
+}
