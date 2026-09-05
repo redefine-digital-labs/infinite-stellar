@@ -18,6 +18,7 @@ import {
 } from '@infinite-stellar/game-sdk';
 import { Eyebrow, StatusPill } from './components';
 import { FloatingPanel, type FloatingPanelPosition } from './FloatingPanel';
+import { MapPlanetGlyph } from './MapPlanetGlyph';
 import type { PlayerVaultState, StrategyMiningState } from './use-player-journey';
 import type { ProofReadinessState } from './use-proof-readiness';
 
@@ -515,7 +516,7 @@ export function StrategyConsole({
         <h1 className="sr-only">Command the unknown sky.</h1>
         <div className="map-toolbar floating-map-toolbar">
           <div>
-            <span>LOCAL STAR MAP</span>
+            <span className="map-mode-label">LOCAL SIMULATION</span>
             <strong>{game.planets.filter((planet) => planet.discovered).length} / {game.planets.length} resolved</strong>
           </div>
           <div className="map-legend" aria-label="Map legend">
@@ -558,6 +559,11 @@ export function StrategyConsole({
           >+</button>
           <button type="button" onClick={returnToHome} title="Return to the founding Planet (H)">Home</button>
           <button type="button" onClick={fitDiscoveredUniverse} title="Fit all resolved space (0)">Fit</button>
+          <button type="button" aria-pressed={visiblePanels.length === 0}
+            onClick={() => setVisiblePanels(visiblePanels.length ? [] : compactPanels ? ['command'] : DEFAULT_VISIBLE)}
+            title="Hide command windows for an unobstructed star map">
+            {visiblePanels.length ? 'Clear view' : 'Restore panels'}
+          </button>
         </div>
 
         <div
@@ -591,7 +597,7 @@ export function StrategyConsole({
           {game.planets.filter((planet) => planet.discovered).map((planet) => {
             const selected = planet.id === game.selectedPlanetId;
             const targeted = planet.id === game.targetPlanetId;
-            const size = 10 + planet.level * 2;
+            const size = 22 + planet.level * 3;
             return (
               <button
                 className={`map-planet owner-${planet.owner} space-${planet.spaceType.toLowerCase()} ${planet.planetType === 'SpacetimeRip' ? 'type-spacetime-rip' : ''} ${selected ? 'is-selected' : ''} ${targeted ? 'is-targeted' : ''}`}
@@ -610,7 +616,9 @@ export function StrategyConsole({
                 aria-label={`${planet.name}, level ${planet.level} ${planetTypeLabel(planet)}, ${planet.owner}, energy ${Math.floor(planet.energy)}`}
                 aria-pressed={selected || targeted}
               >
-                <span />
+                <MapPlanetGlyph name={planet.name} level={planet.level} planetType={planet.planetType}
+                  energyFraction={planet.energyCapacity > 0 ? planet.energy / planet.energyCapacity : 0}
+                  selected={selected} targeted={targeted} />
               </button>
             );
           })}
@@ -630,6 +638,13 @@ export function StrategyConsole({
                 <path d="M 0 0 L 6 3 L 0 6 z" />
               </marker>
             </defs>
+            {source && target && source.id !== target.id && (
+              <line className="map-route-preview" x1={50 + ((source.x - camera.centerX) / cameraRadius) * 46}
+                y1={50 + ((source.y - camera.centerY) / cameraRadius) * 46}
+                x2={50 + ((target.x - camera.centerX) / cameraRadius) * 46}
+                y2={50 + ((target.y - camera.centerY) / cameraRadius) * 46}
+                vectorEffect="non-scaling-stroke" />
+            )}
             {game.voyages.map((voyage) => {
               const from = game.planets.find((planet) => planet.id === voyage.fromPlanetId);
               const to = game.planets.find((planet) => planet.id === voyage.toPlanetId);

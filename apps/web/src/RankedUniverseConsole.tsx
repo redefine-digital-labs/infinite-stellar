@@ -11,6 +11,7 @@ import {
 import type { RankedMapPlanet, RankedMapView } from '@infinite-stellar/game-sdk';
 import { FloatingPanel, type FloatingPanelPosition } from './FloatingPanel';
 import { StatusPill } from './components';
+import { MapPlanetGlyph } from './MapPlanetGlyph';
 
 export interface RankedUniverseConsoleProps {
   map: RankedMapView;
@@ -155,8 +156,8 @@ export function RankedUniverseConsole({
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     setCamera((current) => ({
       ...current,
-      centerX: gesture.centerX - ((event.clientX - gesture.startX) / gesture.width) * current.radius * 2,
-      centerY: gesture.centerY - ((event.clientY - gesture.startY) / gesture.height) * current.radius * 2,
+      centerX: gesture.centerX - ((event.clientX - gesture.startX) / gesture.width) * current.radius / 0.46,
+      centerY: gesture.centerY - ((event.clientY - gesture.startY) / gesture.height) * current.radius / 0.46,
     }));
   };
   const endPan = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -205,7 +206,7 @@ export function RankedUniverseConsole({
     <section className="strategy-console floating-strategy ranked-universe-console" aria-label="Ranked Infinite Stellar universe">
       <div className="strategy-map-canvas">
         <div className="map-toolbar floating-map-toolbar">
-          <div><span>RANKED PRIVATE MAP</span><strong>{map.planets.length} known · {map.unmaterializedPlanets} unmaterialized</strong></div>
+          <div><span className="map-mode-label">RANKED PRIVATE MAP</span><strong>{map.planets.length} known · {map.unmaterializedPlanets} unmaterialized</strong></div>
           <div className="map-legend"><span><i className="legend-player" /> Yours</span><span><i className="legend-rival" /> Rival</span><span><i className="legend-neutral" /> Unclaimed</span></div>
           <button className="button button-secondary compact-button" type="button" onClick={onRefresh}>Refresh chain</button>
         </div>
@@ -215,6 +216,10 @@ export function RankedUniverseConsole({
           <button type="button" aria-label="Zoom in" disabled={camera.radius <= MIN_RADIUS} onClick={() => zoomCamera(1 / ZOOM_FACTOR)}>+</button>
           <button type="button" disabled={!home} onClick={focusHome}>Home</button>
           <button type="button" onClick={fit}>Fit</button>
+          <button type="button" aria-pressed={visiblePanels.length === 0}
+            onClick={() => setVisiblePanels(visiblePanels.length ? [] : ['status', 'command'])}>
+            {visiblePanels.length ? 'Clear view' : 'Restore panels'}
+          </button>
         </div>
         <div
           className={`star-map ${isPanning ? 'is-panning' : ''}`}
@@ -236,7 +241,7 @@ export function RankedUniverseConsole({
               key={planet.objectId}
               type="button"
               className={`map-planet owner-${planet.owner} space-${planet.spaceType.toLowerCase()} ${planet.planetType === 'SpacetimeRip' ? 'type-spacetime-rip' : ''} ${selectedId === planet.objectId ? 'is-selected' : ''} ${targetId === planet.objectId ? 'is-targeted' : ''} ${planet.materialized ? '' : 'is-unmaterialized'}`}
-              style={{ ...mapPosition(planet, camera), width: 10 + planet.level * 2, height: 10 + planet.level * 2 }}
+              style={{ ...mapPosition(planet, camera), width: 22 + planet.level * 3, height: 22 + planet.level * 3 }}
               onClick={() => {
                 if (selected?.owner === 'player' && selected.objectId !== planet.objectId) setTargetId(planet.objectId);
                 else setSelectedId(planet.objectId);
@@ -245,10 +250,18 @@ export function RankedUniverseConsole({
               }}
               onDoubleClick={() => setCamera({ centerX: planet.x, centerY: planet.y, radius: MIN_RADIUS })}
               aria-label={`${planetName(planet)}, level ${planet.level}, ${planet.owner}, ${planet.materialized ? 'onchain' : 'not yet onchain'}`}
-            ><span /></button>
+            ><MapPlanetGlyph name={planetName(planet)} level={planet.level} planetType={planet.planetType}
+              energyFraction={planet.energyCapacity > 0n ? Number(planet.energy * 1000n / planet.energyCapacity) / 1000 : 0}
+              selected={selectedId === planet.objectId} targeted={targetId === planet.objectId} /></button>
           ))}
           <svg className="voyage-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             <defs><marker id="ranked-voyage-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth" viewBox="0 0 6 6"><path d="M 0 0 L 6 3 L 0 6 z" /></marker></defs>
+            {selected && target && selected.objectId !== target.objectId && (
+              <line className="map-route-preview" x1={Number.parseFloat(mapPosition(selected, camera).left)}
+                y1={Number.parseFloat(mapPosition(selected, camera).top)}
+                x2={Number.parseFloat(mapPosition(target, camera).left)} y2={Number.parseFloat(mapPosition(target, camera).top)}
+                vectorEffect="non-scaling-stroke" />
+            )}
             {map.voyages.map((voyage) => {
               const from = map.planets.find((planet) => planet.objectId === voyage.fromPlanetId);
               const to = map.planets.find((planet) => planet.objectId === voyage.toPlanetId);

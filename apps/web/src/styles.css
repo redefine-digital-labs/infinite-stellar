@@ -1466,6 +1466,104 @@ code {
 .map-planet.space-deepspace { filter: saturate(1.3) brightness(1.12); }
 .map-planet.space-deadspace > span { border-radius: 2px; }
 
+/* Both simulation and chain maps share this presentation-only planet layer. */
+.planet-glyph {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  --surface-light: #a9d4dd;
+  --surface-mid: #456481;
+  --surface-dark: #101929;
+}
+
+.space-nebula .planet-glyph { --surface-light: #b5e9ce; --surface-mid: #428577; }
+.space-deepspace .planet-glyph { --surface-light: #c4bcf5; --surface-mid: #655a96; }
+.space-deadspace .planet-glyph { --surface-light: #dbbbad; --surface-mid: #705457; }
+.planet-glyph[data-kind="SilverMine"] { --surface-light: #ffe5aa; --surface-mid: #a57840; }
+.planet-glyph[data-kind="SilverBank"] { --surface-light: #b8e8ff; --surface-mid: #577dba; }
+.planet-glyph[data-kind="Ruins"] { --surface-light: #e5c2ff; --surface-mid: #8758a3; }
+
+.planet-surface {
+  position: absolute;
+  inset: 14%;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 30% 27%, #ffffffa6, transparent 24%),
+    radial-gradient(ellipse at 65% 36%, #0b172450, transparent 35%),
+    linear-gradient(135deg, var(--surface-light), var(--surface-mid) 45%, var(--surface-dark) 86%);
+  box-shadow: inset -3px -3px 5px #0009, 0 0 14px color-mix(in srgb, currentColor 35%, transparent);
+  border: 1px solid color-mix(in srgb, var(--surface-light) 45%, transparent);
+}
+
+.planet-energy-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0.8;
+  background: conic-gradient(currentColor var(--energy-angle), #abcbe51a 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
+}
+
+.planet-facility {
+  position: absolute;
+  right: -8px;
+  bottom: -6px;
+  color: var(--surface-light);
+  font: 11px/1 ui-monospace, monospace;
+  text-shadow: 0 1px 4px #000;
+}
+
+.planet-glyph[data-kind="SpacetimeRip"] .planet-surface {
+  background: radial-gradient(ellipse at center, #01030c 20%, #7749bd 48%, #9defff 60%, #091023 73%);
+  transform: rotate(-28deg) scaleX(0.78);
+  box-shadow: 0 0 20px #9a7aff66;
+}
+
+.planet-map-label {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  display: grid;
+  gap: 4px;
+  width: max-content;
+  max-width: 190px;
+  padding: 6px 9px;
+  border: 1px solid #b5dce322;
+  border-radius: 4px;
+  color: #e3eef6;
+  background: #070d19eb;
+  text-align: center;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.planet-map-label strong {
+  overflow: hidden;
+  font: 600 10px/1.2 ui-monospace, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planet-map-label small {
+  color: #a7b6c8;
+  font: 8px/1.3 ui-monospace, monospace;
+  letter-spacing: 0.07em;
+}
+
+.planet-map-label.is-visible,
+.map-planet:hover .planet-map-label,
+.map-planet:focus-visible .planet-map-label { opacity: 1; }
+.map-planet:is(:hover, :focus-visible, .is-selected, .is-targeted) { z-index: 5; }
+.map-planet.is-targeted .planet-map-label { border-color: #ffc77866; }
+
+.map-route-preview {
+  stroke: var(--amber);
+  stroke-width: 1;
+  stroke-dasharray: 3 6;
+  opacity: 0.65;
+}
+
 .map-planet.type-spacetime-rip::before {
   position: absolute;
   inset: -5px;
@@ -2233,10 +2331,10 @@ code {
   inset: 0;
   min-height: 100%;
   background:
-    radial-gradient(circle at 50% 48%, rgba(77, 179, 121, 0.1), transparent 37%),
-    radial-gradient(circle at 28% 24%, rgba(127, 190, 255, 0.07), transparent 23%),
-    radial-gradient(circle at 78% 72%, rgba(154, 102, 255, 0.05), transparent 24%),
-    #020604;
+    radial-gradient(ellipse at 50% 48%, rgba(37, 83, 105, 0.12), transparent 55%),
+    radial-gradient(ellipse at 20% 28%, rgba(77, 93, 166, 0.16), transparent 42%),
+    radial-gradient(ellipse at 78% 72%, rgba(103, 61, 146, 0.12), transparent 38%),
+    #040812;
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -2352,8 +2450,8 @@ code {
   overflow: hidden;
   color: var(--text);
   border: 1px solid rgba(151, 211, 181, 0.19);
-  border-radius: 0.35rem;
-  background: rgba(5, 13, 9, 0.88);
+  border-radius: 0.65rem;
+  background: linear-gradient(150deg, rgba(17, 29, 39, 0.94), rgba(6, 14, 22, 0.95));
   box-shadow: 0 1.4rem 4rem rgba(0, 0, 0, 0.38);
   backdrop-filter: blur(20px) saturate(1.18);
   transition: border-color 140ms ease, box-shadow 140ms ease;
@@ -2485,7 +2583,7 @@ code {
 .mission-window .mission-title {
   margin: 0;
   font-family: Georgia, serif;
-  font-size: clamp(2.2rem, 4vw, 3.6rem);
+  font-size: clamp(1.8rem, 2.6vw, 2.5rem);
   font-weight: 400;
   line-height: 0.88;
 }
@@ -2869,16 +2967,23 @@ code {
   }
 
   .is-strategy-active .live-region {
+    top: 12rem;
     right: 0.65rem;
-    bottom: 10rem;
+    bottom: auto;
     left: 0.65rem;
     max-width: none;
+    pointer-events: none;
   }
 }
 
 @media (max-width: 420px) {
   .floating-map-toolbar span {
     display: none;
+  }
+
+  .floating-map-toolbar .map-mode-label {
+    display: block;
+    font-size: 0.48rem;
   }
 
   .floating-command-panel .command-section,

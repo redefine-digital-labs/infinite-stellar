@@ -59,6 +59,18 @@ afterEach(() => {
 });
 
 describe('map-first floating strategy controls', () => {
+  it('clears the tactical view and restores the command windows without changing gameplay', async () => {
+    setViewport(1280, 800);
+    const user = userEvent.setup();
+    const props = strategyProps();
+    render(<StrategyConsole {...props} />);
+    await user.click(screen.getByRole('button', { name: 'Clear view' }));
+    expect(screen.queryAllByRole('dialog')).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Home' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Restore panels' }));
+    expect(screen.getAllByRole('dialog')).toHaveLength(3);
+    expect(props.onDispatch).not.toHaveBeenCalled();
+  });
   it('moves with the keyboard, persists positions, and minimizes into the dock', async () => {
     setViewport(1280, 800);
     const user = userEvent.setup();
@@ -210,5 +222,23 @@ describe('map-first floating strategy controls', () => {
     expect(Number(route.getAttribute('x2'))).toBeCloseTo(Number.parseFloat(targetNode.style.left));
     expect(Number(route.getAttribute('y2'))).toBeCloseTo(Number.parseFloat(targetNode.style.top));
     expect(route).toHaveAttribute('marker-end', 'url(#voyage-arrow)');
+  });
+
+  it('keeps the proposed route attached while panning without dispatching a fleet', () => {
+    const props = strategyProps();
+    const target = props.game.planets.find((planet) => planet.discovered && planet.owner === 'neutral')!;
+    props.game = setStrategyTarget(props.game, target.id);
+    const { container } = render(<StrategyConsole {...props} />);
+    const map = screen.getByLabelText(/star map camera/i);
+    fireEvent.keyDown(map, { key: 'ArrowRight' });
+    fireEvent.keyDown(map, { key: '+' });
+    const route = container.querySelector('.map-route-preview')!;
+    const origin = screen.getByRole('button', { name: /first-light, level/i });
+    const destination = screen.getByRole('button', { name: new RegExp(`${target.name}, level`, 'i') });
+    expect(Number(route.getAttribute('x1'))).toBeCloseTo(Number.parseFloat(origin.style.left));
+    expect(Number(route.getAttribute('y2'))).toBeCloseTo(Number.parseFloat(destination.style.top));
+    expect(destination.querySelector('.planet-map-label')).toHaveTextContent('TARGET');
+    expect(props.onDispatch).not.toHaveBeenCalled();
+    expect(container.querySelectorAll('.voyage-route')).toHaveLength(0);
   });
 });
