@@ -6,6 +6,7 @@ import {
   type Round5MinerChunk,
   type Round5MinerMessage,
   type Round5MinerRequest,
+  type RankedMiningGeometry,
 } from '@infinite-stellar/game-sdk';
 
 export interface MinerProgress {
@@ -64,8 +65,11 @@ function fallbackMining(
 export function startRound5Miner(
   chunks: readonly Round5MinerChunk[],
   onProgress: (progress: MinerProgress) => void,
+  rankedGeometry?: RankedMiningGeometry,
 ): MinerOperation {
+  round5MinerTotal(chunks);
   const id = requestId();
+  if (rankedGeometry && typeof Worker === 'undefined') throw new Error('Ranked exploration requires a local Web Worker.');
   if (typeof Worker === 'undefined') return fallbackMining(id, chunks, onProgress);
 
   const worker = new Worker(new URL('./miner.worker.ts', import.meta.url), {
@@ -79,6 +83,7 @@ export function startRound5Miner(
     rejectResult = reject;
     worker.addEventListener('message', (event: MessageEvent<Round5MinerMessage>) => {
       const message = event.data;
+      if (settled) return;
       if (message.version !== ROUND5_MINER_PROTOCOL_VERSION || message.requestId !== id) return;
       if (message.type === 'progress') {
         found += message.locations.length;
@@ -114,6 +119,7 @@ export function startRound5Miner(
     requestId: id,
     chunks: [...chunks],
     progressEvery: 256,
+    ...(rankedGeometry ? { rankedGeometry } : {}),
   };
   worker.postMessage(request);
   return {

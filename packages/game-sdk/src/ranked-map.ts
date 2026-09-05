@@ -423,7 +423,8 @@ function mappedPlanet(
     );
   }
   const isHome = seat.civilization.initialHomePlanetId === objectId;
-  if (isHome && (!chain || !chain.isFoundingPlanet || chain.ownerSeatId !== identity.seatId)) {
+  // Founding provenance survives conquest; current ownership is chain state, not a vault invariant.
+  if (isHome && (!chain || !chain.isFoundingPlanet)) {
     throw new RankedMapError(
       'CHAIN_MISMATCH',
       `The Seat's founding Planet ${objectId} is missing or has an invalid chain binding.`,

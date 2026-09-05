@@ -180,10 +180,12 @@ describe('Infinite Stellar player shell', () => {
 
   it('routes an existing Seat into the chain-backed private command map', async () => {
     const user = userEvent.setup();
+    const mine = vi.fn();
     const seat = {
       status: 'enrolled',
       seatId: id('31'),
       seat: { soulId: id('32') },
+      civilization: { initialHomePlanetId: id('41') },
     } as unknown as PlayerSeatBundle;
     const map = {
       identity: { seatId: seat.seatId },
@@ -215,7 +217,9 @@ describe('Infinite Stellar player shell', () => {
       rankedMap={{
         phase: 'loaded', seatId: seat.seatId, hasPrivateRecord: true,
         protection: 'indexeddb-aes-gcm', map,
+        canMine: true,
       }}
+      onMineRankedMap={mine}
     />);
 
     await user.click(screen.getByRole('button', { name: /check mainnet readiness/i }));
@@ -224,5 +228,7 @@ describe('Infinite Stellar player shell', () => {
     expect(screen.getByRole('button', { name: /is-11111, level 0, player, onchain/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /launch fleet/i })).not.toBeInTheDocument();
     expect(screen.getByText(/ranked writes remain sealed/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Explore here' }));
+    expect(mine).toHaveBeenCalledWith({ x: 73, y: 6421 });
   });
 });

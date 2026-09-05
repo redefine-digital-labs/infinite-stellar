@@ -4,6 +4,7 @@ import {
   ROUND5_MINER_PROTOCOL_VERSION,
   round5MinerTotal,
   round5WorldLocation,
+  createRankedLocationMiner,
   type MinedRound5Location,
   type Round5MinerRequest,
   type Round5MinerStartRequest,
@@ -24,12 +25,16 @@ async function yieldToWorkerEvents(): Promise<void> {
 
 async function mine(request: Round5MinerStartRequest): Promise<void> {
   const startedAt = performance.now();
-  const total = round5MinerTotal(request.chunks);
   const locations: MinedRound5Location[] = [];
   let progressLocations: MinedRound5Location[] = [];
   let checked = 0;
 
   try {
+    const total = round5MinerTotal(request.chunks);
+    if (!Number.isInteger(request.progressEvery) || request.progressEvery < 1 || request.progressEvery > 256) {
+      throw new Error('Mining progress cadence must be 1–256 coordinates.');
+    }
+    const mineLocation = request.rankedGeometry ? createRankedLocationMiner(request.rankedGeometry) : round5WorldLocation;
     for (const chunk of request.chunks) {
       for (let y = chunk.y; y < chunk.y + chunk.side; y += 1) {
         for (let x = chunk.x; x < chunk.x + chunk.side; x += 1) {
@@ -45,7 +50,7 @@ async function mine(request: Round5MinerStartRequest): Promise<void> {
             return;
           }
 
-          const world = round5WorldLocation({ x, y });
+          const world = mineLocation({ x, y });
           checked += 1;
           if (world) {
             const location = {

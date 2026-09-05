@@ -54,6 +54,9 @@ export function App() {
       onEnrollRanked={enrollment.enroll}
       rankedMap={rankedMap.snapshot}
       onRefreshRankedMap={rankedMap.refresh}
+      rankedMining={rankedMap.mining}
+      onMineRankedMap={rankedMap.mine}
+      onCancelRankedMining={rankedMap.cancelMining}
     />
   );
 }

@@ -12,6 +12,7 @@ import type { RankedMapPlanet, RankedMapView } from '@infinite-stellar/game-sdk'
 import { FloatingPanel, type FloatingPanelPosition } from './FloatingPanel';
 import { StatusPill } from './components';
 import { MapPlanetGlyph } from './MapPlanetGlyph';
+import type { RankedMiningSnapshot } from './use-ranked-map';
 
 export interface RankedUniverseConsoleProps {
   map: RankedMapView;
@@ -20,6 +21,12 @@ export interface RankedUniverseConsoleProps {
   soulId?: string;
   onRefresh: () => void;
   onBack: () => void;
+  mining?: RankedMiningSnapshot;
+  canMine?: boolean;
+  miningBlocker?: string;
+  needsHome?: boolean;
+  onMine?: (center: { x: number; y: number }) => void;
+  onCancelMining?: () => void;
 }
 
 interface Camera {
@@ -100,6 +107,12 @@ export function RankedUniverseConsole({
   soulId,
   onRefresh,
   onBack,
+  mining = { phase: 'idle' },
+  canMine = false,
+  miningBlocker,
+  needsHome = false,
+  onMine,
+  onCancelMining,
 }: RankedUniverseConsoleProps) {
   const home = map.planets.find((planet) => planet.isHome);
   const initialCamera = useMemo(() => fitCamera(map.planets, map.worldRadius), [map.planets, map.worldRadius]);
@@ -274,7 +287,7 @@ export function RankedUniverseConsole({
           {map.planets.length === 0 && (
             <div className="ranked-map-empty">
               <strong>{hasPrivateRecord ? 'No coordinates have been discovered yet.' : 'This device has no private map for the Seat.'}</strong>
-              <span>Chain ownership is intact. Restore the encrypted map backup or return on the device that mined it.</span>
+              <span>{needsHome ? 'Explore a sector to find private home candidates. Claiming still requires a verified proof and chain finality.' : 'Chain ownership is intact. Restore the encrypted map backup or return on the device that mined it.'}</span>
             </div>
           )}
           <div className="scan-readout"><span>CHAIN SNAPSHOT</span><strong>{map.snapshotFingerprint.slice(0, 12)}…</strong><small>{protection ?? 'vault unavailable'} · private coordinates never uploaded</small></div>
@@ -298,6 +311,32 @@ export function RankedUniverseConsole({
 
       {panel('command', 'Planet & route', 'CHAIN STATE · PRIVATE POSITION', (
         <div className="command-panel floating-command-panel ranked-command-content">
+          <div className="ranked-exploration">
+            <strong>Private exploration · 64 × 64 sector</strong>
+            <p>Search at the map center, or jump to a random sector. Discoveries stay on this device; they do not claim a Planet.</p>
+            <div className="button-row">
+              <button className="button button-secondary compact-button" type="button"
+                disabled={!canMine || !onMine || mining.phase === 'mining' || mining.phase === 'saving'}
+                onClick={() => onMine?.({ x: Math.round(camera.centerX), y: Math.round(camera.centerY) })}>Explore here</button>
+              <button className="button button-secondary compact-button" type="button"
+                disabled={!canMine || !onMine || mining.phase === 'mining' || mining.phase === 'saving'}
+                onClick={() => {
+                  const random = crypto.getRandomValues(new Uint32Array(2));
+                  const angle = random[0]! / 2 ** 32 * Math.PI * 2;
+                  const radius = Math.sqrt(random[1]! / 2 ** 32) * Math.max(0, map.worldRadius - 64);
+                  const center = { x: Math.round(Math.cos(angle) * radius), y: Math.round(Math.sin(angle) * radius) };
+                  setCamera({ centerX: center.x, centerY: center.y, radius: MIN_RADIUS });
+                  onMine?.(center);
+                }}>Random sector</button>
+              {mining.phase === 'mining' && <button className="button button-secondary compact-button" type="button" onClick={onCancelMining}>Cancel search</button>}
+            </div>
+            <div role="status" aria-live="polite">
+              {mining.phase === 'mining' && `Searching ${mining.progress?.checked ?? 0} / ${mining.progress?.total ?? 4096} · ${mining.progress?.found ?? 0} found`}
+              {mining.phase === 'saving' && 'Validating and encrypting discoveries…'}
+              {mining.message}
+              {!canMine && (miningBlocker ?? 'Season exploration is not available.')}
+            </div>
+          </div>
           {selected ? <RankedPlanetReadout label="ORIGIN" planet={selected} /> : <p>Select a known Planet.</p>}
           {target && <RankedPlanetReadout label="TARGET" planet={target} />}
           <div className="ranked-command-lock">

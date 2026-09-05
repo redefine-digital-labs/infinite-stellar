@@ -1,4 +1,5 @@
 import {
+  appendRankedPrivateLocations,
   parseRankedPrivateMapRecord,
   rankedPrivateMapStorageKey,
   type RankedMapIdentity,
@@ -21,6 +22,7 @@ export interface EncryptedRankedMapRecord {
 }
 
 export interface RankedMapVaultStore {
+  withLock<T>(namespace: string, action: () => Promise<T>): Promise<T>;
   getKey(namespace: string): Promise<CryptoKey | undefined>;
   putKey(namespace: string, key: CryptoKey): Promise<void>;
   getRecord(namespace: string): Promise<EncryptedRankedMapRecord | undefined>;
@@ -64,7 +66,15 @@ function transactionDone(transaction: IDBTransaction): Promise<void> {
 export class IndexedDbRankedMapVaultStore implements RankedMapVaultStore {
   private databasePromise?: Promise<IDBDatabase>;
 
-  constructor(private readonly factory: IDBFactory) {}
+  constructor(
+    private readonly factory: IDBFactory,
+    private readonly locks: LockManager | undefined = globalThis.navigator?.locks,
+  ) {}
+
+  async withLock<T>(namespace: string, action: () => Promise<T>): Promise<T> {
+    if (!this.locks) throw new Error('This browser cannot safely coordinate ranked map saves across tabs. Use a browser with Web Locks support.');
+    return this.locks.request(`${DATABASE_NAME}:${namespace}`, { mode: 'exclusive' }, action);
+  }
 
   private database(): Promise<IDBDatabase> {
     if (this.databasePromise) return this.databasePromise;
@@ -118,8 +128,18 @@ export class IndexedDbRankedMapVaultStore implements RankedMapVaultStore {
 }
 
 export class MemoryRankedMapVaultStore implements RankedMapVaultStore {
+  private readonly locks = new Map<string, Promise<unknown>>();
   private readonly keys = new Map<string, CryptoKey>();
   private readonly records = new Map<string, EncryptedRankedMapRecord>();
+
+  withLock<T>(namespace: string, action: () => Promise<T>): Promise<T> {
+    const previous = this.locks.get(namespace) ?? Promise.resolve();
+    const next = previous.catch(() => undefined).then(action);
+    this.locks.set(namespace, next);
+    const cleanup = () => { if (this.locks.get(namespace) === next) this.locks.delete(namespace); };
+    void next.then(cleanup, cleanup);
+    return next;
+  }
 
   async getKey(namespace: string) { return this.keys.get(namespace); }
   async putKey(namespace: string, key: CryptoKey) { this.keys.set(namespace, key); }
@@ -132,8 +152,6 @@ export class MemoryRankedMapVaultStore implements RankedMapVaultStore {
 }
 
 export class EncryptedRankedMapVault implements RankedMapVault {
-  private readonly writes = new Map<string, Promise<void>>();
-
   constructor(
     private readonly store: RankedMapVaultStore,
     private readonly webCrypto: Crypto,
@@ -152,20 +170,12 @@ export class EncryptedRankedMapVault implements RankedMapVault {
     return generated;
   }
 
-  private enqueue(namespace: string, action: () => Promise<void>): Promise<void> {
-    const previous = this.writes.get(namespace) ?? Promise.resolve();
-    const next = previous.catch(() => undefined).then(action);
-    this.writes.set(namespace, next);
-    const cleanup = () => {
-      if (this.writes.get(namespace) === next) this.writes.delete(namespace);
-    };
-    void next.then(cleanup, cleanup);
-    return next;
-  }
-
   async restore(identity: RankedMapIdentity): Promise<RankedPrivateMapRecord | null> {
     const namespace = rankedPrivateMapStorageKey(identity);
-    await (this.writes.get(namespace) ?? Promise.resolve());
+    return this.store.withLock(namespace, () => this.read(namespace));
+  }
+
+  private async read(namespace: string): Promise<RankedPrivateMapRecord | null> {
     const encrypted = await this.store.getRecord(namespace);
     if (!encrypted) return null;
     if (
@@ -197,27 +207,33 @@ export class EncryptedRankedMapVault implements RankedMapVault {
     const parsed = parseRankedPrivateMapRecord(JSON.stringify(record));
     if (!parsed) return Promise.reject(new Error('The ranked map failed schema validation before encryption.'));
     const namespace = rankedPrivateMapStorageKey(parsed);
-    return this.enqueue(namespace, async () => {
+    return this.store.withLock(namespace, async () => {
+      // A late Worker or another tab may hold an older snapshot. Preserve every
+      // existing discovery; reject conflicting preimages before touching disk.
+      const existing = await this.read(namespace);
+      const merged = existing ? appendRankedPrivateLocations(
+        existing, parsed.locations, Math.max(existing.updatedAtMs, parsed.updatedAtMs),
+      ) : parsed;
       const key = await this.key(namespace);
       const iv = this.webCrypto.getRandomValues(new Uint8Array(new ArrayBuffer(12)));
       const ciphertext = await this.webCrypto.subtle.encrypt({
         name: 'AES-GCM',
         iv,
         additionalData: associatedData(namespace),
-      }, key, utf8(JSON.stringify(parsed)));
+      }, key, utf8(JSON.stringify(merged)));
       await this.store.putRecord(namespace, {
         schemaVersion: 1,
         algorithm: 'AES-GCM',
         iv,
         ciphertext,
-        updatedAtMs: parsed.updatedAtMs,
+        updatedAtMs: merged.updatedAtMs,
       });
     });
   }
 
   clear(identity: RankedMapIdentity): Promise<void> {
     const namespace = rankedPrivateMapStorageKey(identity);
-    return this.enqueue(namespace, () => this.store.deleteNamespace(namespace));
+    return this.store.withLock(namespace, () => this.store.deleteNamespace(namespace));
   }
 }
 

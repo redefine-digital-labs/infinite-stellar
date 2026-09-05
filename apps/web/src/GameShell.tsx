@@ -23,6 +23,7 @@ import type { RankedEnrollmentState } from './use-ranked-enrollment';
 import type { RankedProjectionSnapshot } from './use-ranked-projection';
 import type { RankedMapSnapshot } from './use-ranked-map';
 import { RankedUniverseConsole } from './RankedUniverseConsole';
+import type { RankedMiningSnapshot } from './use-ranked-map';
 
 export interface GameShellProps {
   walletAddress?: string;
@@ -37,6 +38,9 @@ export interface GameShellProps {
   onRefreshProjection?: () => void;
   rankedMap?: RankedMapSnapshot;
   onRefreshRankedMap?: () => void;
+  rankedMining?: RankedMiningSnapshot;
+  onMineRankedMap?: (center: { x: number; y: number }) => void;
+  onCancelRankedMining?: () => void;
 }
 
 const DISCONNECTED_RANKED_GATEWAY: RankedGatewaySnapshot = {
@@ -61,6 +65,9 @@ export function GameShell({
   onRefreshProjection,
   rankedMap = { phase: 'disabled' },
   onRefreshRankedMap,
+  rankedMining,
+  onMineRankedMap,
+  onCancelRankedMining,
 }: GameShellProps) {
   const journey = usePlayerJourney(walletAddress);
   const { session } = journey;
@@ -161,6 +168,12 @@ export function GameShell({
             map={rankedMap.map}
             hasPrivateRecord={rankedMap.hasPrivateRecord ?? false}
             protection={rankedMap.protection}
+            mining={rankedMining}
+            canMine={rankedMap.canMine}
+            miningBlocker={rankedMap.miningBlocker}
+            needsHome={!rankedGateway.seat.civilization.initialHomePlanetId}
+            onMine={onMineRankedMap}
+            onCancelMining={onCancelRankedMining}
             soulId={rankedGateway.seat.seat.soulId}
             onRefresh={onRefreshRankedMap ?? onRefreshRanked ?? (() => undefined)}
             onBack={journey.restart}

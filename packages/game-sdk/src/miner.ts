@@ -1,6 +1,7 @@
 import { round5WorldLocation, type Round5Coordinates } from './round5-universe';
+import { createRankedLocationMiner, type RankedMiningGeometry } from './ranked-miner';
 
-export const ROUND5_MINER_PROTOCOL_VERSION = 1 as const;
+export const ROUND5_MINER_PROTOCOL_VERSION = 2 as const;
 export const ROUND5_MINER_CHUNK_SIDE = 64;
 export const ROUND5_MINER_CHUNKS_PER_BATCH = 4;
 
@@ -23,6 +24,7 @@ export interface Round5MinerStartRequest {
   requestId: string;
   chunks: Round5MinerChunk[];
   progressEvery: number;
+  rankedGeometry?: RankedMiningGeometry;
 }
 
 export interface Round5MinerCancelRequest {
@@ -78,7 +80,8 @@ function assertChunk(chunk: Round5MinerChunk): void {
     !Number.isSafeInteger(chunk.index) || chunk.index < 0 ||
     !Number.isSafeInteger(chunk.x) ||
     !Number.isSafeInteger(chunk.y) ||
-    !Number.isSafeInteger(chunk.side) || chunk.side < 1 || chunk.side > 512
+    !Number.isSafeInteger(chunk.side) || chunk.side < 1 || chunk.side > 512 ||
+    !Number.isSafeInteger(chunk.x + chunk.side) || !Number.isSafeInteger(chunk.y + chunk.side)
   ) {
     throw new RangeError('Miner chunks require safe integer coordinates and a side from 1 through 512.');
   }
@@ -140,20 +143,25 @@ export function round5MinerBatch(
 }
 
 export function round5MinerTotal(chunks: readonly Round5MinerChunk[]): number {
-  return chunks.reduce((total, chunk) => {
+  if (chunks.length < 1 || chunks.length > 64) throw new RangeError('A mining request requires 1–64 chunks.');
+  const total = chunks.reduce((total, chunk) => {
     assertChunk(chunk);
     return total + chunk.side * chunk.side;
   }, 0);
+  if (total > 262_144) throw new RangeError('A mining request exceeds the bounded work limit.');
+  return total;
 }
 
 /** Synchronous reference path used by tests and non-Worker environments. */
-export function mineRound5Chunks(chunks: readonly Round5MinerChunk[]): MinedRound5Location[] {
+export function mineRound5Chunks(chunks: readonly Round5MinerChunk[], rankedGeometry?: RankedMiningGeometry): MinedRound5Location[] {
+  round5MinerTotal(chunks);
+  const mine = rankedGeometry ? createRankedLocationMiner(rankedGeometry) : round5WorldLocation;
   const locations: MinedRound5Location[] = [];
   for (const chunk of chunks) {
     assertChunk(chunk);
     for (let y = chunk.y; y < chunk.y + chunk.side; y += 1) {
       for (let x = chunk.x; x < chunk.x + chunk.side; x += 1) {
-        const world = round5WorldLocation({ x, y });
+        const world = mine({ x, y });
         if (!world) continue;
         locations.push({
           x,

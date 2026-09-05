@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   createRankedPrivateMapRecord,
+  round5WorldLocation,
   type InfiniteStellarDeployment,
   type PlayerSeatBundle,
   type RankedKnownUniverseProjection,
@@ -9,6 +10,9 @@ import {
   type RankedProjectionClient,
 } from '@infinite-stellar/game-sdk';
 import { useRankedMap, type RankedMapDependencies } from './use-ranked-map';
+import { ROUND5_RULES_GEOMETRY, createRulesGeometryCommitment } from '@infinite-stellar/prover';
+import { EncryptedRankedMapVault, MemoryRankedMapVaultStore } from './ranked-map-vault';
+import type { MinerResult } from './miner-client';
 
 const id = (suffix: string) => `0x${suffix.padStart(64, '0')}`;
 const CHAIN = '4btiuiMPvEENsttpZC7CZ53DruC3MAgfznDbASZ7DR6S';
@@ -112,5 +116,90 @@ describe('ranked private map hook', () => {
     act(() => result.current.refresh());
     await waitFor(() => expect(result.current.snapshot.phase).toBe('loaded'));
     expect(deps.vault.restore).toHaveBeenCalledTimes(2);
+  });
+
+  function miningDependencies() {
+    const chain = projection();
+    Object.assign(chain.manifest, ROUND5_RULES_GEOMETRY, {
+      homePerlinMin: 13n, homePerlinMax: 14n,
+      rulesGeometryCommitment: createRulesGeometryCommitment(ROUND5_RULES_GEOMETRY),
+    });
+    Object.assign(chain.runtime, { universeOpened: true, cancelled: false, settlementStarted: false });
+    const vault = new EncryptedRankedMapVault(new MemoryRankedMapVaultStore(), crypto, 'memory-aes-gcm');
+    let finish!: (result: MinerResult) => void;
+    const cancel = vi.fn();
+    const deps: RankedMapDependencies = {
+      vault,
+      readKnownProjection: vi.fn().mockResolvedValue(chain),
+      startMiner: vi.fn(() => ({ requestId: 'fixture', result: new Promise<MinerResult>((resolve) => { finish = resolve; }), cancel })),
+    };
+    return { deps, cancel, finish: (value: MinerResult) => finish(value) };
+  }
+
+  function minedResult(): MinerResult {
+    const location = round5WorldLocation({ x: 73, y: 6421 })!;
+    return { checked: 4096, total: 4096, found: 1, elapsedMs: 100, locations: [{
+      x: location.x, y: location.y, locationId: location.locationId, perlin: location.perlin, biomebase: location.biomebase,
+    }] };
+  }
+
+  it('validates, encrypts and point-reads discoveries after refresh without claiming ownership', async () => {
+    const currentSeat = seat('31');
+    const fixture = miningDependencies();
+    const { result } = renderHook(() => useRankedMap(CLIENT, DEPLOYMENT, CHAIN, currentSeat, fixture.deps));
+    await waitFor(() => expect(result.current.snapshot.canMine).toBe(true));
+    act(() => result.current.mine({ x: 73, y: 6421 }));
+    expect(fixture.deps.startMiner).toHaveBeenCalledWith(
+      [{ index: 0, x: 41, y: 6389, side: 64 }], expect.any(Function),
+      expect.objectContaining({ rulesGeometryCommitment: createRulesGeometryCommitment(ROUND5_RULES_GEOMETRY) }),
+    );
+    act(() => fixture.finish(minedResult()));
+    await waitFor(() => expect(result.current.snapshot.map?.planets).toHaveLength(1));
+    expect(result.current.snapshot.map?.planets[0]).toMatchObject({ materialized: false, owner: 'neutral' });
+    expect((await fixture.deps.vault.restore(identity(currentSeat)))?.locations).toHaveLength(1);
+    act(() => result.current.refresh());
+    await waitFor(() => expect(result.current.snapshot.map?.planets).toHaveLength(1));
+  });
+
+  it.each(['hash', 'scope'] as const)('rejects Worker %s substitution before saving', async (kind) => {
+    const currentSeat = seat('31');
+    const fixture = miningDependencies();
+    const save = vi.spyOn(fixture.deps.vault, 'save');
+    const { result } = renderHook(() => useRankedMap(CLIENT, DEPLOYMENT, CHAIN, currentSeat, fixture.deps));
+    await waitFor(() => expect(result.current.snapshot.canMine).toBe(true));
+    act(() => result.current.mine({ x: 73, y: 6421 }));
+    const forged = minedResult();
+    if (kind === 'hash') forged.locations[0]!.locationId = '0'.repeat(64);
+    else forged.locations[0]!.x = 0;
+    act(() => fixture.finish(forged));
+    await waitFor(() => expect(result.current.mining.phase).toBe('error'));
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it('cancels old Seat work and ignores results even when its Worker completes late', async () => {
+    const firstSeat = seat('31');
+    const secondSeat = seat('32');
+    const fixture = miningDependencies();
+    const save = vi.spyOn(fixture.deps.vault, 'save');
+    const { result, rerender } = renderHook(({ currentSeat }) =>
+      useRankedMap(CLIENT, DEPLOYMENT, CHAIN, currentSeat, fixture.deps), { initialProps: { currentSeat: firstSeat } });
+    await waitFor(() => expect(result.current.snapshot.canMine).toBe(true));
+    act(() => result.current.mine({ x: 73, y: 6421 }));
+    rerender({ currentSeat: secondSeat });
+    await waitFor(() => expect(result.current.snapshot.phase).toBe('loaded'));
+    act(() => fixture.finish(minedResult()));
+    await act(async () => { await Promise.resolve(); });
+    expect(fixture.cancel).toHaveBeenCalledTimes(1);
+    expect(save).not.toHaveBeenCalled();
+    expect(result.current.snapshot.seatId).toBe(secondSeat.seatId);
+  });
+
+  it('does not discard a readable map when mining parameters are unavailable', async () => {
+    const currentSeat = seat('31');
+    const deps = dependencies(currentSeat);
+    const { result } = renderHook(() => useRankedMap(CLIENT, DEPLOYMENT, CHAIN, currentSeat, deps));
+    await waitFor(() => expect(result.current.snapshot.phase).toBe('loaded'));
+    expect(result.current.snapshot.canMine).toBe(false);
+    expect(result.current.snapshot.miningBlocker).toMatch(/not open/);
   });
 });

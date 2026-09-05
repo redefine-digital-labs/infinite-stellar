@@ -1,7 +1,7 @@
 # Infinite Stellar Current Phase
 
 - **Status:** In progress (mainnet execution remains blocked until every production gate has real evidence)
-- **Phase:** Visual gameplay delivery toward a shared Sui season
+- **Phase:** Private exploration and proof-bound player journey toward a shared Sui season
 - **Goal:** Close every implementable production release gate, pin reproducible proof and audit evidence, prepare the exact multisig-controlled Sui publish/bootstrap bundle, and execute it only after independent audit clearance and the required real signers approve.
 - **Authorization:** GitHub and Vercel delivery plus production-valid Sui mainnet engineering are authorized. Development keys, missing audits, unfinished services, or absent signer approvals cannot be substituted.
 - **Outcome:** Release-gate closure audit started from source commit `2905327`. No production assertion or chain write is accepted without inspectable evidence.
@@ -9,5 +9,7 @@
 - **Mainnet status:** No Infinite Stellar game transaction was signed or submitted. Production verifier readiness remains false.
 - **Remaining blockers:** Under audit; known blockers are production proof ceremony, independent audits, signer identities/approvals, multisig/capability custody, public checkpoint indexer, sponsor/monitoring, two-wallet soak, Artifact/ship adapters, and operations/rights clearance.
 - **Delivery plan:** `docs/18-delivery-and-season-operations.md` records the five owner-confirmed milestones and proposed 32-player/72-hour pilot followed by 64–128-player/seven-day seasons. Timing and capacity are proposals awaiting playtest evidence, not deployed rules.
-- **Exact next action:** Finish and verify shared planet visuals, route previews, clear-view controls, and responsive layouts; then implement the proof-backed two-wallet home/exploration/combat journey. Preserve the unresolved audit, multisig, and mainnet release objective.
-- **Current handoff:** `docs/codex/handoffs/2026-09-02-chain-backed-ranked-private-map.md`
+- **Latest implemented increment:** Shared planet visuals, route previews, responsive panels and clear-view controls are pushed in `e8e5ad4`. Manifest-committed ranked mining now runs in a bounded cancellable Worker, revalidates discoveries before encrypted persistence, and refreshes deterministic chain point reads. Cross-tab vault writes preserve the union of discoveries. Conquered founding planets retain their provenance and show the chain's new owner. None of this opens ranked signing.
+- **Verification:** Typecheck, lint, production build and 164 TypeScript tests passed on September 5, including the exploration UI callback. Browser demo Worker mining is functional. September 2 Vercel deployment remains the last confirmed publication until new deployment evidence is recorded.
+- **Exact next action:** Verify and publish this increment, then select persisted home candidates and prepare proof-bound home/move intents from the exact Season/Seat/Planet state. Add portable encrypted backup/recovery, and continue the two-wallet journey. Preserve the unresolved audit, multisig, and mainnet release objective.
+- **Current handoff:** `docs/codex/handoffs/2026-09-05-ranked-private-exploration.md`

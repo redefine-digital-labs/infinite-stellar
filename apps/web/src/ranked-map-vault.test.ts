@@ -78,4 +78,37 @@ describe('ranked map vault', () => {
     await vault.clear(identity);
     await expect(vault.restore(identity)).resolves.toBeNull();
   });
+
+  it('merges concurrent independent vault instances without rotating away the first key or dropping discoveries', async () => {
+    const store = new MemoryRankedMapVaultStore();
+    const firstTab = new EncryptedRankedMapVault(store, globalThis.crypto, 'memory-aes-gcm');
+    const secondTab = new EncryptedRankedMapVault(store, globalThis.crypto, 'memory-aes-gcm');
+    const first = record();
+    const second = { ...first, locations: [{ ...first.locations[0]!, locationId: 'a'.repeat(64), x: 100 }], updatedAtMs: 200 };
+    await Promise.all([firstTab.save(first), secondTab.save(second)]);
+    await firstTab.save({ ...first, updatedAtMs: 50 });
+    const restored = await secondTab.restore(identity);
+    expect(restored?.locations).toHaveLength(2);
+    expect(restored?.locations.map((location) => location.locationId)).toContain(first.locations[0]!.locationId);
+    expect(restored?.updatedAtMs).toBe(200);
+  });
+
+  it('preserves existing secrets when a new write conflicts or existing ciphertext is corrupt', async () => {
+    const store = new MemoryRankedMapVaultStore();
+    const vault = new EncryptedRankedMapVault(store, globalThis.crypto, 'memory-aes-gcm');
+    const first = record();
+    await vault.save(first);
+    await expect(vault.save({ ...first, locations: [{ ...first.locations[0]!, x: 0 }] })).rejects.toThrow(/conflicting/);
+    await expect(vault.restore(identity)).resolves.toEqual(first);
+    const { rankedPrivateMapStorageKey } = await import('@infinite-stellar/game-sdk');
+    const namespace = rankedPrivateMapStorageKey(identity);
+    const encrypted = (await store.getRecord(namespace))!;
+    const badBytes = encrypted.ciphertext.slice(0);
+    const view = new Uint8Array(badBytes);
+    view[0] = view[0]! ^ 1;
+    const corrupt = { ...encrypted, ciphertext: badBytes };
+    await store.putRecord(namespace, corrupt);
+    await expect(vault.save(first)).rejects.toThrow(/authenticated/);
+    expect(await store.getRecord(namespace)).toBe(corrupt);
+  });
 });

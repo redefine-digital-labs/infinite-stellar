@@ -7,9 +7,15 @@ import {
   round5MinerBatch,
   round5MinerSpiralOffset,
   round5WorldLocation,
+  round5MinerTotal,
 } from '../src';
 
 describe('Round-5 Worker mining contracts', () => {
+  it('rejects overflowing coordinates and unbounded batches before scanning', () => {
+    expect(() => round5MinerTotal([{ index: 0, x: Number.MAX_SAFE_INTEGER, y: 0, side: 1 }])).toThrow();
+    expect(() => round5MinerTotal([])).toThrow();
+    expect(() => round5MinerTotal(Array.from({ length: 64 }, (_, index) => ({ index, x: 0, y: 0, side: 512 })))).toThrow(/work limit/);
+  });
   it('walks deterministic non-overlapping chunks in a square spiral', () => {
     expect(Array.from({ length: 9 }, (_, index) => round5MinerSpiralOffset(index))).toEqual([
       { x: 0, y: 0 },

@@ -207,6 +207,14 @@ function chainPlanet(locationId: string, objectId: string): PlanetProjection {
 }
 
 describe('ranked private map', () => {
+  it('keeps a conquered founding planet visible with the chain-authoritative rival owner', () => {
+    const location = firstLocation();
+    const objectId = deriveRankedPlanetObjectId(identity, location.locationId);
+    const record = appendRankedPrivateLocations(createRankedPrivateMapRecord(identity), [location], 100);
+    const planet = { ...chainPlanet(location.locationId, objectId), ownerSeatId: `0x${'99'.padStart(64, '0')}` };
+    const view = mergeRankedPrivateMap(identity, seat(objectId), projection([planet]), record);
+    expect(view.planets[0]).toMatchObject({ isHome: true, owner: 'rival', materialized: true });
+  });
   it('namespaces, parses, and appends private coordinates deterministically', () => {
     const empty = createRankedPrivateMapRecord(identity);
     const record = appendRankedPrivateLocations(empty, [firstLocation()], 100);

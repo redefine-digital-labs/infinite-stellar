@@ -3065,6 +3065,29 @@ code {
   color: var(--muted);
 }
 
+.ranked-exploration {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgb(116 174 236 / 24%);
+  border-radius: 12px;
+  background: rgb(11 25 44 / 70%);
+}
+
+.ranked-exploration p,
+.ranked-exploration [role="status"] {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ranked-exploration .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .ranked-command-lock {
   display: grid;
   gap: 0.35rem;
