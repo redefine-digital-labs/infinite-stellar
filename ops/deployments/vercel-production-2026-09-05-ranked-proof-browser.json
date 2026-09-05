@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "surface": "vercel",
+  "environment": "production",
+  "project": "infinite-stellar",
+  "createdAt": "2026-09-05T14:07:34Z",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "branch": "codex/dark-forest-parity",
+    "commit": "f66c1f35c72ba5d26b95d1e980fc0746185234fc"
+  },
+  "deployment": {
+    "id": "dpl_HXtcLUYrTgGwMDCfgVJtWdpu2zgU",
+    "status": "READY",
+    "immutableUrl": "https://infinite-stellar-9a75e8moa-soulidity-ai.vercel.app",
+    "productionAlias": "https://infinite-stellar.vercel.app"
+  },
+  "capability": {
+    "sdkWitnessToRealDevelopmentGroth16": true,
+    "threeActionUnsignedTransactionPreparation": true,
+    "postProofContextRevalidation": true,
+    "isolatedProductionWorkerAdapter": true,
+    "workerCancellationTerminatesComputation": true,
+    "completeSelectionCacheIsolation": true,
+    "wasmCompatibleProductionCsp": true,
+    "rankedMapActionUiConnected": false,
+    "rankedMainnetWrites": false,
+    "productionProofArtifactsApproved": false,
+    "chainTransactionsSignedOrSubmitted": 0
+  },
+  "verification": {
+    "node": "24.20.0",
+    "typecheck": "passed",
+    "lint": "passed",
+    "documentationLint": "passed",
+    "typescriptTests": { "web": 149, "gameSdk": 143, "prover": 38, "total": 330 },
+    "realCircuitIntegration": {
+      "command": "npm run circuits:test:ranked",
+      "testsPassed": 3,
+      "artifactsRequiredNoSilentSkip": true,
+      "checks": [
+        "Real SDK-prepared private witnesses executed by actual circuit WASM and development proving keys.",
+        "Groth16 self-verification, exact public statements and Sui proof-point serialization pass.",
+        "All three unsigned transaction builders accept the actual generated proof bytes.",
+        "Coordinate preimage and public-statement mutations reject.",
+        "Production mode refuses the development manifests."
+      ]
+    },
+    "localBrowserWithExactProductionCsp": {
+      "harness": "apps/web/proof-development.html",
+      "environmentFlag": "INFINITE_STELLAR_PROOF_CSP_QA=1",
+      "setupStatus": "development-only-public-entropy",
+      "usesPublicTestCoordinates": true,
+      "rpcRequests": 0,
+      "oldCspRejectedWebAssemblyCompilation": true,
+      "updatedCspAllThreeProofsPassed": true,
+      "timingsIncludeLocalArtifactPreflight": true,
+      "timingsAreNotProductionP95": true,
+      "proofs": [
+        { "circuit": "claim_home_v1", "publicSignals": 4, "proofBytes": 128, "elapsedMs": 717,
+          "manifestSha256": "2bd109ed508d57fe8395bdc97af79c273a0fac07c767f5c5cb91f0fe131f2f7f" },
+        { "circuit": "move_v1", "publicSignals": 4, "proofBytes": 128, "elapsedMs": 756,
+          "manifestSha256": "aabf877d1e2f2153a048a186710615d9acafbdb5feeaafa1e0f3df71d2e4b889" },
+        { "circuit": "move_new_v1", "publicSignals": 5, "proofBytes": 128, "elapsedMs": 743,
+          "manifestSha256": "49a500cd18c20c8bb95575164b219a822fd02c652bea6b8ecbcb41126835ade9" }
+      ],
+      "browserPreflightCancellation": "passed",
+      "workerLateResultAndStateRaceRegressionTests": "passed"
+    },
+    "productionBuild": "passed",
+    "developmentHarnessAndKeysExcludedFromBuild": true,
+    "httpStatus": 200,
+    "htmlAndCompiledWorkerCspVerified": true,
+    "javascriptEvalStillDisallowed": true,
+    "connectionOriginsUnchanged": true,
+    "browserSmoke": [
+      "Production readiness screen still shows no mainnet package/manifest and pending ceremony, audits, operations and multisig evidence.",
+      "Alias reload starts a new local playtest rather than importing the previous deployment's save.",
+      "Actual home search creates IS-4E7D4 and discovers one natural neighbor with 1,024 searched units squared.",
+      "After asynchronous vault restore, same-build reload preserves both Planets and searched coverage; Home energy grows from 63,407 to 70,393.",
+      "No production browser errors were captured during this smoke test."
+    ]
+  },
+  "limits": [
+    "The ranked map still needs the fresh chain-context reader and user-facing proof/signature/pending/finality/recovery lifecycle.",
+    "Synthetic offline deployment fixtures and disposable development keys are not evidence of a real release, ceremony, audit, custody approval or chain settlement.",
+    "Required independent audits, production setup, approved multisig, two-wallet rehearsal and operations remain incomplete."
+  ],
+  "rollback": {
+    "deploymentId": "dpl_5EfcU2Ho6sokh682gbSUzcKFct2i",
+    "immutableUrl": "https://infinite-stellar-g088jfkb2-soulidity-ai.vercel.app",
+    "newBuildStartsFreshLocalPlaytest": true,
+    "chainRollbackRequired": false
+  }
+}
