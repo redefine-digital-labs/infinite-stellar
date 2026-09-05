@@ -1,8 +1,8 @@
 # Planet Commands, Exploration and Portable Recovery
 
 Worktree: `/Users/naoer/Documents/Claude/Projects/infinite-stellar`.
-Branch: `codex/dark-forest-parity`. The client increment is validated and ready
-for authorized source/deployment delivery. No game-chain write was made.
+Branch: `codex/dark-forest-parity`. Source `8b5880c` is pushed and deployed at
+`https://infinite-stellar.vercel.app`. No game-chain write was made.
 
 ## Implemented and verified
 
@@ -38,7 +38,6 @@ for authorized source/deployment delivery. No game-chain write was made.
 
 ## Remaining and next
 
-Deliver the coherent client increment and pin deployment/rollback evidence.
 Continue animated/partially known voyages and ranked proof-bound special-action adapters,
 pending state and two-wallet finality. Production audits, ceremony, custody,
 signers and operations remain real release gates.
@@ -46,6 +45,9 @@ signers and operations remain real release gates.
 Full review and implementation evidence is in `docs/19-df-interaction-audit.md`.
 The reference fork still lacked an authorized entered account at the last
 inspection; local browser work must not be described as playing that fork.
-The current live release is unchanged (`8439b2a`). There is no onchain rollback
-for this unpublished increment; preserve the dirty worktree rather than
-resetting it wholesale.
+Live deployment `dpl_57v5xdB1v58ff6XdHcnQZDXuHiUP` is READY. The production alias
+passes HTTP/security headers and local simulated 75% dispatch; the immutable
+deployment's mainnet readiness route remains fail-closed. Record:
+`ops/deployments/vercel-production-2026-09-05-unified-commands.json`.
+Web rollback is `dpl_46KUx7ZEKdD8U4NWaqNMZzXA8t5u` (`8439b2a`); preserve local
+vaults, portable backups and simulation data. No onchain rollback is needed.

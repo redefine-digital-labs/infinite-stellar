@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "surface": "vercel",
+  "environment": "production",
+  "project": "infinite-stellar",
+  "createdAt": "2026-09-05T12:23:13.097Z",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "branch": "codex/dark-forest-parity",
+    "commit": "8b5880c4431d29a7be62dc0b20d0b3068d3b323e"
+  },
+  "deployment": {
+    "id": "dpl_57v5xdB1v58ff6XdHcnQZDXuHiUP",
+    "status": "READY",
+    "immutableUrl": "https://infinite-stellar-buyo8xdws-soulidity-ai.vercel.app",
+    "productionAlias": "https://infinite-stellar.vercel.app"
+  },
+  "capability": {
+    "localRound5Simulation": true,
+    "canonicalSoulidityMainnetRead": true,
+    "deterministicSeatFirstRoute": true,
+    "manifestCommittedRankedMining": true,
+    "continuousPrivateExploration": true,
+    "completedEmptyChunkPersistence": true,
+    "explicitExplorerRelocation": true,
+    "unifiedLocalPlanetCommandPreviewAndDispatch": true,
+    "isotropicPointerAnchoredMapCamera": true,
+    "directSpaceReachAndResourceShortcuts": true,
+    "portableEncryptedMapBackup": true,
+    "chainAuthoritativePrivateMapMerge": true,
+    "publicCheckpointIndexer": false,
+    "rankedMainnetWrites": false,
+    "liveTwoWalletSeasonVerified": false,
+    "suiTransactionOrSoulHistoryFromDemo": false
+  },
+  "verification": {
+    "nodeVersion": "24.x",
+    "typecheck": "passed",
+    "lint": "passed",
+    "documentationLint": "passed",
+    "typescriptTests": { "web": 102, "gameSdk": 90, "prover": 38, "total": 230 },
+    "productionBuild": "passed",
+    "httpStatus": 200,
+    "securityHeaders": "passed",
+    "browserSmoke": [
+      "production alias restores existing local simulation and exposes new reach, percentage and explorer controls",
+      "production alias accepts 75-percent click dispatch and creates one local simulated Voyage",
+      "immutable deployment mainnet readiness route remains fail-closed with no game signing action",
+      "localhost compact UI verifies click/drag dispatch, conquest, reinforcement and blank/Escape deselection",
+      "localhost explorer persists completed empty chunks, restores after refresh and resumes discovery",
+      "localhost compact aiming handles 50-to-60-percent keyboard adjustment without zoom changes",
+      "localhost explicit explorer relocation starts discovery without creating a fleet"
+    ],
+    "scopeNote": "Browser gameplay checks use local simulation. Portable recovery is verified with real Web Crypto, component and hook tests, not a live two-wallet ranked Season. No new Move or production circuit validation is claimed for this client/SDK increment."
+  },
+  "mainnetReleaseGate": {
+    "productionProofVerifiersReady": false,
+    "independentAuditComplete": false,
+    "multisigPolicyPinned": false,
+    "gameTransactionSubmitted": false,
+    "decision": "blocked_fail_closed"
+  },
+  "rollback": {
+    "deploymentId": "dpl_46KUx7ZEKdD8U4NWaqNMZzXA8t5u",
+    "immutableUrl": "https://infinite-stellar-hx0pe00r7-soulidity-ai.vercel.app",
+    "sourceCommit": "8439b2a9b5232795befff8690b5c5091dda5f57c",
+    "chainStateChanged": false,
+    "privateDataPolicy": "Preserve device vaults, portable backups and simulation storage during web rollback."
+  }
+}
