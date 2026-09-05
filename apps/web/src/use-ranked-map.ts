@@ -72,7 +72,7 @@ const DEFAULT_DEPENDENCIES: RankedMapDependencies = {
 
 const DISABLED: RankedMapSnapshot = { phase: 'disabled' };
 
-function identityFor(
+export function rankedMapIdentityFor(
   deployment: InfiniteStellarDeployment,
   chainIdentifier: string,
   seat: PlayerSeatBundle | undefined,
@@ -131,7 +131,7 @@ export function useRankedMap(
     miningContext.current = null;
     setMining({ phase: 'idle' });
     const request = requestSequence.current;
-    const identity = identityFor(deployment, chainIdentifier, seat);
+    const identity = rankedMapIdentityFor(deployment, chainIdentifier, seat);
     if (!identity || !seat) {
       setSnapshot(DISABLED);
       return;

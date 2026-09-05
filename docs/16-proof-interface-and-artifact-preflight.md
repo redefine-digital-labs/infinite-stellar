@@ -285,6 +285,40 @@ p95, a setup ceremony, an independent audit or chain settlement evidence.
 
 ## Mainnet release gates
 
+### Ranked map action consumer
+
+`readRankedActionContext` verifies the RPC chain identity, fixed-controller Seat
+bundle, exact selected one/two public Planet IDs and canonical shared `0x6`
+Clock BCS. Seat versions bracket the projection read. The vault supplies only
+private geometry, never live ownership/resources. The initial deadline is
+bounded by the action window and remains fixed through proving and signing.
+
+`useRankedActions` restores that encrypted map and uses the isolated production
+Worker adapter. It revalidates after proof, after simulation/before signing,
+and after wallet return. The signed BCS bytes must exactly match the prepared
+bytes. The exact transaction digest and allowlisted public settlement
+expectation must persist before transmission; signatures, signed bytes and
+coordinates are never journaled. Web Locks serialize the Seat's lifecycle
+across tabs; browsers without this protection cannot submit.
+
+Response loss retains the digest. Recovery reads that exact digest and checks
+indexed events/effects, never re-signing or resending. Unknown/mismatched
+settlement remains pending. Verified finality refreshes the map even if journal
+cleanup fails; the retained journal continues blocking another send. Navigation
+or wallet/Season changes cancel preparation, not an already submitted action.
+
+Configure all three production URL locators in the client:
+`VITE_CLAIM_HOME_PROOF_MANIFEST_URL`, `VITE_MOVE_PROOF_MANIFEST_URL` and
+`VITE_MOVE_NEW_PROOF_MANIFEST_URL`. Exact artifact hashes, circuit identity and
+release authorization come from the pinned deployment, never these locators.
+
+The offline UI harness `/ranked-actions-development.html` accepts only a local
+development origin and uses public fixtures/callbacks. It has no wallet, RPC,
+Worker or executor. Hook transport/signature fixtures remain synthetic;
+`npm run circuits:test:ranked` separately verifies real development proofs.
+`npm run test:chain-read` performs actual read-only mainnet chain/Clock checks.
+Neither test proves two-wallet settlement or production readiness.
+
 Mainnet ranked writes remain disabled until all of the following are evidenced:
 
 - the exact live-verified Soulidity adapter ABI and accepted package remain

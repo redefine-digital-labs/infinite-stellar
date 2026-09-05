@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import type { InfiniteStellarDeployment } from '@infinite-stellar/game-sdk';
+import type { InfiniteStellarDeployment, RankedActionRequest } from '@infinite-stellar/game-sdk';
 import { usePlayerJourney } from './use-player-journey';
 import {
   MAINNET_DEPLOYMENT,
@@ -22,6 +22,7 @@ import type { RankedProjectionSnapshot } from './use-ranked-projection';
 import type { RankedMapSnapshot } from './use-ranked-map';
 import { RankedUniverseConsole } from './RankedUniverseConsole';
 import type { RankedMiningSnapshot, RankedBackupDownload, RankedBackupSnapshot } from './use-ranked-map';
+import type { RankedActionState } from './use-ranked-actions';
 
 export interface GameShellProps {
   walletAddress?: string;
@@ -42,6 +43,11 @@ export interface GameShellProps {
   rankedBackup?: RankedBackupSnapshot;
   onExportRankedBackup?: (passphrase: string) => Promise<RankedBackupDownload>;
   onImportRankedBackup?: (raw: string, passphrase: string) => Promise<void>;
+  rankedAction?: RankedActionState;
+  rankedActionsReady?: boolean;
+  onSubmitRankedAction?: (request: RankedActionRequest) => Promise<void>;
+  onRecoverRankedAction?: () => Promise<void>;
+  onCancelRankedAction?: () => void;
 }
 
 const DISCONNECTED_RANKED_GATEWAY: RankedGatewaySnapshot = {
@@ -72,6 +78,11 @@ export function GameShell({
   rankedBackup,
   onExportRankedBackup,
   onImportRankedBackup,
+  rankedAction,
+  rankedActionsReady = false,
+  onSubmitRankedAction,
+  onRecoverRankedAction,
+  onCancelRankedAction,
 }: GameShellProps) {
   const journey = usePlayerJourney(walletAddress);
   const { session } = journey;
@@ -84,6 +95,9 @@ export function GameShell({
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [session.stage]);
+  useEffect(() => {
+    if (!rankedMapActive) onCancelRankedAction?.();
+  }, [rankedMapActive, onCancelRankedAction]);
 
   return (
     <div className={`app-frame ${session.stage === 'active' || rankedMapActive ? 'is-strategy-active' : ''}`}>
@@ -187,6 +201,11 @@ export function GameShell({
             soulId={rankedGateway.seat.seat.soulId}
             onRefresh={onRefreshRankedMap ?? onRefreshRanked ?? (() => undefined)}
             onBack={journey.restart}
+            action={rankedAction}
+            actionsReady={rankedActionsReady && network === 'mainnet'}
+            onSubmitAction={onSubmitRankedAction}
+            onRecoverAction={onRecoverRankedAction}
+            onCancelAction={onCancelRankedAction}
           />
         )}
 

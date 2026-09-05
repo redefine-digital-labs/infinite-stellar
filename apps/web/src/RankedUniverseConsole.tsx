@@ -9,7 +9,7 @@ import {
   type ReactNode,
   type WheelEvent as ReactWheelEvent,
 } from 'react';
-import { exploredChunkArea, type RankedMapPlanet, type RankedMapView } from '@infinite-stellar/game-sdk';
+import { exploredChunkArea, type RankedActionRequest, type RankedMapPlanet, type RankedMapView } from '@infinite-stellar/game-sdk';
 import { FloatingPanel, type FloatingPanelPosition } from './FloatingPanel';
 import { StatusPill } from './components';
 import { MapPlanetGlyph } from './MapPlanetGlyph';
@@ -21,6 +21,8 @@ import { mapPosition, mapToWorld, worldPixelScale, zoomAtMapPoint } from './map-
 import { useMapViewport } from './use-map-viewport';
 import type { RankedMiningSnapshot, RankedBackupSnapshot, RankedBackupDownload } from './use-ranked-map';
 import { RankedMapBackupControls } from './RankedMapBackupControls';
+import { RankedActionControls } from './RankedActionControls';
+import type { RankedActionState } from './use-ranked-actions';
 
 export interface RankedUniverseConsoleProps {
   map: RankedMapView;
@@ -39,6 +41,11 @@ export interface RankedUniverseConsoleProps {
   onExportBackup?: (passphrase: string) => Promise<RankedBackupDownload>;
   onImportBackup?: (raw: string, passphrase: string) => Promise<void>;
   refreshing?: boolean;
+  action?: RankedActionState;
+  actionsReady?: boolean;
+  onSubmitAction?: (request: RankedActionRequest) => Promise<void>;
+  onRecoverAction?: () => Promise<void>;
+  onCancelAction?: () => void;
 }
 
 interface Camera {
@@ -122,12 +129,18 @@ export function RankedUniverseConsole({
   onExportBackup,
   onImportBackup,
   refreshing = false,
+  action = { status: 'idle' },
+  actionsReady = false,
+  onSubmitAction,
+  onRecoverAction,
+  onCancelAction,
 }: RankedUniverseConsoleProps) {
   const home = map.planets.find((planet) => planet.isHome);
   const initialCamera = useMemo(() => fitCamera(map.planets, map.worldRadius), [map.planets, map.worldRadius]);
   const [camera, setCamera] = useState<Camera>(initialCamera);
   const [selectedId, setSelectedId] = useState(home?.objectId ?? map.planets[0]?.objectId);
   const [targetId, setTargetId] = useState<string>();
+  const [aimingRoute, setAimingRoute] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
   const [relocatingExplorer, setRelocatingExplorer] = useState(false);
   const [explorerError, setExplorerError] = useState('');
@@ -216,7 +229,8 @@ export function RankedUniverseConsole({
   };
   const keyboard = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     const step = camera.radius * 0.12;
-    if (event.key === 'Escape') { setRelocatingExplorer(false); setSelectedId(undefined); setTargetId(undefined); }
+    if (event.key === 'Escape') { setRelocatingExplorer(false); setAimingRoute(false); setSelectedId(undefined); setTargetId(undefined); }
+    else if (event.key.toLowerCase() === 'q' && selected?.owner === 'player') setAimingRoute(true);
     else if (event.key === '+' || event.key === '=') zoomCamera(1 / ZOOM_FACTOR);
     else if (event.key === '-' || event.key === '_') zoomCamera(ZOOM_FACTOR);
     else if (event.key.toLowerCase() === 'h') focusHome();
@@ -303,6 +317,10 @@ export function RankedUniverseConsole({
             {explorerError && <span>{explorerError}</span>}
             <button type="button" onClick={() => setRelocatingExplorer(false)}>Cancel explorer placement (Esc)</button>
           </div>}
+          {aimingRoute && <div className="aim-status" role="status">
+            <strong>Choose a different Planet for this fleet. No transaction is sent until you confirm.</strong>
+            <button type="button" onClick={() => setAimingRoute(false)}>Cancel target selection</button>
+          </div>}
           <span className="map-crosshair map-crosshair-x" aria-hidden="true" />
           <span className="map-crosshair map-crosshair-y" aria-hidden="true" />
           {displayedPlanets.map(({ planet, detail, biome }) => (
@@ -313,8 +331,11 @@ export function RankedUniverseConsole({
               data-detail={detail.simplified ? 'point' : detail.showResources ? 'resources' : 'body'}
               style={{ ...position(planet), ...planetGlyphStyle(detail) }}
               onClick={() => {
-                setSelectedId(planet.objectId);
-                setTargetId(undefined);
+                if (aimingRoute && selected && selected.objectId !== planet.objectId) {
+                  setTargetId(planet.objectId); setAimingRoute(false);
+                } else if (!aimingRoute) {
+                  setSelectedId(planet.objectId); setTargetId(undefined);
+                }
                 setFocusedPanel('command');
                 setVisiblePanels((current) => current.includes('command') ? current : [...current, 'command']);
               }}
@@ -421,10 +442,10 @@ export function RankedUniverseConsole({
             setVisiblePanels([]);
           }}>Focus planet</button>}
           {target && <RankedPlanetReadout label="TARGET" planet={target} />}
-          <div className="ranked-command-lock">
-            <strong>Ranked writes remain sealed</strong>
-            <span>The map is real chain state. Fleet signing unlocks only with audited production proof keys and release evidence.</span>
-          </div>
+          <RankedActionControls selected={selected} target={target} needsHome={needsHome}
+            ready={actionsReady} blocked={refreshing || backupBusy || mining.phase === 'saving'} state={action}
+            onAim={() => { setAimingRoute(true); setRelocatingExplorer(false); setVisiblePanels([]); mapRef.current?.focus({ preventScroll: true }); }}
+            onSubmit={onSubmitAction} onCancel={onCancelAction} onRecover={onRecoverAction} />
         </div>
       ))}
 

@@ -26,6 +26,7 @@
     "circuits:build:dev": "node circuits/scripts/build-development-artifacts.mjs",
     "circuits:test:dev": "node circuits/scripts/test-development-proofs.mjs",
     "circuits:test:ranked": "npm exec --workspace @infinite-stellar/game-sdk -- vitest run --config vitest.circuits.config.ts",
+    "test:chain-read": "npm exec --workspace @infinite-stellar/game-sdk -- vitest run --config vitest.chain.config.ts",
     "circuits:export:move-fixtures": "npm run build --workspace @infinite-stellar/prover && node circuits/scripts/export-move-adapter-fixtures.mjs"
   },
   "devDependencies": {

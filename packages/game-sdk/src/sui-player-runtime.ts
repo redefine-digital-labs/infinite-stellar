@@ -512,6 +512,11 @@ async function waitAndReconcilePlayerTransaction(
       { cause: error },
     );
   }
+  const observedDigest = finalized.$kind === 'Transaction'
+    ? finalized.Transaction.digest : finalized.FailedTransaction.digest;
+  if (observedDigest !== input.digest) {
+    throw new PlayerTransactionExecutionError('FINALITY_FAILED', 'The indexed result belongs to another transaction digest.');
+  }
   if (finalized.$kind === 'FailedTransaction' || !finalized.Transaction.status.success) {
     throw new PlayerTransactionExecutionError('EXECUTION_FAILED', formatExecutionFailure(finalized));
   }

@@ -5,5 +5,5 @@
     "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
     "noEmit": true
   },
-  "include": ["src", "test/proof-development.ts", "vite.config.ts"]
+  "include": ["src", "test/*.ts", "test/*.tsx", "vite.config.ts"]
 }

@@ -521,6 +521,15 @@ describe('production Sui player runtime', () => {
     expect(waitForTransaction).toHaveBeenCalledOnce();
   });
 
+  it('does not treat a failed result for another digest as a terminal failure of the pending action', async () => {
+    const failed = failedTransaction('MoveAbort');
+    if (failed.$kind === 'FailedTransaction') failed.FailedTransaction.digest = '2'.repeat(32);
+    await expect(recoverPlayerTransactionByDigest({
+      client: { waitForTransaction: vi.fn().mockResolvedValue(failed) }, digest: DIGEST, deployment: DEPLOYMENT,
+      expectation: { kind: 'claim_home', seasonId: MANIFEST_ID, seatId: deriveSeasonSeatId(DEPLOYMENT, CONTROLLER) },
+    })).rejects.toMatchObject({ code: 'FINALITY_FAILED' });
+  });
+
   it('rejects malformed recovery digests before any chain request', async () => {
     const waitForTransaction = vi.fn();
     await expect(recoverPlayerTransactionByDigest({

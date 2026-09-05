@@ -7,10 +7,12 @@ import {
 import { useCallback } from 'react';
 import { ConnectButton } from '@mysten/dapp-kit-react/ui';
 import { GameShell } from './GameShell';
-import { MAINNET_DEPLOYMENT, SOULIDITY_MAINNET_PIN } from './deployment';
+import { MAINNET_DEPLOYMENT, RANKED_PROOF_MANIFEST_URLS, SOULIDITY_MAINNET_PIN } from './deployment';
 import { useRankedGateway } from './use-ranked-gateway';
 import { useRankedEnrollment } from './use-ranked-enrollment';
-import { useRankedMap } from './use-ranked-map';
+import { rankedMapIdentityFor, useRankedMap } from './use-ranked-map';
+import { useRankedActions } from './use-ranked-actions';
+import type { Transaction } from '@mysten/sui/transactions';
 
 export function App() {
   const account = useCurrentAccount();
@@ -41,6 +43,18 @@ export function App() {
     SOULIDITY_MAINNET_PIN.chainIdentifier,
     ranked.snapshot.seat,
   );
+  const onActionFinalized = useCallback(() => { ranked.refresh(); rankedMap.refresh(); }, [ranked.refresh, rankedMap.refresh]);
+  const rankedActionsReady = ranked.snapshot.writesReady &&
+    Object.values(RANKED_PROOF_MANIFEST_URLS).every(Boolean);
+  const actions = useRankedActions({
+    client, deployment: MAINNET_DEPLOYMENT, network, controller: account?.address,
+    identity: rankedMapIdentityFor(MAINNET_DEPLOYMENT, SOULIDITY_MAINNET_PIN.chainIdentifier, ranked.snapshot.seat),
+    writesReady: rankedActionsReady, manifestUrls: RANKED_PROOF_MANIFEST_URLS,
+    buildTransaction: (transaction: Transaction) => transaction.build({ client }),
+    signTransaction: (transaction: Transaction) => dAppKit.signTransaction({ transaction, network: 'mainnet', account: account ?? undefined }),
+    executeTransaction: (bytes, signature) => client.executeTransaction({ transaction: bytes, signatures: [signature] }),
+    onFinalized: onActionFinalized,
+  });
 
   return (
     <GameShell
@@ -60,6 +74,11 @@ export function App() {
       rankedBackup={rankedMap.backup}
       onExportRankedBackup={rankedMap.exportBackup}
       onImportRankedBackup={rankedMap.importBackup}
+      rankedAction={actions.state}
+      rankedActionsReady={rankedActionsReady}
+      onSubmitRankedAction={actions.submit}
+      onRecoverRankedAction={actions.recover}
+      onCancelRankedAction={actions.cancel}
     />
   );
 }

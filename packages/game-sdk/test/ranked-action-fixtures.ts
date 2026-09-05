@@ -16,7 +16,7 @@ const config = (name: string, byte: string): CircuitConfigPin => ({
 export function rankedActionFixture(mode: 'home' | 'move' | 'move_new' = 'home'): RankedActionContext {
   const deployment: InfiniteStellarDeployment = {
     network: 'mainnet', packageId: id('10'), manifestId: id('11'), runtimeId: id('12'),
-    enrollmentRegistryId: id('13'), planetRegistryId: id('14'), randomObjectId: id('08'), clockObjectId: id('06'),
+    enrollmentRegistryId: id('13'), planetRegistryId: id('14'), randomObjectId: id('08'), clockObjectId: `0x${'0'.repeat(63)}6`,
     soulidityCallablePackageId: id('60'), soulidityOriginalPackageId: id('a4'),
     claimHomeCircuitConfig: config('claim-home', '31'), moveCircuitConfig: config('move', '32'),
     moveNewCircuitConfig: config('move-new', '33'),

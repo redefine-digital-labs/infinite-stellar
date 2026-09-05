@@ -3173,6 +3173,24 @@ code {
   background: rgba(255, 174, 91, 0.035);
 }
 
+.ranked-action-controls,
+.ranked-action-controls .command-label {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.ranked-action-controls input[type="range"],
+.ranked-action-controls > .button {
+  width: 100%;
+}
+
+.ranked-action-controls [role="status"] {
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .ranked-command-lock strong {
   color: var(--amber);
   font-family: ui-monospace, monospace;

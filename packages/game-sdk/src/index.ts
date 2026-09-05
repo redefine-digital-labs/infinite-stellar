@@ -10,6 +10,7 @@ export * from './ranked-map';
 export * from './ranked-miner';
 export * from './ranked-actions';
 export * from './ranked-proof';
+export * from './ranked-action-reader';
 export * from './routing';
 export * from './round5-rules';
 export * from './round5-universe';

@@ -5,6 +5,13 @@ import type {
 import deploymentRecord from '../../../ops/deployments/sui-testnet-v0.1.0.json';
 import soulidityRecord from '../../../config/soulidity-mainnet-v1.json';
 
+// URLs locate artifacts; every digest/identity still comes from the release/Season pins.
+export const RANKED_PROOF_MANIFEST_URLS = {
+  claim_home: import.meta.env.VITE_CLAIM_HOME_PROOF_MANIFEST_URL as string | undefined,
+  move: import.meta.env.VITE_MOVE_PROOF_MANIFEST_URL as string | undefined,
+  move_new: import.meta.env.VITE_MOVE_NEW_PROOF_MANIFEST_URL as string | undefined,
+};
+
 export const SOULIDITY_MAINNET_PIN: SoulidityMainnetPin = {
   network: 'mainnet',
   chainIdentifier: soulidityRecord.chainIdentifier,
