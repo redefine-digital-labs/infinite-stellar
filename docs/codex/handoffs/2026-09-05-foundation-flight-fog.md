@@ -43,8 +43,12 @@ action. Navigation home preserves the vault and an in-tab continuation. Ranked
 readiness never saves over local gameplay, entry waits for restore, and local
 records cannot supply ranked authority. Browser confirms same Home across
 entry, home/mainnet/back/continue, and refresh with continued energy growth.
-Tests cover all legacy boundaries and storage safety. Release evidence belongs
-in CURRENT.md. No real Sui signature, proof or ranked activation is claimed.
+Tests cover all legacy boundaries and storage safety. Full release validation
+passes 290 tests, types, lint, docs and build. Source `e24662f` is pushed and
+deployed READY as `dpl_AnUCr63FyzusegXHg58wAi8GnPcz`; evidence is
+`ops/deployments/vercel-production-2026-09-05-entry-resume.json`. Production
+reload/home/continue preserves both existing owned Planets without new browser
+errors. No real Sui signature, proof or ranked activation is claimed.
 
 Next: replace fixed demo Home/candidate generation, finish actual ranked
 proof/signing/finality, then the confirmed season operations work. Preserve

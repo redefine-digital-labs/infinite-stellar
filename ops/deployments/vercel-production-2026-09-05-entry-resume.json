@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "surface": "vercel",
+  "environment": "production",
+  "project": "infinite-stellar",
+  "createdAt": "2026-09-05T13:18:04.536Z",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "branch": "codex/dark-forest-parity",
+    "commit": "e24662f8ec79d4e334d00cf0d7bf1c70a175c9bf"
+  },
+  "deployment": {
+    "id": "dpl_AnUCr63FyzusegXHg58wAi8GnPcz",
+    "status": "READY",
+    "immutableUrl": "https://infinite-stellar-gj6w94ebl-soulidity-ai.vercel.app",
+    "productionAlias": "https://infinite-stellar.vercel.app"
+  },
+  "capability": {
+    "singleActionLocalEntryAfterSoulSelection": true,
+    "legacySetupResume": true,
+    "nonDestructiveHomeNavigation": true,
+    "rankedPagesCannotOverwriteLocalSave": true,
+    "waitForAuthenticatedRestore": true,
+    "realRankedEntryImplemented": false,
+    "rankedMainnetWrites": false
+  },
+  "verification": {
+    "localNodeVersion": "24.20.0",
+    "vercelNodeVersion": "24.x",
+    "typecheck": "passed",
+    "lint": "passed",
+    "documentationLint": "passed",
+    "typescriptTests": {
+      "web": 128,
+      "gameSdk": 124,
+      "prover": 38,
+      "total": 290
+    },
+    "productionBuild": "passed",
+    "httpStatus": 200,
+    "securityHeaders": "passed",
+    "browserSmoke": [
+      "Fresh localhost: Soul selection then Enter universe opens the Home-only star map without intermediate approval or fixture-search screens.",
+      "Local Home persists through home/mainnet-readiness/back/continue and encrypted-vault reload; energy continues growing.",
+      "Production alias reload restores both existing owned Planets.",
+      "Production home/continue navigation preserves both Planets and energy.",
+      "No new production browser warnings or errors since 2026-09-05T13:18:30Z."
+    ],
+    "scopeNote": "Local setup still uses deterministic fixtures, not real home mining or ranked proofs. Existing chain-backed Seat-first reads and all real signing/release gates remain unchanged."
+  },
+  "releaseAttempt": {
+    "initial": "Network fetch failed during upload; read-only deployment listing verified that no new deployment existed before retry.",
+    "retry": "READY and aliased"
+  },
+  "mainnetReleaseGate": {
+    "productionProofVerifiersReady": false,
+    "gameTransactionSubmitted": false,
+    "decision": "blocked_fail_closed"
+  },
+  "rollback": {
+    "deploymentId": "dpl_7xK5S61dxCwvKJy6w97kzmwvTR73",
+    "sourceCommit": "3884a501a0d1c70608f065de98cb86d19b8fb256",
+    "chainStateChanged": false,
+    "privateDataPolicy": "Preserve all device vaults, portable backups and simulation state."
+  }
+}
