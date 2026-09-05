@@ -1,6 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
 import type { InfiniteStellarDeployment } from '@infinite-stellar/game-sdk';
-import { round5HomeStats } from '@infinite-stellar/game-sdk';
 import { usePlayerJourney } from './use-player-journey';
 import {
   MAINNET_DEPLOYMENT,
@@ -10,11 +9,9 @@ import {
 import {
   BrandMark,
   Eyebrow,
-  PlanetVisual,
   ShortAddress,
   SoulSigil,
   StatusPill,
-  StepRail,
 } from './components';
 import { StrategyConsole } from './StrategyConsole';
 import { useProofReadiness } from './use-proof-readiness';
@@ -78,8 +75,6 @@ export function GameShell({
 }: GameShellProps) {
   const journey = usePlayerJourney(walletAddress);
   const { session } = journey;
-  const selectedSoul = session.souls.find((soul) => soul.id === session.selectedSoulId);
-  const candidate = session.search.candidate;
   const proofReadiness = useProofReadiness();
   const rankedMapActive = Boolean(
     session.stage === 'unavailable' && rankedGateway.seat &&
@@ -142,13 +137,16 @@ export function GameShell({
                 When the universe ends, the civilization disappears—but the Soul remembers.
               </p>
               <div className="hero-actions">
-                <button className="button button-primary" type="button" onClick={journey.enterDemo}>
-                  Explore local demo <span aria-hidden="true">↗</span>
+                <button className="button button-primary" type="button" onClick={journey.enterDemo}
+                  disabled={journey.vault.status === 'restoring' || journey.vault.status === 'error'}>
+                  {journey.vault.status === 'restoring' ? 'Checking local save…'
+                    : journey.hasSavedDemo ? 'Continue local game' : 'Explore local demo'} <span aria-hidden="true">↗</span>
                 </button>
                 <button className="button button-secondary" type="button" onClick={journey.enterOnchain}>
                   Check mainnet readiness
                 </button>
               </div>
+              {journey.vault.status === 'error' && <p role="alert">Could not restore the local save. Reload to retry; existing data has not been cleared.</p>}
               <p className="truth-note">
                 The demo is local and creates no Sui transaction or Soul history.
               </p>
@@ -342,7 +340,6 @@ export function GameShell({
                 Your Soul gives the Commander a persistent identity and visible form. It grants no
                 ranked power, and selling it later will not transfer this civilization.
               </p>
-              <StepRail active={0} />
             </aside>
             <div className="journey-content">
               <div className="section-heading">
@@ -375,185 +372,36 @@ export function GameShell({
                   );
                 })}
               </div>
+              <p className="fine-print">This preview uses a fixture home. No wallet approval or Sui transaction; exploration after entry runs locally.</p>
               <div className="action-dock">
                 <div>
-                  <span>SEASON EFFECT</span>
-                  <strong>Creates a fixed-controller Seat. Creates no Planet.</strong>
+                  <span>LOCAL FIRST LIGHT</span>
+                  <strong>Choose your Soul, then enter the star map.</strong>
                 </div>
                 <button
                   className="button button-primary"
                   type="button"
-                  disabled={!session.selectedSoulId}
-                  onClick={journey.beginEnrollment}
+                  disabled={!session.selectedSoulId || journey.vault.status === 'restoring' || journey.vault.status === 'error'}
+                  onClick={journey.enterUniverse}
                 >
-                  Create Season Seat
+                  Enter universe
                 </button>
               </div>
             </div>
           </section>
         )}
 
-        {session.stage === 'enrolling' && (
-          <section className="center-panel transaction-panel" aria-labelledby="enroll-title">
-            {selectedSoul && <SoulSigil soul={selectedSoul} selected />}
-            <Eyebrow>ENROLLMENT · AWAITING APPROVAL</Eyebrow>
-            <h1 id="enroll-title">Bind {selectedSoul?.name} to this Season Seat?</h1>
-            <p>
-              The controller remains <ShortAddress address={session.controllerAddress} /> for the
-              whole season. Soul transfer will detach attribution, never transfer control.
-            </p>
-            <div className="transaction-facts">
-              <div><span>WRITE</span><strong>Seat + Projection + AwaitingHome</strong></div>
-              <div><span>PLANETS CREATED</span><strong>0</strong></div>
-              <div><span>MODE</span><strong>Local simulation</strong></div>
-            </div>
-            <button
-              className="button button-primary wide-button"
-              type="button"
-              disabled={session.transaction.status === 'finalizing'}
-              onClick={journey.finalizeEnrollment}
-            >
-              {session.transaction.status === 'finalizing'
-                ? 'Waiting for simulated finality…'
-                : 'Approve simulated transaction'}
+        {session.mode === 'demo' &&
+          ['enrolling', 'sealed-lobby', 'searching', 'claim-ready', 'claiming'].includes(session.stage) && (
+          <section className="center-panel narrow-panel" aria-labelledby="resume-title">
+            <Eyebrow>LOCAL FIRST LIGHT · SAVED SESSION</Eyebrow>
+            <h1 id="resume-title">Continue into the universe.</h1>
+            <p>Your saved Soul and Season Seat are preserved. Finish local setup and open the star map.</p>
+            <p className="fine-print">Local fixtures only. No wallet approval, proof generation or Sui transaction.</p>
+            <button className="button button-primary" type="button" onClick={journey.enterUniverse}
+              disabled={journey.vault.status === 'restoring' || journey.vault.status === 'error'}>
+              Enter universe
             </button>
-            {session.transaction.status === 'awaiting-signature' && (
-              <button className="text-button" type="button" onClick={journey.simulateFailure}>
-                Simulate wallet rejection
-              </button>
-            )}
-            <small className="fine-print">
-              {session.transaction.status === 'finalizing'
-                ? 'The demo waits for a checkpoint-shaped finality boundary before routing.'
-                : 'No wallet signature is requested in demo mode.'}
-            </small>
-          </section>
-        )}
-
-        {session.stage === 'sealed-lobby' && (
-          <section className="journey-layout" aria-labelledby="lobby-title">
-            <aside className="journey-aside">
-              <Eyebrow>02 · THE SEALED SKY</Eyebrow>
-              <h1 id="lobby-title">Your Seat exists.<br />Your world does not.</h1>
-              <p>
-                Enrollment is final, but the universe seed is still sealed. Your Civilization is
-                <code> AwaitingHome</code> and cannot move, score, recover, or own a Planet.
-              </p>
-              <StepRail active={1} />
-            </aside>
-            <div className="lobby-console">
-              <div className="sealed-sphere" aria-hidden="true"><span>SEALED</span></div>
-              <div className="console-readout">
-                <div><span>SEAT</span><strong>{session.seat?.id.slice(0, 12)}…</strong></div>
-                <div><span>COMMANDER</span><strong>{session.seat?.soulName}</strong></div>
-                <div><span>LIFECYCLE</span><strong className="amber-text">AwaitingHome</strong></div>
-                <div><span>CONTROLLED PLANETS</span><strong>0</strong></div>
-              </div>
-              <button className="button button-primary wide-button" type="button" onClick={journey.openUniverse}>
-                Open the simulated universe
-              </button>
-              <p className="fine-print">Production opening is permissionless and uses Sui Random exactly once.</p>
-            </div>
-          </section>
-        )}
-
-        {session.stage === 'searching' && (
-          <section className="search-layout" aria-labelledby="search-title">
-            <div className="search-copy">
-              <Eyebrow>03 · FIND FIRST LIGHT</Eyebrow>
-              <h1 id="search-title">The map is yours<br />before it is the chain's.</h1>
-              <p>
-                Search happens locally. Coordinates, salt, and witness material stay in this
-                browser. Only a commitment and proof-shaped digest enter the demo claim.
-              </p>
-              <StepRail active={2} />
-              <button className="button button-primary" type="button" onClick={journey.search}>
-                Run local search
-              </button>
-              <small className="fine-print">
-                {journey.vault.status === 'sealed'
-                  ? 'Private material is AES-GCM encrypted in this device’s IndexedDB vault.'
-                  : journey.vault.status === 'ephemeral'
-                    ? 'Persistent browser storage is unavailable; private material lasts only for this tab.'
-                    : journey.vault.status === 'error'
-                      ? `Private vault unavailable: ${journey.vault.error}`
-                      : 'Preparing the controller-scoped encrypted device vault…'}
-              </small>
-            </div>
-            <div className="radar-panel" aria-label="Private local search visualization">
-              <div className="radar-grid" aria-hidden="true">
-                <span className="radar-sweep" />
-                <span className="radar-origin" />
-                <span className="radar-blip blip-one" />
-                <span className="radar-blip blip-two" />
-                <span className="radar-blip blip-three" />
-              </div>
-              <div className="radar-footer">
-                <span>LOCAL WORKER</span>
-                <strong>Seed finalized · exact miner ready</strong>
-                <small>{proofReadiness.label}</small>
-                <small>NETWORK EGRESS: NONE</small>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {session.stage === 'claim-ready' && candidate && (
-          <section className="claim-layout" aria-labelledby="claim-title">
-            <div className="planet-stage"><PlanetVisual candidate={candidate} /></div>
-            <div className="claim-copy">
-              <Eyebrow>CANDIDATE FOUND · LOCAL ONLY</Eyebrow>
-              <h1 id="claim-title">A place to begin.</h1>
-              <p>
-                Sector <strong>{candidate.sectorCode}</strong> satisfies the home predicate. Exact
-                coordinates remain sealed in your local vault.
-              </p>
-              <div className="candidate-stats">
-                <div><span>TYPE</span><strong>Regular</strong></div>
-                <div><span>LEVEL</span><strong>0</strong></div>
-                <div><span>INITIAL ENERGY</span><strong>{round5HomeStats().energy.toLocaleString('en-US')}</strong></div>
-              </div>
-              <div className="privacy-callout">
-                <span aria-hidden="true">⌁</span>
-                <div><strong>Private by construction</strong><small>Preimage and salt stay on this device.</small></div>
-              </div>
-              <div className="hero-actions">
-                <button className="button button-primary" type="button" onClick={journey.beginClaim}>Claim Founding Planet</button>
-                <button className="button button-secondary" type="button" onClick={journey.rejectCandidate}>Search again</button>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {session.stage === 'claiming' && candidate && (
-          <section className="center-panel transaction-panel" aria-labelledby="claiming-title">
-            <PlanetVisual candidate={candidate} />
-            <Eyebrow>HOME CLAIM · AWAITING APPROVAL</Eyebrow>
-            <h1 id="claiming-title">Make {candidate.sectorCode} your First Light?</h1>
-            <p>
-              This atomic transition creates one Planet owned by the Season Seat and changes the
-              Civilization from <code>AwaitingHome</code> to <code>Active</code>.
-            </p>
-            <div className="transaction-facts">
-              <div><span>PUBLIC</span><strong>Commitment + proof digest</strong></div>
-              <div><span>PRIVATE</span><strong>Coordinates + salt</strong></div>
-              <div><span>OWNER</span><strong>Season Seat</strong></div>
-            </div>
-            <button
-              className="button button-primary wide-button"
-              type="button"
-              disabled={session.transaction.status === 'finalizing'}
-              onClick={journey.finalizeClaim}
-            >
-              {session.transaction.status === 'finalizing'
-                ? 'Waiting for simulated finality…'
-                : 'Approve simulated claim'}
-            </button>
-            {session.transaction.status === 'awaiting-signature' && (
-              <button className="text-button" type="button" onClick={journey.simulateFailure}>
-                Simulate wallet rejection
-              </button>
-            )}
           </section>
         )}
 

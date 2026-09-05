@@ -1,20 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  beginEnrollment,
-  beginHomeClaim,
-  completeSearch,
   createInitialSession,
   DEMO_CONTROLLER,
   enterDemo,
   enterOnchainUnavailable,
-  finalizeEnrollment,
-  finalizeHomeClaim,
   failJourney,
   mergeMinedStrategyLocations,
   nextExplorationBatch,
   mergeExploredChunks,
-  openDemoUniverse,
-  rejectCandidate,
   retryJourney,
   selectStrategyPlanet,
   setStrategyTarget,
@@ -24,8 +17,6 @@ import {
   advanceStrategyToNextArrival,
   advanceStrategyTime,
   synchronizeStrategyClock,
-  submitEnrollment,
-  submitHomeClaim,
   upgradeStrategyPlanet,
   claimStrategyStartingShips,
   dispatchStrategyShip,
@@ -52,6 +43,7 @@ import {
   type StrategyMoveIntent,
   type StrategyAbility,
 } from '@infinite-stellar/game-sdk';
+import { enterLocalUniverse } from './demo-entry';
 import { startRound5Miner, type MinerOperation } from './miner-client';
 import { browserSessionVault, type SessionVaultProtection } from './session-vault';
 
@@ -77,13 +69,8 @@ export interface PlayerJourneyController {
   enterDemo: () => void;
   enterOnchain: () => void;
   selectSoul: (soulId: string) => void;
-  beginEnrollment: () => void;
-  finalizeEnrollment: () => void;
-  openUniverse: () => void;
-  search: () => void;
-  rejectCandidate: () => void;
-  beginClaim: () => void;
-  finalizeClaim: () => void;
+  enterUniverse: () => void;
+  hasSavedDemo: boolean;
   chooseStrategyPlanet: (planetId?: string) => void;
   setStrategyTarget: (planetId?: string) => void;
   scanStrategy: (center?: Round5Coordinates) => void;
@@ -130,6 +117,7 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
     total: 0,
     found: 0,
   });
+  const savedDemos = useRef(new Map<string, PlayerSession>());
   const restoredAddresses = useRef(new Set<string>());
   const readyAddresses = useRef(new Set<string>());
   const miningOperation = useRef<MinerOperation | undefined>(undefined);
@@ -196,7 +184,10 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
         status: vault.protection === 'indexeddb-aes-gcm' ? 'sealed' : 'ephemeral',
         protection: vault.protection,
       });
-      if (restored) setSession((current) => current.stage === 'welcome' ? restored : current);
+      if (restored?.mode === 'demo' && restored.controllerAddress === persistenceAddress) {
+        savedDemos.current.set(persistenceAddress, restored);
+        setSession((current) => current.stage === 'welcome' ? restored : current);
+      }
     }).catch((error) => {
       if (cancelled) return;
       setVaultState({
@@ -209,8 +200,9 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
   }, [persistenceAddress, vault]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || session.stage === 'welcome') return;
+    if (typeof window === 'undefined' || session.mode !== 'demo' || session.stage === 'welcome') return;
     if (!readyAddresses.current.has(persistenceAddress) || vaultState.status === 'error') return;
+    savedDemos.current.set(persistenceAddress, session);
     void vault.save(persistenceAddress, session).catch((error) => {
       setVaultState({
         status: 'error',
@@ -226,18 +218,6 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
     miningOperation.current?.cancel();
     miningOperation.current = undefined;
   }, [persistenceAddress]);
-
-  useEffect(() => {
-    if (session.transaction.status !== 'finalizing') return;
-    const timer = window.setTimeout(() => {
-      if (session.stage === 'enrolling') {
-        mutate((current) => finalizeEnrollment(current, new Date()));
-      } else if (session.stage === 'claiming') {
-        mutate(finalizeHomeClaim);
-      }
-    }, 450);
-    return () => window.clearTimeout(timer);
-  }, [mutate, session.stage, session.transaction.status]);
 
   const cancelStrategyScan = useCallback(() => {
     explorerEpoch.current += 1;
@@ -302,16 +282,21 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
   return useMemo(
     () => ({
       session,
-      enterDemo: () => mutate((current) => enterDemo(current, walletAddress ?? DEMO_CONTROLLER)),
+      hasSavedDemo: savedDemos.current.has(walletAddress ?? DEMO_CONTROLLER),
+      enterDemo: () => {
+        if (vaultState.status === 'restoring' || vaultState.status === 'error') return;
+        mutate((current) => savedDemos.current.get(walletAddress ?? DEMO_CONTROLLER)
+          ?? enterDemo(current, walletAddress ?? DEMO_CONTROLLER));
+      },
       enterOnchain: () => mutate((current) => enterOnchainUnavailable(current, walletAddress)),
       selectSoul: (soulId: string) => mutate((current) => selectSoul(current, soulId)),
-      beginEnrollment: () => mutate(beginEnrollment),
-      finalizeEnrollment: () => mutate(submitEnrollment),
-      openUniverse: () => mutate(openDemoUniverse),
-      search: () => mutate(completeSearch),
-      rejectCandidate: () => mutate(rejectCandidate),
-      beginClaim: () => mutate(beginHomeClaim),
-      finalizeClaim: () => mutate(submitHomeClaim),
+      enterUniverse: () => {
+        if (vaultState.status === 'restoring' || vaultState.status === 'error') return;
+        mutate((current) => {
+          try { return enterLocalUniverse(current); }
+          catch (error) { return failJourney(current, error instanceof Error ? error.message : 'Local entry failed.'); }
+        });
+      },
       chooseStrategyPlanet: (planetId?: string) => mutateStrategy((game) => selectStrategyPlanet(game, planetId)),
       executeMoveIntent: (intent: StrategyMoveIntent) => mutateStrategy((game) => executeStrategyMoveIntent(game, intent)),
       executeAbility: (sourceId: string, ability: StrategyAbility) => mutateStrategy((game) => executeStrategyAbility(game, sourceId, ability)),
@@ -355,14 +340,9 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
         miningOperation.current?.cancel();
         miningOperation.current = undefined;
         setMining({ status: 'idle', checked: 0, total: 0, found: 0 });
-        if (typeof window !== 'undefined') {
-          void vault.clear(persistenceAddress, window.localStorage).catch((error) => {
-            setVaultState({
-              status: 'error',
-              protection: vault.protection,
-              error: error instanceof Error ? error.message : 'The private vault could not be cleared.',
-            });
-          });
+        // Navigation is not deletion. Keep both the encrypted record and in-tab resume state.
+        if (session.mode === 'demo' && session.stage !== 'welcome' && session.controllerAddress) {
+          savedDemos.current.set(session.controllerAddress, session);
         }
         setSession(createInitialSession());
       },

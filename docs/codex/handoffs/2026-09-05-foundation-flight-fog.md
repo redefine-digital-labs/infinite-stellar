@@ -36,10 +36,20 @@ Production Home close-up shows the original shader and the upstream license
 is publicly served. Exact evidence is
 `ops/deployments/vercel-production-2026-09-05-df-planet-renderer.json`.
 
-Next: simplify the wallet/Soul/Seat/home entry journey against DF, including
-existing-Seat resume, before introducing new gameplay. Preserve required Sui
-authorization/finality and every production gate. Do not relabel demo shortcuts
-as a real ranked Season, or claim this partial renderer finishes full DF parity.
+Latest entry correction: `apps/web/src/demo-entry.ts` combines local fixture
+setup after Soul selection. The shell removes simulated approval/open/search/
+claim screens and artificial delay; legacy intermediate saves have one resume
+action. Navigation home preserves the vault and an in-tab continuation. Ranked
+readiness never saves over local gameplay, entry waits for restore, and local
+records cannot supply ranked authority. Browser confirms same Home across
+entry, home/mainnet/back/continue, and refresh with continued energy growth.
+Tests cover all legacy boundaries and storage safety. Release evidence belongs
+in CURRENT.md. No real Sui signature, proof or ranked activation is claimed.
+
+Next: replace fixed demo Home/candidate generation, finish actual ranked
+proof/signing/finality, then the confirmed season operations work. Preserve
+required authorization and release gates; do not relabel local shortcuts as
+a real ranked Season or claim this partial renderer finishes full DF parity.
 
 ## Implemented and verified
 

@@ -47,29 +47,12 @@ describe('Infinite Stellar player shell', () => {
     });
     render(<GameShell />);
 
-    await user.click(screen.getByRole('button', { name: /explore local demo/i }));
+    await user.click(await screen.findByRole('button', { name: /explore local demo/i }));
     expect(screen.getByRole('heading', { name: /who crosses/i })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /lyra-9/i }));
-    await user.click(screen.getByRole('button', { name: /create season seat/i }));
-    expect(screen.getByRole('heading', { name: /bind lyra-9/i })).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: /approve simulated transaction/i }));
-    expect(screen.getByRole('button', { name: /waiting for simulated finality/i })).toBeDisabled();
-    await screen.findByRole('button', { name: /open the simulated universe/i });
-    expect(screen.getAllByText('AwaitingHome')).not.toHaveLength(0);
-
-    await user.click(screen.getByRole('button', { name: /open the simulated universe/i }));
-    expect(screen.getByRole('heading', { name: /the map is yours/i })).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: /run local search/i }));
-    expect(screen.getByRole('heading', { name: /a place to begin/i })).toBeInTheDocument();
-    expect(screen.getByText('50,000')).toBeInTheDocument();
-    expect(screen.queryByText('RESONANCE')).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: /claim founding planet/i }));
-    await user.click(screen.getByRole('button', { name: /approve simulated claim/i }));
-    expect(screen.getByRole('button', { name: /waiting for simulated finality/i })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: /enter universe/i }));
+    expect(screen.queryByRole('button', { name: /approve simulated/i })).not.toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: /command the/i })).toBeInTheDocument();
     expect(screen.getByText(/df round 5 ruleset/i)).toBeInTheDocument();
 
@@ -137,7 +120,7 @@ describe('Infinite Stellar player shell', () => {
     const user = userEvent.setup();
     render(<GameShell />);
     expect(screen.getByRole('link', { name: /skip to mission control/i })).toHaveAttribute('href', '#main-content');
-    await user.click(screen.getByRole('button', { name: /explore local demo/i }));
+    await user.click(await screen.findByRole('button', { name: /explore local demo/i }));
     expect(screen.getByText('LOCAL SIMULATION')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(/nothing here is submitted to sui/i);
   });
@@ -169,16 +152,23 @@ describe('Infinite Stellar player shell', () => {
     expect(enroll).toHaveBeenCalledWith(canonicalSoul);
   });
 
-  it('shows a recoverable transaction rejection state', async () => {
+  it('keeps the game when returning home or checking mainnet readiness', async () => {
     const user = userEvent.setup();
     render(<GameShell />);
-    await user.click(screen.getByRole('button', { name: /explore local demo/i }));
+    await user.click(await screen.findByRole('button', { name: /explore local demo/i }));
+    expect(screen.getByRole('button', { name: /enter universe/i })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: /lyra-9/i }));
-    await user.click(screen.getByRole('button', { name: /create season seat/i }));
-    await user.click(screen.getByRole('button', { name: /simulate wallet rejection/i }));
-    expect(screen.getByRole('heading', { name: /nothing finalized/i })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /retry from safe state/i }));
-    expect(screen.getByRole('button', { name: /create season seat/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /enter universe/i }));
+    expect(await screen.findByRole('heading', { name: /command the/i })).toBeInTheDocument();
+    const homeLabel = screen.getByRole('button', { name: /level 0 regular, player/i }).getAttribute('aria-label');
+    await user.click(screen.getByRole('button', { name: /return to infinite stellar home/i }));
+    expect(screen.getByRole('button', { name: /continue local game/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /check mainnet readiness/i }));
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    await user.click(screen.getByRole('button', { name: /continue local game/i }));
+    expect(screen.getByRole('heading', { name: /command the/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /level 0 regular, player/i })).toHaveAttribute('aria-label', homeLabel);
+    expect(screen.getByText('1 discovered')).toBeInTheDocument();
   });
 
   it('shows a digest-anchored read-only universe for an existing ranked Seat', async () => {

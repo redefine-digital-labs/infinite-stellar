@@ -368,4 +368,24 @@ Focus planet, distant overview and desktop resize/camera alignment. Unit tests
 cover radius/density, culling, level-dependent resources, selected anchors,
 same-paint camera updates, GL failure/loss/cleanup and click/drag command
 regressions at an appropriate zoom. New rendering does not modify simulation
-rules or ranked authority. Entry-flow simplification remains the next journey.
+rules or ranked authority.
+
+### Entry correction: September 5
+
+The upstream `GameLandingPage.tsx` combines home search/join after user intent
+and validates existing-player coordinates before entry. Our local preview now
+uses Soul selection followed by one Enter universe action, removing two fake
+wallet approvals, manually opening the fixture universe, the fixture-search
+button and artificial finality delay. It explicitly labels the fixture home;
+this is not actual proof generation or a production search/join implementation.
+Restoring old enrollment/search/claim boundaries preserves finalized identity
+and candidate state. Existing ranked Seat-first resolution and coordinate
+recovery remain in the chain-backed route; wallet signatures are not bypassed.
+
+Returning home is now non-destructive and offers Continue local game. Checking
+mainnet readiness cannot overwrite the encrypted demo record. Local entry waits
+for authenticated restore and blocks on restore failure; local records cannot
+restore ranked authority. Browser smoke verifies new entry, navigation through
+mainnet readiness, continuation and refresh with the same Home and growing
+energy. Tests cover every legacy entry boundary, absent Soul, onchain shortcut
+rejection, restoration races and storage authentication failure.

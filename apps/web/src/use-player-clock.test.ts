@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createInitialSession, createStrategyGame, dispatchStrategyVoyage, scanStrategyUniverse,
+import { createInitialSession, createStrategyGame, DEMO_CONTROLLER, dispatchStrategyVoyage, scanStrategyUniverse,
   setStrategyTarget, type PlayerSession } from '@infinite-stellar/game-sdk';
 import { usePlayerJourney } from './use-player-journey';
 
@@ -11,7 +11,7 @@ function savedSession(): PlayerSession {
   const game = scanStrategyUniverse(createStrategyGame({ universeSeed: 'clock', homeId: 'home', homeName: 'HOME' }));
   const target = game.planets.find((planet) => planet.discovered && !planet.isHome && planet.level === 0)!;
   const strategy = dispatchStrategyVoyage(setStrategyTarget(game, target.id), 90);
-  return { ...createInitialSession(), stage: 'active', mode: 'demo', strategy: { ...strategy, wallClockAtMs: 100_000 } };
+  return { ...createInitialSession(), controllerAddress: DEMO_CONTROLLER, stage: 'active', mode: 'demo', strategy: { ...strategy, wallClockAtMs: 100_000 } };
 }
 
 afterEach(() => { vi.useRealTimers(); vi.clearAllMocks(); });
@@ -48,7 +48,11 @@ describe('player simulation clock wiring', () => {
     const { result } = renderHook(() => usePlayerJourney());
     await act(async () => { await Promise.resolve(); });
     await act(() => vi.advanceTimersByTimeAsync(3000));
-    expect(result.current.session.strategy?.now).toBe(0);
-    expect(result.current.session.strategy?.voyages).toHaveLength(1);
+    // A local record cannot supply ranked state at all; it must be read from Sui.
+    expect(result.current.session.stage).toBe('welcome');
+    expect(result.current.session.strategy).toBeUndefined();
+    expect(saved.strategy?.now).toBe(0);
+    expect(saved.strategy?.voyages).toHaveLength(1);
+    expect(vault.save).not.toHaveBeenCalled();
   });
 });
