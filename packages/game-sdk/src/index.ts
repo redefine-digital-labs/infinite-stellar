@@ -1,6 +1,7 @@
 export * from './demo';
 export * from './journey';
 export * from './miner';
+export * from './exploration';
 export * from './persistence';
 export * from './projection';
 export * from './ranked-projection';
@@ -11,6 +12,7 @@ export * from './round5-rules';
 export * from './round5-universe';
 export * from './soulidity-reader';
 export * from './strategy';
+export * from './strategy-commands';
 export * from './sui-gateway';
 export * from './sui-player-runtime';
 export type * from './types';

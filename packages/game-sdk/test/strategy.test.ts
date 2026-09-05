@@ -11,6 +11,8 @@ import {
   dispatchStrategyShip,
   dispatchStrategyArtifact,
   dispatchStrategyVoyage,
+  previewStrategyVoyage,
+  strategySendingEnergy,
   deactivateStrategyArtifact,
   invadeStrategyPlanet,
   scanStrategyUniverse,
@@ -43,6 +45,35 @@ function fixtureArtifact(
 }
 
 describe('local Round 5 strategy universe', () => {
+  it('inspects neutral, rival and friendly planets without setting a destination', () => {
+    const game = createStrategyGame({ universeSeed: 'inspect', homeId: 'home', homeName: 'HOME' });
+    for (const owner of ['neutral', 'rival', 'player'] as const) {
+      const other = game.planets.find((planet) => planet.discovered && !planet.isHome)!;
+      const selected = selectStrategyPlanet({ ...game, targetPlanetId: other.id,
+        planets: game.planets.map((planet) => planet.id === other.id ? { ...planet, owner } : planet) }, other.id);
+      expect(selected.selectedPlanetId).toBe(other.id);
+      expect(selected.targetPlanetId).toBeUndefined();
+      expect(selected.voyages).toEqual([]);
+    }
+  });
+
+  it('quotes the same normal route it dispatches and reserves energy at 100% input', () => {
+    const game = createStrategyGame({ universeSeed: 'quote', homeId: 'home', homeName: 'HOME' });
+    const target = game.planets.find((planet) => planet.discovered && !planet.isHome)!;
+    const quote = previewStrategyVoyage(game, 'home', target.id, 100);
+    expect(quote.error).toBeUndefined();
+    const next = dispatchStrategyVoyage(setStrategyTarget(game, target.id), 100);
+    expect(next.voyages[0]).toMatchObject({ energySent: quote.energySent, energyArriving: quote.energyArriving, arrivalAt: game.now + quote.travelTime });
+    expect(quote.energySent).toBe(49_000);
+    expect(next.planets.find((planet) => planet.id === 'home')!.energy).toBe(1_000);
+    expect(game.voyages).toEqual([]);
+    expect(strategySendingEnergy(1.5, 100)).toBe(0);
+    expect(strategySendingEnergy(2.5, 100)).toBe(1);
+    for (const percentage of [Number.NaN, Infinity, -1, 101]) {
+      expect(previewStrategyVoyage(game, 'home', target.id, percentage).error).toBeDefined();
+      expect(() => dispatchStrategyVoyage(setStrategyTarget(game, target.id), percentage)).toThrow();
+    }
+  });
   it('is deterministic and expands private discovery', () => {
     const left = createStrategyGame({ universeSeed: 'seed', homeId: 'home', homeName: 'FIRST-LIGHT' });
     const right = createStrategyGame({ universeSeed: 'seed', homeId: 'home', homeName: 'FIRST-LIGHT' });
@@ -158,7 +189,10 @@ describe('local Round 5 strategy universe', () => {
     const target = game.planets.find((planet) => planet.discovered && planet.owner === 'neutral')!;
     game = setStrategyTarget(game, target.id);
     const normalTravel = Math.max(1, Math.floor((Math.hypot(target.x, target.y) * 100) / 75));
+    const quote = previewStrategyVoyage(game, 'home', target.id, 90);
+    expect(game.artifacts[0]?.burned).toBe(false);
     game = dispatchStrategyVoyage(game, 90);
+    expect(game.voyages[0]).toMatchObject({ energySent: quote.energySent, energyArriving: quote.energyArriving, arrivalAt: game.now + quote.travelTime });
     expect(game.voyages[0]!.arrivalAt - game.now).toBeLessThan(normalTravel);
     expect(game.artifacts[0]?.burned).toBe(true);
     expect(game.planets.find((planet) => planet.id === 'home')!.defense).toBe(400);
@@ -248,8 +282,10 @@ describe('local Round 5 strategy universe', () => {
         ? { ...planet, owner: 'neutral' }
         : planet),
     };
+    const quote = previewStrategyVoyage(game, 'home', endpoint.id, 90);
+    expect(quote.defenseDamage).toBe(0);
     game = dispatchStrategyVoyage(game, 90);
-    expect(game.voyages[0]?.arrivalType).toBe('Wormhole');
+    expect(game.voyages[0]).toMatchObject({ arrivalType: 'Wormhole', energyArriving: quote.energyArriving, arrivalAt: game.now + quote.travelTime });
     game = advanceStrategyToNextArrival(game);
     expect(game.planets.find((planet) => planet.id === endpoint.id)?.owner).toBe('neutral');
     expect(game.planets.find((planet) => planet.id === endpoint.id)?.energy).toBe(energyBefore);

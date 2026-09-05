@@ -1,0 +1,274 @@
+# Dark Forest Interaction Audit
+
+## Priority and evidence boundary
+
+On September 5 the owner identified substantial interaction mismatches,
+especially exploration and choosing energy before attacking. Interaction
+fidelity now takes priority over the in-progress portable-backup increment.
+The five-milestone multiplayer and production objective remains unchanged.
+
+The supplied live reference is
+[INFINITY SPCX](https://infinity-spcx.vercel.app/play/0x3b3045241c1a71732040300d61f365c9fb4d519e).
+The site opened successfully and identified itself as Robinhood Testnet. The
+accessible browser profile had no saved account and offered burner generation
+or private-key import. No account was generated, no key was requested or
+imported, and no transaction was submitted. Actual in-game behavior of this
+fork remains to be observed in an authorized existing session; do not describe
+the source audit as having played the owner's game.
+
+Source authority: official Round 5 snapshot
+[`d1e25ea`](https://github.com/darkforest-eth/darkforest-v0.6/tree/d1e25ead311697ecaa27ff648dac16a0d8cea15c).
+The separately published client at `009e6438` corroborates the key interactions.
+Read-only reference checkouts are outside the product repository. GPL source
+and assets are not copied into this MIT project; behavioral requirements and
+independent implementations are the deliverables.
+
+## Confirmed source mismatches in the published baseline
+
+| Interaction | Reference behavior | Current Infinite Stellar gap |
+| --- | --- | --- |
+| Continuous exploration | Explore/Pause controls a continuing search; completed chunks lead to the next unexplored chunk | The public demo runs one batch per click; the new ranked control scans one sector per click |
+| Move explorer | A dedicated targeting mode lets the player click the map to reposition the search origin; camera position is independent | Demo search is pinned to Home; ranked search uses camera center or a random location |
+| Fog and coverage | Completed spatial chunks are recorded even when they contain no planets, skipped on later scans, and visibly reveal the map | State primarily records planets and a radial summary, not the actual explored-area footprint |
+| Inspect versus aim | Clicking any planet selects it for inspection. Sending mode and drag gestures establish an explicit source-to-target action | Selection overloads non-owned planets as targets and can target another owned planet instead of selecting it |
+| Energy selection | Each origin remembers its own energy/silver percentages; energy defaults to 50%; sliders include numeric adjustments and shortcuts | One component-wide 60% setting; silver uses an absolute amount; no per-origin memory |
+| Send sequence | Set energy, then Send/Q and aim; alternatively drag from a controlled origin. Targeting has clear cancellation and cleanup | Select target first, then a separate launch button; no equivalent aiming/drag state |
+| In-map prediction | A cursor-following route and range rings respond to the selected energy. The target displays reinforcement or defense-adjusted loss and junk cost | A line appears only after target selection; no energy-dependent reach ring or hover combat prediction |
+| Availability and pending sends | Pending departures reduce spendable energy and are visibly distinguished from completed actions | Demo dispatch is immediate local state; the eventual ranked UI still needs pending-intent accounting and reconciliation |
+| Camera behavior | One world-to-pixel scale preserves geometry; scroll zoom remains anchored under the cursor | Horizontal and vertical percentage transforms use different physical scales; zoom is anchored at the map center |
+| Fleet visibility | Fleets move along the route with arrival countdown and carried resources; partially known routes still have useful arrival feedback | Ranked map currently draws static lines and hides voyages without both coordinate preimages |
+
+## Primary source locations
+
+- [Explore controls](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/client/src/Frontend/Panes/ExplorePane.tsx): pause/resume, origin targeting, patterns and core selection.
+- [Mining scheduler](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/client/src/Backend/Miner/MinerManager.ts): continuous chunk completion, skipped explored chunks and non-blocking scheduling.
+- [Persistent coverage](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/client/src/Backend/Storage/PersistentChunkStore.ts) and [background rendering](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/packages/renderer/src/Entities/BackgroundRenderer.ts): explored-area authority and fog.
+- [Input state](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/client/src/Backend/GameLogic/GameUIManager.ts): selection, drag-send, send/cancel transitions and per-planet percentages.
+- [Resource controls](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/client/src/Frontend/Views/SendResources.tsx): energy/silver controls and keyboard percentages.
+- [Camera](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/client/src/Frontend/Game/Viewport.ts): isotropic projection, pointer-anchored zoom and pan-versus-send handling.
+- [Aiming overlay](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/packages/renderer/src/UIRenderer.ts), [planet feedback](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/packages/renderer/src/Entities/PlanetRenderManager.ts), and [voyages](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/packages/renderer/src/Entities/VoyageRenderer.ts): route, reach, combat and arrival visualization.
+
+## Correction sequence and acceptance
+
+1. Separate inspect, pan, relocate-explorer and aim/send states. Verify that
+   selecting a neutral, rival or second friendly Planet never accidentally
+   starts a move. A drag from a controlled origin previews and initiates the
+   same intent as Send followed by choosing a target. Escape cancels safely.
+2. Bind energy/silver selection to each origin. Reflect departure deductions,
+   route modifiers, arrival energy, defense impact, junk and transit time in
+   one shared prediction path; the final action must use that same path.
+   Reference 100% input is not permission to empty a normal source: its client
+   caps normal sending at 98%, distinct from abandon and ship actions.
+3. Make exploration a persistent continuous job with bounded Worker batches,
+   explicit pause/resume and click-to-relocate. Persist exact completed chunks,
+   including empty ones. Render actual fog clearance and the active search
+   footprint; never substitute a radial reveal or pretend every visible region
+   has been mined. Start with the reference 16-by-16 chunk footprint.
+4. Use isotropic camera transforms, cursor-anchored zoom, appropriate map
+   hit-testing, live fleet markers and compact contextual panels. Validate
+   desktop and touch workflows against the same behavior contract.
+5. Compare these paths in the owner's live reference once access is available.
+   Record fork-specific differences separately from Round 5 rules. Add
+   interaction regression tests before publishing the corrected product.
+
+Sui confirmation, Soul/Seat authority and private-coordinate guarantees stay
+intact. Sending intent does not bypass the Sui wallet or production proof
+gates. Local fixture actions remain visibly separate from ranked actions.
+Do not copy a burner-key wallet flow into the Soul-based product.
+
+## Parked work
+
+Portable backup encryption, controls and founding-Planet recovery code are
+uncommitted and unverified as a complete integration. Do not publish them as a
+finished recovery milestone. The backup schema must include the corrected
+private exploration coverage before claiming cross-device exploration resume.
+The last verified published source remains `8439b2a`; documentation follow-up
+`ca1e1e8` records its Vercel deployment.
+
+## Local interaction correction, September 5
+
+The unpublished working tree separates inspection from fleet aiming. Clicking
+any discovered Planet selects it, regardless of ownership. The local simulation
+remembers each origin's energy and silver percentages (50/0 defaults). Send/Q
+starts aiming, a destination click submits the local intent, and dragging from
+a controlled origin uses the same atomic source/destination callback. Escape,
+pointer cancellation and dropping onto empty space do not submit a fleet.
+Invalid routes remain in preview. A separate route-only action preserves ship,
+artifact and abandonment controls without dispatching a normal fleet.
+
+Normal dispatch and preview now share route preparation and rounding, including
+charged Photoid consumption, Wormhole routing, arrival limits and space junk.
+The quote does not mutate artifacts. A 100% UI setting caps a normal departure
+at 98% and leaves at least one energy. Keyboard digits choose energy; shifted
+digits choose silver; F fits the map. These are local simulation interactions,
+not ranked signing. Ranked clicks now inspect instead of implicitly targeting;
+ranked writes remain sealed.
+
+This is an incremental correction, not completed DF fidelity. Continuous
+exploration, actual chunk coverage/fog, isotropic and cursor-anchored camera,
+energy reach rings, deselection, unowned-Planet drag panning, full ranked intent
+composition and pending-signature reservations remain to be implemented.
+The reference browser was checked again and still reports zero saved accounts;
+no authorized in-game playtest has occurred.
+
+## Expanded planet-to-combat review
+
+The owner reiterated that planet selection, abilities and attacking must be
+reviewed as one complete interaction, not a sequence of isolated button edits.
+The continuous-explorer work in progress is parked while this review takes
+priority. It is not published or fully regression-verified.
+
+The reviewed path spans `GameShell` and `use-player-journey`, `StrategyConsole`
+and `MapPlanetGlyph`, SDK selection/dispatch/ship/artifact/abandonment and
+arrival functions, `round5-rules`, the guarded `sui-gateway`, and Move
+`proof_actions`, `voyage` and Planet debit/arrival functions. The pinned DF
+comparison additionally covers `PlanetContextPane`, `SendResources`,
+`MineArtifactButton`, `CapturePlanetButton`, `GameUIManager`, `GameManager`,
+`Viewport`, `UIRenderer`, `PlanetRenderManager` and `DFMoveFacet`.
+
+### Confirmed defects at review time
+
+| Path | Evidence in the current working tree | Required correction |
+| --- | --- | --- |
+| Selected Planet abilities | `StrategyConsole` renders upgrade, prospect, find, invade and capture buttons without matching the SDK ownership, type, Gear, cooldown, checkpoint, capacity and energy predicates | Derive visible/enabled actions and specific rejection reasons from the selected Planet's capabilities; preserve read-only inspection of rivals |
+| Artifact + fleet resources | `onDispatchArtifact(id)` reaches `dispatchStrategyArtifact(game, id)` with its default 60% energy and zero silver; the selected percentages never reach it | One explicit payload must carry the same chosen energy, silver, origin, target and artifact through preview and submission |
+| Ship movement | `dispatchStrategyShip` is a separate zero-energy path, but the console displays a normal-fleet quote; it also uses direct distance without the Wormhole handling present in DF's `_executeMove` before ship-specific behavior | Choose a ship in the same sending composer, disable energy/silver, validate controller/location/capacity and use a matching ship quote; settle without conquest |
+| Abandonment | The separate button sends all resources and changes ownership, using a 150% route, while the displayed normal quote still uses the user's ordinary percentage and route | Explicit abandonment mode must preview its actual resources, route, returned junk, carried artifact and irreversible source-side effect; Home and incoming-voyage restrictions must be visible before aiming |
+| Hover target versus committed target | During fleet aiming, `target` is `hoveredId`, while artifact/ship/abandon callbacks still read `game.targetPlanetId`; the UI may show actions for a target the callback does not use | Do not mix a hover with an independently stored dispatch target; freeze the complete intended action at destination selection |
+| Deselect and input modes | Escape clears aiming but leaves selection; blank click does not deselect; non-owned Planet buttons prevent panning; plus/minus still zoom rather than adjust selected resources | Separate inspect, pan, normal send, ship, abandon and endpoint selection; implement cleanup and shortcuts consistently |
+| Normal attack feedback | The new quote covers normal dispatch, but no energy-dependent reach rings or numeric energy at an empty cursor are shown; map glyphs have no defended-loss/capture feedback | Draw source-relative reach and cursor/target feedback from the same quote; show reinforcement versus defended damage and qualify any predicted capture as a snapshot estimate |
+| Distance bound | SDK `distanceBetween` floors Euclidean distance. DF `GameManager.move` uses the ceiling for the proof's maximum distance, and `DFMoveFacet` / Sui `voyage` calculate decay from that bound | Share an exact proof-bound distance convention before using local predictions for ranked intents; add non-integer-distance boundary tests |
+| Pending state and errors | Demo callbacks immediately mutate local state. Ranked composition is absent. A Sui source's nonce, pending departures, due arrivals, changing owner and refreshed resources can invalidate a previously shown quote | Track immutable pending intents, reserve their spend, simulate, show rejection/finality, and rebuild after a changed source/Seat; never infer onchain success from UI selection |
+| Public action adapter coverage | Move contains package-internal artifact/ship/Wormhole/Photoid/abandon dispatch helpers, but public proof actions and SDK builders expose only normal `move` / `move_new` here | Finish the real proof-bound adapters and rehearsal; package-internal functionality is not a playable ranked action |
+
+### Original-client versus contract differences
+
+Blindly copying DF's frontend formula is not sufficient. In this pinned
+snapshot, `GameManager.getWormholeFactors` uses linear distance factors
+`[0, 2, 4, 6, 8, 10]` and prefers greater rarity across endpoints, whereas
+`DFMoveFacet._checkWormhole` uses `[1, 2, 4, 8, 16, 32]` and gives an active
+source Wormhole precedence. The current SDK's exponential factor matches that
+contract, not that frontend helper. Keep contract-authoritative math and
+document the improved prediction rather than reproducing a known mismatch.
+
+Similarly, the DF client clamps growing, non-full Silver Mine sends to 98%
+when the player chooses more than 98%, while the contract ultimately checks
+available silver. Sui's Clock/read freshness and simulation need an explicit
+policy; a visual 100% label must not silently promise a stale absolute amount.
+
+The primary evidence for these differences is
+[`GameManager`](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/client/src/Backend/GameLogic/GameManager.ts),
+[`GameUIManager`](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/client/src/Backend/GameLogic/GameUIManager.ts)
+and
+[`DFMoveFacet`](https://github.com/darkforest-eth/darkforest-v0.6/blob/d1e25ead311697ecaa27ff648dac16a0d8cea15c/eth/contracts/facets/DFMoveFacet.sol).
+
+### Next acceptance slice
+
+Use one complete local action intent for fleet, carried artifact, ship and
+abandonment, with mode-specific quotes and capability predicates. Verify
+click/drag equivalence, opponent inspection, blank/Escape cancellation,
+resource memory, actual cargo/resource payloads, unreachable targets, Home
+abandon rejection, ship-only non-conquest, charged artifacts, non-integer
+distance, and changed ownership/arrival conditions. Then integrate the same
+intent boundaries with real Sui preparation and finality. Do not treat the
+previous 170 passing tests as evidence for these still-unimplemented cases.
+
+## Unpublished unified-command implementation
+
+The subsequent local correction adds `strategy-commands.ts`: fleet (including
+carried artifacts), ship and abandonment all take an explicit origin, target,
+mode and resource intent. Preview evaluates the same pure transition used by
+execution without committing its result. Execution revalidates changed
+ownership, cargo, capacity and route conditions. Selected-Planet abilities use
+the same validation for their enabled state and displayed rejection reason.
+These are simulation commands, not production Sui transaction builders.
+
+The console now sends those complete intents, selects ships/cargo within the
+composer, uses zero resources for ships and all resources for abandonment,
+and explicitly aims Wormhole endpoints. Escape and blank clicks deselect;
+non-owned Planets can be inspected or dragged to pan. Exact integer ceiling
+distance replaces the previous floor. Ship routing includes contract-style
+Wormhole factors; claiming ships preserves existing artifacts.
+
+Browser validation at 393 × 720 reproduced a real overlay defect: the command
+panel covered the target during aiming. Compact aiming now hides panels and
+restores the command panel after send/cancel. Actual local clicks sent 37,500
+of 50,000 energy, conquered the neutral destination with 4,375 remaining,
+then sent reinforcement. A subsequent real drag sent exactly one voyage,
+using the remembered 75%; blank-map click cleared both selection markers.
+Unavailable next routes show a reason, not bogus zero distance/time metrics.
+
+Verification: 25 targeted web tests and 19 targeted SDK tests pass. Typecheck,
+lint and production build pass. Full-suite run exposed three additional
+failures in the parked exploration changes (`ranked-map-vault`,
+`use-ranked-map`, `miner`); an initial duplicate-error UI assertion has since
+been corrected and the targeted suite rerun. This working tree is not ready
+to publish. No reference-fork gameplay, ranked action, or chain settlement
+was claimed or performed.
+
+Remaining: finish and validate continuous exploration, real reach rings,
+isotropic camera/cursor math, DF resource shortcuts, pending ranked spend,
+public proof-bound artifact/ship/abandonment adapters and real two-wallet
+finality. Local command parity does not close those release requirements.
+
+## Continuous exploration implementation and validation
+
+Both local and ranked exploration now continue through bounded, aligned
+16-unit chunks until paused. Origin is independent of selected Planet and
+camera; the explicit Explore here control relocates to camera center. Resume
+uses the saved origin and skips completed coverage. Empty results still save
+complete footprints. Four complete siblings compact, but incomplete siblings
+never become a filled bounding box. The shared SVG layer darkens unsearched
+space and marks current chunks; no discovery-radius circle claims coverage.
+
+Worker scope/hash and completed-batch validation are retained. A later
+closed-season chain read stops the loop and disables restart while retaining
+readable discoveries. Backup import/export cannot begin in the interval
+between active batches. Restored local coverage validates alignment and origin.
+
+The three earlier explorer failures were obsolete fixtures; the revised
+tests explicitly retain out-of-scope and forged-location rejection. Additional
+tests cover empty-chunk persistence/resume, holes, negative coordinates,
+finite-world exhaustion, coverage rendering and closed-season stopping.
+All 190 tests, typecheck, lint and production build now pass.
+
+In the local browser, 70,656 units² survived refresh; resuming reached
+175,104 units² and resolved two additional Planets. Zooming and pausing worked
+while the Worker loop ran. This is local evidence, not ranked multiplayer.
+Portable recovery, camera/reach/shortcut parity and real proof-bound actions
+remain unfinished. No commit, deployment or chain write was made here.
+
+## Camera, reach, resource controls and portable recovery correction
+
+The later client correction uses one measured world-to-pixel scale for local
+and ranked Planets, routes, coverage and local capture zones. Wheel zoom
+preserves the coordinate beneath the pointer. Local panning clamps around the
+actual local world center, not global zero. Manual zoom no longer changes its
+displayed percentage when exploration expands. A direct-space reach circle
+ends at the last integer proof distance with surviving energy, and empty-cursor
+guidance uses the same arrival formula and Photoid/abandon source modifiers.
+Wormhole endpoint routes still use their target-specific full quote; a generic
+reach circle is not a claim about those special endpoints.
+
+The pinned SendResources source was rechecked: minus/equal change energy by
+10 percentage points, underscore/plus change silver, and the fine-adjustment
+buttons change one point. Those controls are implemented. Map zoom uses the
+wheel, on-screen controls and bracket keys in the local command map. Compact
+aiming explicitly focuses the map so Escape and resource keys continue working.
+Move explorer is now a separate click-to-place mode in both maps; it pauses
+the previous search and never selects a Planet or submits a fleet.
+
+Portable recovery validation and its authority boundary are documented in
+`20-private-map-backup.md`. Real Web Crypto and hook tests verify authentication,
+namespace binding, failure preservation and chain-derived ownership/resources.
+Browser checks also verified the circular reach on a narrow viewport, changing
+50% to 60% with equal while aiming, Escape cancellation, and click-to-relocate
+exploration with no new fleet. A narrow-toolbar overlap found in that check
+was fixed by retaining Move explorer and hiding the redundant camera-center
+shortcut on small screens.
+
+Remaining interaction work includes animated voyages/countdowns and useful
+partially known arrival routes, full ranked intent/pending-state integration,
+and an authorized in-game reference-fork comparison. These do not disappear
+because the local control tests pass. No real two-wallet Season or game-chain
+write has been performed by this client increment.

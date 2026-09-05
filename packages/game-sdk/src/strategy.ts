@@ -21,11 +21,13 @@ import {
 } from './round5-rules';
 import { round5WorldLocation } from './round5-universe';
 import {
-  round5MinerBatch,
+  round5MinerTotal,
   type MinedRound5Location,
   type Round5MinerChunk,
 } from './miner';
+import { nextExplorationBatch, mergeExploredChunks, locationInChunks, type ExploredChunk } from './exploration';
 import { keccak_256 } from '@noble/hashes/sha3.js';
+import { routeDistanceBound } from './routing';
 
 export type StrategyOwner = 'player' | 'rival' | 'neutral';
 export type StrategyShipType = 'Mothership' | 'Crescent' | 'Whale' | 'Gear' | 'Titan';
@@ -124,7 +126,7 @@ export interface StrategyGame {
   checkpoint: number;
   worldRadius: number;
   scanRadius: number;
-  selectedPlanetId: string;
+  selectedPlanetId?: string;
   targetPlanetId?: string;
   planets: StrategyPlanet[];
   voyages: StrategyVoyage[];
@@ -137,6 +139,8 @@ export interface StrategyGame {
   spaceJunk: number;
   spaceJunkLimit: number;
   scans: number;
+  exploredChunks?: ExploredChunk[];
+  explorationOrigin?: { x: number; y: number };
   settled: boolean;
   settledAt?: number;
   finalScore?: number;
@@ -380,7 +384,9 @@ function refreshCaptureEpoch(game: StrategyGame): StrategyGame {
 }
 
 function distanceBetween(left: StrategyPlanet, right: StrategyPlanet): number {
-  return Math.floor(Math.hypot(left.x - right.x, left.y - right.y));
+  const bound = routeDistanceBound(left, right);
+  if (bound > BigInt(Number.MAX_SAFE_INTEGER)) throw new StrategyRuleError('The route exceeds the exact local range.');
+  return Number(bound);
 }
 
 function pendingArrivalClassCount(
@@ -428,7 +434,7 @@ function addLog(
   return { ...game, log: [entry, ...game.log].slice(0, 12) };
 }
 
-function requirePlanet(game: StrategyGame, id: string): StrategyPlanet {
+function requirePlanet(game: StrategyGame, id: string | undefined): StrategyPlanet {
   if (game.settled) throw new StrategyRuleError('This local round is already settled.');
   const planet = game.planets.find((candidate) => candidate.id === id);
   if (!planet) throw new StrategyRuleError(`Unknown planet ${id}.`);
@@ -575,6 +581,8 @@ export function createStrategyGame(input: {
     spaceJunk: 0,
     spaceJunkLimit: 2_000,
     scans: 1,
+    exploredChunks: [],
+    explorationOrigin: { x: home.x, y: home.y },
     settled: false,
     log: [{
       id: 'genesis',
@@ -585,18 +593,15 @@ export function createStrategyGame(input: {
   };
 }
 
-export function selectStrategyPlanet(game: StrategyGame, planetId: string): StrategyGame {
+export function selectStrategyPlanet(game: StrategyGame, planetId?: string): StrategyGame {
+  if (planetId === undefined) return { ...game, selectedPlanetId: undefined, targetPlanetId: undefined };
   const planet = requirePlanet(game, planetId);
   if (!planet.discovered) throw new StrategyRuleError('That location is still unknown.');
-  const hostsControlledShip = planet.artifactIds.some((id) => game.artifacts.some((artifact) =>
-    artifact.id === id && isShip(artifact.type) && artifact.controller === 'player'));
-  if (planet.owner === 'player' || hostsControlledShip) {
-    return { ...game, selectedPlanetId: planetId, targetPlanetId: undefined };
-  }
-  return { ...game, targetPlanetId: planetId };
+  return { ...game, selectedPlanetId: planetId, targetPlanetId: undefined };
 }
 
-export function setStrategyTarget(game: StrategyGame, planetId: string): StrategyGame {
+export function setStrategyTarget(game: StrategyGame, planetId?: string): StrategyGame {
+  if (planetId === undefined) return { ...game, targetPlanetId: undefined };
   const planet = requirePlanet(game, planetId);
   if (!planet.discovered) throw new StrategyRuleError('That location is still unknown.');
   if (planetId === game.selectedPlanetId) return { ...game, targetPlanetId: undefined };
@@ -629,7 +634,8 @@ export function nextStrategyMinerBatch(game: StrategyGame): Round5MinerChunk[] {
   if (game.settled) throw new StrategyRuleError('This local round is already settled.');
   const home = game.planets.find((planet) => planet.isHome);
   if (!home) throw new StrategyRuleError('The local universe has no founding planet.');
-  return round5MinerBatch({ x: home.x, y: home.y }, Math.max(0, game.scans - 1));
+  return nextExplorationBatch(game.explorationOrigin ?? home, game.worldRadius,
+    game.exploredChunks ?? [], 0, home).chunks;
 }
 
 /**
@@ -645,13 +651,15 @@ export function mergeMinedStrategyLocations(
   const home = game.planets.find((planet) => planet.isHome);
   if (!home) throw new StrategyRuleError('The local universe has no founding planet.');
 
+  round5MinerTotal(chunks);
+  const exploredChunks = mergeExploredChunks(game.exploredChunks ?? [], chunks);
   const byLocationId = new Map(game.planets.map((planet) => [planet.locationId, copyPlanet(planet)]));
   let discovered = 0;
   let added = 0;
   for (const candidate of locations) {
     const world = round5WorldLocation({ x: candidate.x, y: candidate.y });
     if (
-      !world ||
+      !world || !locationInChunks(candidate, chunks) ||
       world.locationId !== candidate.locationId ||
       world.perlin !== candidate.perlin ||
       world.biomebase !== candidate.biomebase ||
@@ -692,6 +700,7 @@ export function mergeMinedStrategyLocations(
     planets: [...byLocationId.values()],
     scanRadius: Math.min(game.worldRadius, Math.max(game.scanRadius, Math.ceil(frontier))),
     scans: game.scans + 1,
+    exploredChunks,
   };
   return addLog(
     next,
@@ -702,19 +711,9 @@ export function mergeMinedStrategyLocations(
   );
 }
 
-export function dispatchStrategyVoyage(
-  game: StrategyGame,
-  energyPercentage = 60,
-  silverMoved = 0,
-  carriedArtifactId?: string,
-): StrategyGame {
-  if (!game.targetPlanetId) throw new StrategyRuleError('Select a target planet first.');
-  let source = refreshPlanet(requirePlanet(game, game.selectedPlanetId), game.now);
-  let target = refreshPlanet(requirePlanet(game, game.targetPlanetId), game.now);
-  if (source.owner !== 'player') throw new StrategyRuleError('Only controlled planets can send a fleet.');
-  if (source.destroyed || target.destroyed) throw new StrategyRuleError('Destroyed planets cannot route voyages.');
-  const pendingClass = pendingArrivalClassCount(game, target, 'player');
-  if (pendingClass >= 6) throw new StrategyRuleError('The target already has six pending arrivals in this class.');
+function prepareStrategyRoute(game: StrategyGame, sourceId: string, targetId: string) {
+  let source = refreshPlanet(requirePlanet(game, sourceId), game.now);
+  const target = refreshPlanet(requirePlanet(game, targetId), game.now);
   const distance = distanceBetween(source, target);
   let artifacts = game.artifacts.map(copyArtifact);
   const sourceActive = artifactOnPlanet(game, source, source.activeArtifactId);
@@ -745,6 +744,81 @@ export function dispatchStrategyVoyage(
     arrivalType = 'Photoid';
     routeLabel += ` with R${sourceActive.rarity} Photoid`;
   }
+  return { source, target, artifacts, distance, effectiveDistanceTimesHundred, routeRange, routeSpeed, routeLabel, arrivalType };
+}
+
+export function strategySendingEnergy(energy: number, percentage: number): number {
+  if (!Number.isFinite(percentage) || percentage < 0 || percentage > 100) return 0;
+  return Math.max(0, Math.min(Math.floor(energy) - 1, Math.floor(energy * Math.min(98, percentage) / 100)));
+}
+
+/** Direct-space guidance only. Wormholes are endpoint-specific and use the full target quote. */
+export function previewStrategyFreeSpace(
+  game: StrategyGame, sourceId: string, point: { x: number; y: number }, energyPercentage = 50, abandon = false,
+) {
+  const route = prepareStrategyRoute(game, sourceId, sourceId);
+  const sent = abandon ? route.source.energy : strategySendingEnergy(route.source.energy, energyPercentage);
+  const range = abandon ? Math.floor(route.source.range * 1.5) : route.routeRange;
+  const speed = abandon ? Math.floor(route.source.speed * 1.5) : route.routeSpeed;
+  const capacity = route.source.energyCapacity;
+  if (![sent, range, speed, capacity].every(Number.isFinite) || range <= 0 || speed <= 0 || capacity < 0) {
+    throw new StrategyRuleError('The source has invalid route statistics.');
+  }
+  const arriving = (distance: number) => round5ArrivingEnergy(sent, distance, range, capacity);
+  let maxDistance = Math.max(0, Math.floor(range * Math.log2(sent / (capacity / 20 + 1))));
+  if (!Number.isFinite(maxDistance)) maxDistance = 0;
+  // The ring ends at the last integer proof bound with at least one arriving energy.
+  if (!Number.isSafeInteger(maxDistance)) throw new StrategyRuleError('The source exceeds exact route range limits.');
+  if (arriving(maxDistance + 1) > 0) maxDistance += 1;
+  if (maxDistance > 0 && arriving(maxDistance) <= 0) maxDistance -= 1;
+  const distance = Number(routeDistanceBound(route.source, point));
+  return { distance, energySent: sent, energyArriving: arriving(distance),
+    travelTime: round5TravelTime(distance, speed), maxDistance };
+}
+
+function quoteStrategyRoute(
+  game: StrategyGame,
+  route: ReturnType<typeof prepareStrategyRoute>,
+  energyPercentage: number,
+  silverMoved: number,
+) {
+  const { source, target, distance, effectiveDistanceTimesHundred, routeRange, routeSpeed, arrivalType } = route;
+  const energySent = strategySendingEnergy(source.energy, energyPercentage);
+  const energyArriving = round5ArrivingEnergy(energySent, effectiveDistanceTimesHundred / 100, routeRange, source.energyCapacity);
+  const travelTime = Math.max(1, Math.floor(effectiveDistanceTimesHundred / routeSpeed));
+  const friendly = target.owner === 'player';
+  // Hostile Wormhole arrivals transfer no energy, matching settlement.
+  const defenseDamage = friendly || arrivalType === 'Wormhole' ? 0 : Math.floor(energyArriving * 100 / target.defense);
+  let error: string | undefined;
+  if (source.id === target.id) error = 'Choose a different destination.';
+  else if (source.owner !== 'player') error = 'Only controlled planets can send a fleet.';
+  else if (source.destroyed || target.destroyed) error = 'Destroyed planets cannot route voyages.';
+  else if (!Number.isFinite(energyPercentage) || energyPercentage < 0 || energyPercentage > 100) error = 'Energy percentage must be between 0 and 100.';
+  else if (energySent <= 0 || energySent >= source.energy) error = 'A normal voyage must leave positive energy behind.';
+  else if (!Number.isFinite(silverMoved) || silverMoved < 0 || silverMoved > source.silver) error = 'The source does not hold that much silver.';
+  else if (energyArriving <= 0) error = 'Not enough energy survives this route.';
+  else if (pendingArrivalClassCount(game, target, 'player') >= 6) error = 'The target already has six pending arrivals in this class.';
+  else if (game.spaceJunk + target.spaceJunk > game.spaceJunkLimit) error = 'The route exceeds the commander space-junk limit.';
+  return { distance, energySent, energyArriving, travelTime, friendly, defenseDamage, spaceJunk: target.spaceJunk, arrivalType, error };
+}
+
+/** Read-only normal-fleet prediction, using the exact dispatch route and rounding. */
+export function previewStrategyVoyage(game: StrategyGame, sourceId: string, targetId: string, energyPercentage = 50, silverMoved = 0) {
+  return quoteStrategyRoute(game, prepareStrategyRoute(game, sourceId, targetId), energyPercentage, silverMoved);
+}
+
+export function dispatchStrategyVoyage(
+  game: StrategyGame,
+  energyPercentage = 50,
+  silverMoved = 0,
+  carriedArtifactId?: string,
+): StrategyGame {
+  if (!game.targetPlanetId) throw new StrategyRuleError('Select a target planet first.');
+  const route = prepareStrategyRoute(game, requirePlanet(game, game.selectedPlanetId).id, game.targetPlanetId);
+  let { source, target, artifacts } = route;
+  const { distance, routeLabel, arrivalType } = route;
+  const { energySent, energyArriving, travelTime, error } = quoteStrategyRoute(game, route, energyPercentage, silverMoved);
+  if (error) throw new StrategyRuleError(error);
   let carriedArtifact = carriedArtifactId
     ? artifacts.find((artifact) => artifact.id === carriedArtifactId)
     : undefined;
@@ -760,21 +834,6 @@ export function dispatchStrategyVoyage(
   } else if (carriedArtifactId) {
     throw new StrategyRuleError('Unknown carried artifact.');
   }
-  const energySent = Math.floor((source.energy * energyPercentage) / 100);
-  if (energySent <= 0 || energySent >= source.energy) {
-    throw new StrategyRuleError('A normal voyage must leave positive energy behind.');
-  }
-  if (silverMoved < 0 || silverMoved > source.silver) {
-    throw new StrategyRuleError('The source does not hold that much silver.');
-  }
-  const energyArriving = round5ArrivingEnergy(
-    energySent,
-    effectiveDistanceTimesHundred / 100,
-    routeRange,
-    source.energyCapacity,
-  );
-  if (energyArriving <= 0) throw new StrategyRuleError('Not enough energy survives this route.');
-  const travelTime = Math.max(1, Math.floor(effectiveDistanceTimesHundred / routeSpeed));
   source = { ...source, energy: source.energy - energySent, silver: source.silver - silverMoved };
   let spaceJunk = game.spaceJunk;
   if (target.spaceJunk > 0) {
@@ -818,9 +877,10 @@ export function dispatchStrategyVoyage(
 export function dispatchStrategyArtifact(
   game: StrategyGame,
   artifactId: string,
-  energyPercentage = 60,
+  energyPercentage = 50,
+  silverMoved = 0,
 ): StrategyGame {
-  return dispatchStrategyVoyage(game, energyPercentage, 0, artifactId);
+  return dispatchStrategyVoyage(game, energyPercentage, silverMoved, artifactId);
 }
 
 function applyArrival(game: StrategyGame, voyage: StrategyVoyage): StrategyGame {
@@ -922,7 +982,7 @@ export function upgradeStrategyPlanet(
   branch: Round5UpgradeBranch,
 ): StrategyGame {
   let planet = refreshPlanet(requirePlanet(game, game.selectedPlanetId), game.now);
-  if (planet.owner !== 'player') throw new StrategyRuleError('Only a controlled planet may upgrade.');
+  if (planet.owner !== 'player' || planet.destroyed) throw new StrategyRuleError('Only an intact controlled planet may upgrade.');
   if (planet.planetType !== 'Regular' || planet.level === 0) {
     throw new StrategyRuleError('Only regular planets above level zero may upgrade.');
   }
@@ -972,7 +1032,7 @@ export function claimStrategyStartingShips(game: StrategyGame): StrategyGame {
   for (const ship of ships) nextHome = attachArtifactEffects(nextHome, ship);
   const planets = game.planets.map((planet) => planet.id === home.id ? nextHome : copyPlanet(planet));
   return addLog(
-    { ...game, planets, artifacts: ships, shipsClaimed: true },
+    { ...game, planets, artifacts: [...game.artifacts.map(copyArtifact), ...ships], shipsClaimed: true },
     'success',
     'Five Round 5 ships deployed at the home planet.',
   );
@@ -989,13 +1049,19 @@ export function dispatchStrategyShip(game: StrategyGame, artifactId: string): St
   }
   let source = refreshPlanet(requirePlanet(game, game.selectedPlanetId), game.now);
   const target = refreshPlanet(requirePlanet(game, game.targetPlanetId), game.now);
+  if (source.id === target.id || target.destroyed) throw new StrategyRuleError('Choose another intact destination.');
   if (!source.artifactIds.includes(artifact.id)) throw new StrategyRuleError('Ship location is inconsistent.');
   if (target.artifactIds.length >= 5) throw new StrategyRuleError('The target already holds five artifacts.');
   const pendingClass = pendingArrivalClassCount(game, target, 'neutral');
   if (pendingClass >= 6) throw new StrategyRuleError('The target already has six pending arrivals in this class.');
   source = detachArtifactEffects(source, artifact);
   const distance = distanceBetween(source, target);
-  const travelTime = round5TravelTime(distance, source.speed);
+  const fromActive = artifactOnPlanet(game, source, source.activeArtifactId);
+  const toActive = artifactOnPlanet(game, target, target.activeArtifactId);
+  const wormhole = fromActive?.type === 'Wormhole' && fromActive.wormholeToPlanetId === target.id
+    ? fromActive : toActive?.type === 'Wormhole' && toActive.wormholeToPlanetId === source.id ? toActive : undefined;
+  const divisor = wormhole ? ([1, 2, 4, 8, 16, 32][wormhole.rarity] ?? 1) : 1;
+  const travelTime = Math.max(1, Math.floor(Math.floor(distance * 100 / divisor) / source.speed));
   const voyageId = `ship-voyage-${game.now}-${game.voyages.length}-${artifact.id}`;
   const voyage: StrategyVoyage = {
     id: voyageId,
@@ -1028,6 +1094,7 @@ export function activateStrategyCrescent(game: StrategyGame, artifactId: string)
   if (!artifact || artifact.type !== 'Crescent' || !artifact.planetId) {
     throw new StrategyRuleError('Choose a Crescent currently resting on a planet.');
   }
+  if (artifact.controller !== 'player') throw new StrategyRuleError('Only your Crescent may activate.');
   const planet = refreshPlanet(requirePlanet(game, artifact.planetId), game.now);
   if (artifact.activations !== 0) throw new StrategyRuleError('Crescent activates only once.');
   if (planet.owner !== 'neutral' || planet.level < 1 || planet.planetType === 'SilverMine') {
@@ -1309,6 +1376,7 @@ export function abandonStrategyPlanet(game: StrategyGame, carriedArtifactId?: st
   let source = refreshPlanet(requirePlanet(game, game.selectedPlanetId), game.now);
   let target = refreshPlanet(requirePlanet(game, game.targetPlanetId), game.now);
   if (source.owner !== 'player' || source.isHome) throw new StrategyRuleError('A controlled non-home planet is required.');
+  if (source.destroyed || target.destroyed || source.id === target.id) throw new StrategyRuleError('Abandonment requires two distinct intact planets.');
   if (game.voyages.some((voyage) => voyage.toPlanetId === source.id)) {
     throw new StrategyRuleError('A planet with incoming voyages cannot be abandoned.');
   }

@@ -2,7 +2,7 @@ import { round5WorldLocation, type Round5Coordinates } from './round5-universe';
 import { createRankedLocationMiner, type RankedMiningGeometry } from './ranked-miner';
 
 export const ROUND5_MINER_PROTOCOL_VERSION = 2 as const;
-export const ROUND5_MINER_CHUNK_SIDE = 64;
+export const ROUND5_MINER_CHUNK_SIDE = 16;
 export const ROUND5_MINER_CHUNKS_PER_BATCH = 4;
 
 export interface Round5MinerChunk {

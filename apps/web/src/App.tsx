@@ -57,6 +57,9 @@ export function App() {
       rankedMining={rankedMap.mining}
       onMineRankedMap={rankedMap.mine}
       onCancelRankedMining={rankedMap.cancelMining}
+      rankedBackup={rankedMap.backup}
+      onExportRankedBackup={rankedMap.exportBackup}
+      onImportRankedBackup={rankedMap.importBackup}
     />
   );
 }

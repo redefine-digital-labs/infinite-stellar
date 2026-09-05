@@ -44,7 +44,7 @@ describe('Round-5 Worker mining contracts', () => {
     const game = createStrategyGame({ universeSeed: 'miner-test', homeId: 'home', homeName: 'FIRST' });
     const hidden = game.planets.find((planet) => !planet.discovered)!;
     const world = round5WorldLocation({ x: hidden.x, y: hidden.y })!;
-    const chunks = nextStrategyMinerBatch(game);
+    const chunks = [{ index: 0, x: Math.floor(hidden.x / 16) * 16, y: Math.floor(hidden.y / 16) * 16, side: 16 }];
     const mined = mergeMinedStrategyLocations(game, [{
       x: world.x,
       y: world.y,
@@ -54,6 +54,8 @@ describe('Round-5 Worker mining contracts', () => {
     }], chunks);
     expect(mined.planets.find((planet) => planet.id === hidden.id)?.discovered).toBe(true);
     expect(mined.scans).toBe(game.scans + 1);
+    const outside = mergeMinedStrategyLocations(game, [world], nextStrategyMinerBatch(game));
+    expect(outside.planets.find((planet) => planet.id === hidden.id)?.discovered).toBe(false);
 
     const rejected = mergeMinedStrategyLocations(game, [{
       x: world.x,

@@ -1,5 +1,5 @@
 import {
-  appendRankedPrivateLocations,
+  mergeRankedPrivateRecords,
   parseRankedPrivateMapRecord,
   rankedPrivateMapStorageKey,
   type RankedMapIdentity,
@@ -211,9 +211,7 @@ export class EncryptedRankedMapVault implements RankedMapVault {
       // A late Worker or another tab may hold an older snapshot. Preserve every
       // existing discovery; reject conflicting preimages before touching disk.
       const existing = await this.read(namespace);
-      const merged = existing ? appendRankedPrivateLocations(
-        existing, parsed.locations, Math.max(existing.updatedAtMs, parsed.updatedAtMs),
-      ) : parsed;
+      const merged = existing ? mergeRankedPrivateRecords(existing, parsed) : parsed;
       const key = await this.key(namespace);
       const iv = this.webCrypto.getRandomValues(new Uint8Array(new ArrayBuffer(12)));
       const ciphertext = await this.webCrypto.subtle.encrypt({

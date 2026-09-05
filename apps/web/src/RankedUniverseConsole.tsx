@@ -4,15 +4,20 @@ import {
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type WheelEvent as ReactWheelEvent,
 } from 'react';
-import type { RankedMapPlanet, RankedMapView } from '@infinite-stellar/game-sdk';
+import { exploredChunkArea, type RankedMapPlanet, type RankedMapView } from '@infinite-stellar/game-sdk';
 import { FloatingPanel, type FloatingPanelPosition } from './FloatingPanel';
 import { StatusPill } from './components';
 import { MapPlanetGlyph } from './MapPlanetGlyph';
-import type { RankedMiningSnapshot } from './use-ranked-map';
+import { MapExplorationCoverage } from './MapExplorationCoverage';
+import { mapPosition, mapToWorld, worldPixelScale, zoomAtMapPoint } from './map-camera';
+import { useMapViewport } from './use-map-viewport';
+import type { RankedMiningSnapshot, RankedBackupSnapshot, RankedBackupDownload } from './use-ranked-map';
+import { RankedMapBackupControls } from './RankedMapBackupControls';
 
 export interface RankedUniverseConsoleProps {
   map: RankedMapView;
@@ -27,6 +32,10 @@ export interface RankedUniverseConsoleProps {
   needsHome?: boolean;
   onMine?: (center: { x: number; y: number }) => void;
   onCancelMining?: () => void;
+  backup?: RankedBackupSnapshot;
+  onExportBackup?: (passphrase: string) => Promise<RankedBackupDownload>;
+  onImportBackup?: (raw: string, passphrase: string) => Promise<void>;
+  refreshing?: boolean;
 }
 
 interface Camera {
@@ -85,13 +94,6 @@ function fitCamera(planets: readonly RankedMapPlanet[], worldRadius: number): Ca
   };
 }
 
-function mapPosition(planet: RankedMapPlanet, camera: Camera) {
-  return {
-    left: `${50 + ((planet.x - camera.centerX) / camera.radius) * 46}%`,
-    top: `${50 + ((planet.y - camera.centerY) / camera.radius) * 46}%`,
-  };
-}
-
 function initialPositions(): Record<'status' | 'command', FloatingPanelPosition> {
   const width = typeof window === 'undefined' ? 1280 : window.innerWidth;
   return {
@@ -113,6 +115,10 @@ export function RankedUniverseConsole({
   needsHome = false,
   onMine,
   onCancelMining,
+  backup,
+  onExportBackup,
+  onImportBackup,
+  refreshing = false,
 }: RankedUniverseConsoleProps) {
   const home = map.planets.find((planet) => planet.isHome);
   const initialCamera = useMemo(() => fitCamera(map.planets, map.worldRadius), [map.planets, map.worldRadius]);
@@ -120,18 +126,23 @@ export function RankedUniverseConsole({
   const [selectedId, setSelectedId] = useState(home?.objectId ?? map.planets[0]?.objectId);
   const [targetId, setTargetId] = useState<string>();
   const [isPanning, setIsPanning] = useState(false);
+  const [relocatingExplorer, setRelocatingExplorer] = useState(false);
+  const [explorerError, setExplorerError] = useState('');
   const [positions, setPositions] = useState(initialPositions);
   const [visiblePanels, setVisiblePanels] = useState<Array<'status' | 'command'>>(['status', 'command']);
   const [focusedPanel, setFocusedPanel] = useState<'status' | 'command'>('command');
   const pan = useRef<PanGesture | undefined>(undefined);
+  const { ref: mapRef, viewport: mapViewport } = useMapViewport();
+  const position = (point: { x: number; y: number }) => mapPosition(point, camera, mapViewport);
 
   const selected = map.planets.find((planet) => planet.objectId === selectedId);
   const target = map.planets.find((planet) => planet.objectId === targetId);
   const maximumRadius = Math.max(MIN_RADIUS, map.worldRadius * 1.15);
   const zoom = Math.max(1, Math.round((maximumRadius / camera.radius) * 100));
+  const backupBusy = backup?.phase === 'exporting' || backup?.phase === 'importing';
 
   useEffect(() => {
-    if (!map.planets.some((planet) => planet.objectId === selectedId)) {
+    if (selectedId && !map.planets.some((planet) => planet.objectId === selectedId)) {
       setSelectedId(home?.objectId ?? map.planets[0]?.objectId);
     }
     if (targetId && !map.planets.some((planet) => planet.objectId === targetId)) {
@@ -139,10 +150,8 @@ export function RankedUniverseConsole({
     }
   }, [home?.objectId, map.planets, selectedId, targetId]);
 
-  const zoomCamera = (factor: number) => setCamera((current) => ({
-    ...current,
-    radius: Math.min(maximumRadius, Math.max(MIN_RADIUS, current.radius * factor)),
-  }));
+  const zoomCamera = (factor: number, anchor = { x: 50, y: 50 }) => setCamera((current) =>
+    zoomAtMapPoint(current, Math.min(maximumRadius, Math.max(MIN_RADIUS, current.radius * factor)), anchor, mapViewport));
   const focusHome = () => {
     if (!home) return;
     setSelectedId(home.objectId);
@@ -150,6 +159,7 @@ export function RankedUniverseConsole({
   };
   const fit = () => setCamera(fitCamera(map.planets, map.worldRadius));
   const beginPan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (relocatingExplorer) return;
     if (event.button !== 0 || (event.target as HTMLElement).closest('button')) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     pan.current = {
@@ -158,8 +168,8 @@ export function RankedUniverseConsole({
       startY: event.clientY,
       centerX: camera.centerX,
       centerY: camera.centerY,
-      width: Math.max(1, bounds.width),
-      height: Math.max(1, bounds.height),
+      width: bounds.width || mapViewport.width,
+      height: bounds.height || mapViewport.height,
     };
     setIsPanning(true);
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -169,8 +179,8 @@ export function RankedUniverseConsole({
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     setCamera((current) => ({
       ...current,
-      centerX: gesture.centerX - ((event.clientX - gesture.startX) / gesture.width) * current.radius / 0.46,
-      centerY: gesture.centerY - ((event.clientY - gesture.startY) / gesture.height) * current.radius / 0.46,
+      centerX: gesture.centerX - (event.clientX - gesture.startX) / worldPixelScale(current, gesture),
+      centerY: gesture.centerY - (event.clientY - gesture.startY) / worldPixelScale(current, gesture),
     }));
   };
   const endPan = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -180,12 +190,17 @@ export function RankedUniverseConsole({
     event.currentTarget.releasePointerCapture?.(event.pointerId);
   };
   const wheel = (event: ReactWheelEvent<HTMLDivElement>) => {
+    if (event.deltaY === 0) return;
     event.preventDefault();
-    zoomCamera(event.deltaY > 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR);
+    const bounds = event.currentTarget.getBoundingClientRect();
+    zoomCamera(event.deltaY > 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR,
+      { x: (event.clientX - bounds.left) / (bounds.width || mapViewport.width) * 100,
+        y: (event.clientY - bounds.top) / (bounds.height || mapViewport.height) * 100 });
   };
   const keyboard = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     const step = camera.radius * 0.12;
-    if (event.key === '+' || event.key === '=') zoomCamera(1 / ZOOM_FACTOR);
+    if (event.key === 'Escape') { setRelocatingExplorer(false); setSelectedId(undefined); setTargetId(undefined); }
+    else if (event.key === '+' || event.key === '=') zoomCamera(1 / ZOOM_FACTOR);
     else if (event.key === '-' || event.key === '_') zoomCamera(ZOOM_FACTOR);
     else if (event.key.toLowerCase() === 'h') focusHome();
     else if (event.key === '0') fit();
@@ -195,6 +210,20 @@ export function RankedUniverseConsole({
     else if (event.key === 'ArrowDown') setCamera((current) => ({ ...current, centerY: current.centerY + step }));
     else return;
     event.preventDefault();
+  };
+
+  const chooseExplorerPoint = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!relocatingExplorer || (event.target as HTMLElement).closest('.aim-status')) return;
+    event.preventDefault(); event.stopPropagation();
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const point = mapToWorld({ x: (event.clientX - bounds.left) / (bounds.width || mapViewport.width) * 100,
+      y: (event.clientY - bounds.top) / (bounds.height || mapViewport.height) * 100 }, camera, mapViewport);
+    const origin = { x: Math.round(point.x), y: Math.round(point.y) };
+    if (Math.hypot(origin.x, origin.y) >= map.worldRadius) {
+      setExplorerError('Choose an explorer origin inside this finite world.'); return;
+    }
+    setRelocatingExplorer(false); setExplorerError('');
+    onMine?.(origin);
   };
 
   const panel = (id: 'status' | 'command', title: string, eyebrow: string, children: ReactNode) =>
@@ -221,7 +250,9 @@ export function RankedUniverseConsole({
         <div className="map-toolbar floating-map-toolbar">
           <div><span className="map-mode-label">RANKED PRIVATE MAP</span><strong>{map.planets.length} known · {map.unmaterializedPlanets} unmaterialized</strong></div>
           <div className="map-legend"><span><i className="legend-player" /> Yours</span><span><i className="legend-rival" /> Rival</span><span><i className="legend-neutral" /> Unclaimed</span></div>
-          <button className="button button-secondary compact-button" type="button" onClick={onRefresh}>Refresh chain</button>
+          <button className="button button-secondary compact-button" type="button" disabled={refreshing || backupBusy}
+            onClick={onRefresh}>{refreshing ? 'Refreshing chain…' : 'Refresh chain'}</button>
+          {(mining.phase === 'mining' || mining.phase === 'saving') && <button className="miner-cancel" type="button" onClick={onCancelMining}>Pause explorer</button>}
         </div>
         <div className="map-camera-controls" role="group" aria-label="Ranked map camera controls">
           <button type="button" aria-label="Zoom out" disabled={camera.radius >= maximumRadius} onClick={() => zoomCamera(ZOOM_FACTOR)}>−</button>
@@ -235,7 +266,8 @@ export function RankedUniverseConsole({
           </button>
         </div>
         <div
-          className={`star-map ${isPanning ? 'is-panning' : ''}`}
+          ref={mapRef}
+          className={`star-map ${isPanning ? 'is-panning' : ''} ${relocatingExplorer ? 'is-aiming' : ''}`}
           tabIndex={0}
           aria-label="Ranked star map. Drag empty space to pan; use wheel or plus and minus to zoom."
           onPointerDown={beginPan}
@@ -244,7 +276,15 @@ export function RankedUniverseConsole({
           onPointerCancel={endPan}
           onWheel={wheel}
           onKeyDown={keyboard}
+          onClickCapture={chooseExplorerPoint}
         >
+          <MapExplorationCoverage chunks={map.exploredChunks ?? []} active={mining.chunks ?? []}
+            origin={mining.origin ?? map.explorationOrigin} centerX={camera.centerX} centerY={camera.centerY} radius={camera.radius} viewport={mapViewport} />
+          {relocatingExplorer && <div className="aim-status" role="status">
+            <strong>Click the map to move the explorer. This does not send a fleet.</strong>
+            {explorerError && <span>{explorerError}</span>}
+            <button type="button" onClick={() => setRelocatingExplorer(false)}>Cancel explorer placement (Esc)</button>
+          </div>}
           <span className="map-ring ring-a" aria-hidden="true" />
           <span className="map-ring ring-b" aria-hidden="true" />
           <span className="map-crosshair map-crosshair-x" aria-hidden="true" />
@@ -254,10 +294,10 @@ export function RankedUniverseConsole({
               key={planet.objectId}
               type="button"
               className={`map-planet owner-${planet.owner} space-${planet.spaceType.toLowerCase()} ${planet.planetType === 'SpacetimeRip' ? 'type-spacetime-rip' : ''} ${selectedId === planet.objectId ? 'is-selected' : ''} ${targetId === planet.objectId ? 'is-targeted' : ''} ${planet.materialized ? '' : 'is-unmaterialized'}`}
-              style={{ ...mapPosition(planet, camera), width: 22 + planet.level * 3, height: 22 + planet.level * 3 }}
+              style={{ ...position(planet), width: 22 + planet.level * 3, height: 22 + planet.level * 3 }}
               onClick={() => {
-                if (selected?.owner === 'player' && selected.objectId !== planet.objectId) setTargetId(planet.objectId);
-                else setSelectedId(planet.objectId);
+                setSelectedId(planet.objectId);
+                setTargetId(undefined);
                 setFocusedPanel('command');
                 setVisiblePanels((current) => current.includes('command') ? current : [...current, 'command']);
               }}
@@ -270,17 +310,17 @@ export function RankedUniverseConsole({
           <svg className="voyage-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             <defs><marker id="ranked-voyage-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth" viewBox="0 0 6 6"><path d="M 0 0 L 6 3 L 0 6 z" /></marker></defs>
             {selected && target && selected.objectId !== target.objectId && (
-              <line className="map-route-preview" x1={Number.parseFloat(mapPosition(selected, camera).left)}
-                y1={Number.parseFloat(mapPosition(selected, camera).top)}
-                x2={Number.parseFloat(mapPosition(target, camera).left)} y2={Number.parseFloat(mapPosition(target, camera).top)}
+              <line className="map-route-preview" x1={Number.parseFloat(position(selected).left)}
+                y1={Number.parseFloat(position(selected).top)}
+                x2={Number.parseFloat(position(target).left)} y2={Number.parseFloat(position(target).top)}
                 vectorEffect="non-scaling-stroke" />
             )}
             {map.voyages.map((voyage) => {
               const from = map.planets.find((planet) => planet.objectId === voyage.fromPlanetId);
               const to = map.planets.find((planet) => planet.objectId === voyage.toPlanetId);
               if (!from || !to) return null;
-              const start = mapPosition(from, camera);
-              const end = mapPosition(to, camera);
+              const start = position(from);
+              const end = position(to);
               return <line key={voyage.id} className="voyage-route" x1={Number.parseFloat(start.left)} y1={Number.parseFloat(start.top)} x2={Number.parseFloat(end.left)} y2={Number.parseFloat(end.top)} vectorEffect="non-scaling-stroke" markerEnd="url(#ranked-voyage-arrow)" />;
             })}
           </svg>
@@ -306,20 +346,27 @@ export function RankedUniverseConsole({
             <div><span>HIDDEN</span><strong>{map.hiddenChainPlanets}</strong></div>
           </div>
           <button className="reset-panel-layout" type="button" onClick={onBack}>Release readiness</button>
+          <RankedMapBackupControls
+            key={`${map.identity.chainIdentifier}:${map.identity.packageId}:${map.identity.seasonId}:${map.identity.seatId}:${map.identity.controllerAddress}`}
+            status={backup} protection={protection} disabled={refreshing || mining.phase === 'mining' || mining.phase === 'saving'}
+            onExport={onExportBackup} onImport={onImportBackup} />
         </div>
       ))}
 
       {panel('command', 'Planet & route', 'CHAIN STATE · PRIVATE POSITION', (
         <div className="command-panel floating-command-panel ranked-command-content">
           <div className="ranked-exploration">
-            <strong>Private exploration · 64 × 64 sector</strong>
-            <p>Search at the map center, or jump to a random sector. Discoveries stay on this device; they do not claim a Planet.</p>
+            <strong>Continuous private explorer</strong>
+            <p>Search outward from an origin until paused. Completed 16-unit chunks, including empty space, are saved and skipped on resume. Discoveries do not claim a Planet.</p>
+            <p>{exploredChunkArea(map.exploredChunks ?? []).toLocaleString()} units² searched · coordinates stay on this device.</p>
             <div className="button-row">
               <button className="button button-secondary compact-button" type="button"
-                disabled={!canMine || !onMine || mining.phase === 'mining' || mining.phase === 'saving'}
+                disabled={!canMine || !onMine || backupBusy || refreshing || mining.phase === 'mining' || mining.phase === 'saving'}
                 onClick={() => onMine?.({ x: Math.round(camera.centerX), y: Math.round(camera.centerY) })}>Explore here</button>
+              <button className="button button-secondary compact-button" type="button" disabled={!canMine || !onMine || backupBusy || refreshing}
+                onClick={() => { onCancelMining?.(); setRelocatingExplorer(true); setExplorerError(''); setVisiblePanels([]); mapRef.current?.focus({ preventScroll: true }); }}>Move explorer</button>
               <button className="button button-secondary compact-button" type="button"
-                disabled={!canMine || !onMine || mining.phase === 'mining' || mining.phase === 'saving'}
+                disabled={!canMine || !onMine || backupBusy || refreshing || mining.phase === 'mining' || mining.phase === 'saving'}
                 onClick={() => {
                   const random = crypto.getRandomValues(new Uint32Array(2));
                   const angle = random[0]! / 2 ** 32 * Math.PI * 2;
@@ -328,16 +375,19 @@ export function RankedUniverseConsole({
                   setCamera({ centerX: center.x, centerY: center.y, radius: MIN_RADIUS });
                   onMine?.(center);
                 }}>Random sector</button>
-              {mining.phase === 'mining' && <button className="button button-secondary compact-button" type="button" onClick={onCancelMining}>Cancel search</button>}
+              {(mining.phase === 'mining' || mining.phase === 'saving') && <button className="button button-secondary compact-button" type="button" onClick={onCancelMining}>Pause explorer</button>}
+              {map.explorationOrigin && <button className="button button-secondary compact-button" type="button"
+                disabled={!canMine || !onMine || backupBusy || refreshing || mining.phase === 'mining' || mining.phase === 'saving'}
+                onClick={() => onMine?.(map.explorationOrigin!)}>Resume explorer</button>}
             </div>
             <div role="status" aria-live="polite">
-              {mining.phase === 'mining' && `Searching ${mining.progress?.checked ?? 0} / ${mining.progress?.total ?? 4096} · ${mining.progress?.found ?? 0} found`}
+              {mining.phase === 'mining' && `Searching ${mining.progress?.checked ?? 0} / ${mining.progress?.total ?? 1024} · ${mining.progress?.found ?? 0} found`}
               {mining.phase === 'saving' && 'Validating and encrypting discoveries…'}
               {mining.message}
               {!canMine && (miningBlocker ?? 'Season exploration is not available.')}
             </div>
           </div>
-          {selected ? <RankedPlanetReadout label="ORIGIN" planet={selected} /> : <p>Select a known Planet.</p>}
+          {selected ? <RankedPlanetReadout label="SELECTED PLANET" planet={selected} /> : <p>Select a known Planet.</p>}
           {target && <RankedPlanetReadout label="TARGET" planet={target} />}
           <div className="ranked-command-lock">
             <strong>Ranked writes remain sealed</strong>

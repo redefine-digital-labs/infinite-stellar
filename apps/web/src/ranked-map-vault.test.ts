@@ -74,7 +74,7 @@ describe('ranked map vault', () => {
     const first = record();
     const second = { ...first, updatedAtMs: 200 };
     await Promise.all([vault.save(first), vault.save(second)]);
-    await expect(vault.restore(identity)).resolves.toEqual(second);
+    await expect(vault.restore(identity)).resolves.toEqual({ ...second, exploredChunks: [] });
     await vault.clear(identity);
     await expect(vault.restore(identity)).resolves.toBeNull();
   });

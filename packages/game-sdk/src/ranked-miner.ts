@@ -15,6 +15,11 @@ export function rankedMiningGeometry(projection: RankedUniverseProjection): Rank
   if (projection.runtime.cancelled || projection.runtime.settlementStarted) {
     throw new Error('This universe is closed for new exploration.');
   }
+  return rankedSeasonGeometry(projection);
+}
+
+/** Historical maps remain recoverable after new exploration closes. */
+export function rankedSeasonGeometry(projection: RankedUniverseProjection): RankedMiningGeometry {
   const manifest = projection.manifest;
   const geometry: RankedMiningGeometry = {
     worldRadius: manifest.worldRadius,

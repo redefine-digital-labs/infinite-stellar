@@ -23,7 +23,7 @@ import type { RankedEnrollmentState } from './use-ranked-enrollment';
 import type { RankedProjectionSnapshot } from './use-ranked-projection';
 import type { RankedMapSnapshot } from './use-ranked-map';
 import { RankedUniverseConsole } from './RankedUniverseConsole';
-import type { RankedMiningSnapshot } from './use-ranked-map';
+import type { RankedMiningSnapshot, RankedBackupDownload, RankedBackupSnapshot } from './use-ranked-map';
 
 export interface GameShellProps {
   walletAddress?: string;
@@ -41,6 +41,9 @@ export interface GameShellProps {
   rankedMining?: RankedMiningSnapshot;
   onMineRankedMap?: (center: { x: number; y: number }) => void;
   onCancelRankedMining?: () => void;
+  rankedBackup?: RankedBackupSnapshot;
+  onExportRankedBackup?: (passphrase: string) => Promise<RankedBackupDownload>;
+  onImportRankedBackup?: (raw: string, passphrase: string) => Promise<void>;
 }
 
 const DISCONNECTED_RANKED_GATEWAY: RankedGatewaySnapshot = {
@@ -68,6 +71,9 @@ export function GameShell({
   rankedMining,
   onMineRankedMap,
   onCancelRankedMining,
+  rankedBackup,
+  onExportRankedBackup,
+  onImportRankedBackup,
 }: GameShellProps) {
   const journey = usePlayerJourney(walletAddress);
   const { session } = journey;
@@ -174,6 +180,10 @@ export function GameShell({
             needsHome={!rankedGateway.seat.civilization.initialHomePlanetId}
             onMine={onMineRankedMap}
             onCancelMining={onCancelRankedMining}
+            backup={rankedBackup}
+            onExportBackup={onExportRankedBackup}
+            onImportBackup={onImportRankedBackup}
+            refreshing={rankedMap.refreshing}
             soulId={rankedGateway.seat.seat.soulId}
             onRefresh={onRefreshRankedMap ?? onRefreshRanked ?? (() => undefined)}
             onBack={journey.restart}
@@ -557,25 +567,10 @@ export function GameShell({
             mining={journey.mining}
             vault={journey.vault}
             proofReadiness={proofReadiness}
-            onDispatch={journey.dispatchStrategy}
+            onMoveIntent={journey.executeMoveIntent}
+            onAbility={journey.executeAbility}
             onAdvanceArrival={journey.advanceStrategyArrival}
             onAdvanceTime={journey.advanceStrategyTime}
-            onUpgrade={journey.upgradeStrategy}
-            onClaimShips={journey.claimStrategyShips}
-            onDispatchShip={journey.dispatchStrategyShip}
-            onDispatchArtifact={journey.dispatchStrategyArtifact}
-            onActivateCrescent={journey.activateStrategyCrescent}
-            onActivateArtifact={journey.activateStrategyArtifact}
-            onDeactivateArtifact={journey.deactivateStrategyArtifact}
-            onWithdrawArtifact={journey.withdrawStrategyArtifact}
-            onDepositArtifact={journey.depositStrategyArtifact}
-            onProspect={journey.prospectStrategy}
-            onFindArtifact={journey.findStrategyArtifact}
-            onInvade={journey.invadeStrategy}
-            onCapture={journey.captureStrategy}
-            onReveal={journey.revealStrategy}
-            onWithdrawSilver={journey.withdrawStrategySilver}
-            onAbandon={journey.abandonStrategy}
             onSettle={journey.settleStrategy}
           />
         )}

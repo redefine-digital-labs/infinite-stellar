@@ -1416,6 +1416,26 @@ code {
   transform: translate(-50%, -50%);
 }
 
+.map-exploration-coverage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.unsearched-space { fill: #020610; opacity: 0.55; }
+.active-search-chunk { fill: #b9f8ca22; stroke: #b9f8ca88; stroke-width: 1px; }
+.explorer-origin { fill: none; stroke: #f6cf7e; stroke-width: 1.5px; }
+.energy-reach-ring {
+  position: absolute;
+  border: 1px dashed #b9f8ca66;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.resource-stepper { display: flex; gap: 6px; justify-content: flex-end; }
+.resource-stepper button { padding: 4px 10px; font: inherit; }
+
 .ring-a { width: 36%; aspect-ratio: 1; }
 .ring-b { width: 72%; aspect-ratio: 1; }
 
@@ -2895,6 +2915,10 @@ code {
     padding-inline: 0.6rem;
   }
 
+  .miner-toolbar-actions .explore-camera-origin { display: none; }
+  .miner-toolbar-actions { gap: 0.3rem; min-width: 0; }
+  .miner-toolbar-actions button { padding-inline: 0.4rem; }
+
   .map-camera-controls {
     top: 8.35rem;
     max-width: calc(100% - 1.3rem);
@@ -3088,6 +3112,27 @@ code {
   gap: 8px;
 }
 
+.ranked-backup-controls {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.ranked-backup-controls summary { cursor: pointer; color: var(--text); }
+.ranked-backup-controls p,
+.ranked-backup-controls [role="status"] { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.ranked-backup-controls label { display: grid; gap: 6px; margin: 12px 0; font-size: 12px; }
+.ranked-backup-controls input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--bg);
+}
+.ranked-backup-controls button { width: 100%; }
+
 .ranked-command-lock {
   display: grid;
   gap: 0.35rem;
@@ -3113,4 +3158,27 @@ code {
   .ranked-panel-dock {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+.star-map.is-aiming, .star-map.is-aiming .map-planet { cursor: crosshair; }
+.planet-ability { display: grid; gap: 4px; }
+.planet-ability small { color: var(--muted); font-size: 10px; line-height: 1.35; }
+.fleet-composer select { width: 100%; background: var(--panel-solid); color: var(--text); padding: 8px; border: 1px solid var(--line); }
+.aim-status {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  bottom: 100px;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 8px;
+  width: max-content;
+  max-width: min(90%, 520px);
+  padding: 12px 18px;
+  border: 1px solid #9bc7dd66;
+  border-radius: 10px;
+  background: #081723ee;
+  color: #dfedf3;
+  text-align: center;
+  pointer-events: auto;
+  font-size: 12px;
 }

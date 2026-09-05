@@ -23,6 +23,8 @@ import type {
   VoyageProjection,
 } from './ranked-projection';
 import type { PlayerSeatBundle } from './sui-player-runtime';
+import { mergeExploredChunks, validateExplorationOrigin, type ExploredChunk } from './exploration';
+import type { Round5Coordinates } from './round5-universe';
 
 const CANONICAL_ADDRESS = /^0x[0-9a-f]{64}$/;
 const LOCATION_ID = /^[0-9a-f]{64}$/;
@@ -76,6 +78,8 @@ export interface RankedPrivateLocation {
 
 export interface RankedPrivateMapRecord extends RankedMapIdentity {
   locations: RankedPrivateLocation[];
+  exploredChunks?: ExploredChunk[];
+  explorationOrigin?: Round5Coordinates;
   updatedAtMs: number;
 }
 
@@ -129,6 +133,8 @@ export interface RankedMapView {
   snapshotFingerprint: string;
   maxEventCheckpoint: string | null;
   planets: RankedMapPlanet[];
+  exploredChunks?: ExploredChunk[];
+  explorationOrigin?: Round5Coordinates;
   voyages: RankedMapVoyage[];
   hiddenChainPlanets: number;
   hiddenVoyages: number;
@@ -264,7 +270,11 @@ export function parseRankedPrivateMapRecord(raw: string): RankedPrivateMapRecord
       };
     });
     if (new Set(locations.map((location) => location.locationId)).size !== locations.length) return null;
-    return { ...identity, locations, updatedAtMs: value.updatedAtMs! };
+    if (value.exploredChunks !== undefined && !Array.isArray(value.exploredChunks)) return null;
+    return { ...identity, locations, updatedAtMs: value.updatedAtMs!,
+      ...(value.exploredChunks !== undefined ? { exploredChunks: mergeExploredChunks(value.exploredChunks) } : {}),
+      ...(value.explorationOrigin !== undefined ? { explorationOrigin: validateExplorationOrigin(value.explorationOrigin) } : {}),
+    };
   } catch {
     return null;
   }
@@ -302,6 +312,18 @@ export function appendRankedPrivateLocations(
     locations: [...merged.values()].sort((left, right) => left.locationId.localeCompare(right.locationId)),
     updatedAtMs,
   };
+}
+
+export function mergeRankedPrivateRecords(left: RankedPrivateMapRecord, right: RankedPrivateMapRecord): RankedPrivateMapRecord {
+  const parsed = parseRankedPrivateMapRecord(JSON.stringify(right));
+  if (!parsed || rankedPrivateMapStorageKey(left) !== rankedPrivateMapStorageKey(parsed)) {
+    throw new RankedMapError('VAULT_MISMATCH', 'Private maps from different Seasons or Seats cannot be merged.');
+  }
+  const record = appendRankedPrivateLocations(left, parsed.locations, Math.max(left.updatedAtMs, parsed.updatedAtMs));
+  const explorationOrigin = right.updatedAtMs >= left.updatedAtMs
+    ? parsed.explorationOrigin ?? record.explorationOrigin : record.explorationOrigin;
+  return { ...record, exploredChunks: mergeExploredChunks(left.exploredChunks ?? [], parsed.exploredChunks ?? []),
+    ...(explorationOrigin ? { explorationOrigin } : {}) };
 }
 
 export function deriveRankedPlanetObjectId(
@@ -534,6 +556,8 @@ export function mergeRankedPrivateMap(
     .map((voyage) => mappedVoyage(voyage, identity.seatId));
   return {
     identity,
+    exploredChunks: parsed.exploredChunks ?? [],
+    explorationOrigin: parsed.explorationOrigin,
     worldRadius: Number(projection.manifest.worldRadius),
     snapshotFingerprint: projection.snapshotFingerprint,
     maxEventCheckpoint: projection.maxEventCheckpoint,

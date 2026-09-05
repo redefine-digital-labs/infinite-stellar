@@ -61,8 +61,11 @@ describe('Infinite Stellar player shell', () => {
     const neutral = screen.getAllByRole('button', { name: /level 0 regular, neutral/i })[0];
     expect(neutral).toBeDefined();
     await user.click(neutral!);
-    await user.click(screen.getByRole('button', { name: '90%' }));
-    await user.click(screen.getByRole('button', { name: /launch fleet/i }));
+    expect(screen.getByRole('button', { name: 'Send (Q)' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: /level 0 regular, player/i }));
+    await user.click(screen.getByRole('button', { name: '75%' }));
+    await user.click(screen.getByRole('button', { name: 'Send (Q)' }));
+    await user.click(neutral!);
     await user.click(screen.getByRole('button', { name: 'Voyages' }));
     expect(screen.getByRole('dialog', { name: 'Voyages' })).toHaveTextContent(/energy/i);
     await user.click(screen.getByRole('button', { name: /resolve next arrival/i }));

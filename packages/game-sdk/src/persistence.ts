@@ -1,4 +1,5 @@
 import type { PlayerSession } from './types';
+import { mergeExploredChunks, validateExplorationOrigin } from './exploration';
 
 export const SESSION_STORAGE_PREFIX = 'infinite-stellar:session:v1';
 
@@ -39,7 +40,15 @@ export function parsePlayerSession(raw: string): PlayerSession | null {
     ) {
       return null;
     }
-    return parsed as PlayerSession;
+    const session = parsed as PlayerSession;
+    if (session.strategy?.exploredChunks !== undefined) {
+      if (!Array.isArray(session.strategy.exploredChunks)) return null;
+      session.strategy.exploredChunks = mergeExploredChunks(session.strategy.exploredChunks);
+    }
+    if (session.strategy?.explorationOrigin !== undefined) {
+      session.strategy.explorationOrigin = validateExplorationOrigin(session.strategy.explorationOrigin);
+    }
+    return session;
   } catch {
     return null;
   }
