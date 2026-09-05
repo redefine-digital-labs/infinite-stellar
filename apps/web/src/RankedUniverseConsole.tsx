@@ -15,6 +15,8 @@ import { StatusPill } from './components';
 import { MapPlanetGlyph } from './MapPlanetGlyph';
 import { MapExplorationCoverage } from './MapExplorationCoverage';
 import { MapVoyages } from './MapVoyages';
+import { MapPlanetBodies } from './MapPlanetBodies';
+import { MIN_PLANET_CAMERA_RADIUS, biomeFromMap, planetCosmetic, planetDetail, planetGlyphStyle, planetWorldRadius } from './planet-rendering';
 import { mapPosition, mapToWorld, worldPixelScale, zoomAtMapPoint } from './map-camera';
 import { useMapViewport } from './use-map-viewport';
 import type { RankedMiningSnapshot, RankedBackupSnapshot, RankedBackupDownload } from './use-ranked-map';
@@ -55,7 +57,7 @@ interface PanGesture {
   height: number;
 }
 
-const MIN_RADIUS = 120;
+const MIN_RADIUS = MIN_PLANET_CAMERA_RADIUS;
 const ZOOM_FACTOR = 1.25;
 
 function compact(value: bigint): string {
@@ -138,6 +140,20 @@ export function RankedUniverseConsole({
 
   const selected = map.planets.find((planet) => planet.objectId === selectedId);
   const target = map.planets.find((planet) => planet.objectId === targetId);
+  const [planetRendererReady, setPlanetRendererReady] = useState(false);
+  const mapScale = worldPixelScale(camera, mapViewport);
+  const voyageEndpoints = new Set(map.voyages.flatMap((voyage) => [voyage.fromPlanetId, voyage.toPlanetId]));
+  const displayedPlanets = map.planets.flatMap((planet) => {
+    const detail = planetDetail(planet.level, mapScale, planet.isHome || planet.owner === 'player' ||
+      planet.objectId === selectedId || planet.objectId === targetId || voyageEndpoints.has(planet.objectId), map.planetRarity);
+    return detail.visible ? [{ planet, detail, biome: biomeFromMap(planet.spaceType, planet.biomebase) }] : [];
+  }).sort((a, b) => b.planet.level - a.planet.level);
+  const planetBodies = displayedPlanets.map(({ planet, detail, biome }) => {
+    const point = position(planet);
+    return { id: planet.locationId, x: parseFloat(point.left) / 100 * mapViewport.width,
+      y: parseFloat(point.top) / 100 * mapViewport.height, radius: detail.radius, opacity: detail.bodyOpacity,
+      biome, level: planet.level, planetType: planet.planetType };
+  });
   const maximumRadius = Math.max(MIN_RADIUS, map.worldRadius * 1.15);
   const zoom = Math.max(1, Math.round((maximumRadius / camera.radius) * 100));
   const backupBusy = backup?.phase === 'exporting' || backup?.phase === 'importing';
@@ -268,7 +284,7 @@ export function RankedUniverseConsole({
         </div>
         <div
           ref={mapRef}
-          className={`star-map ${isPanning ? 'is-panning' : ''} ${relocatingExplorer ? 'is-aiming' : ''}`}
+          className={`star-map ${planetRendererReady ? 'has-planet-renderer' : ''} ${isPanning ? 'is-panning' : ''} ${relocatingExplorer ? 'is-aiming' : ''}`}
           tabIndex={0}
           aria-label="Ranked star map. Drag empty space to pan; use wheel or plus and minus to zoom."
           onPointerDown={beginPan}
@@ -281,31 +297,38 @@ export function RankedUniverseConsole({
         >
           <MapExplorationCoverage chunks={map.exploredChunks ?? []} active={mining.chunks ?? []}
             origin={mining.origin ?? map.explorationOrigin} centerX={camera.centerX} centerY={camera.centerY} radius={camera.radius} viewport={mapViewport} />
+          <MapPlanetBodies planets={planetBodies} viewport={mapViewport} onReady={setPlanetRendererReady} />
           {relocatingExplorer && <div className="aim-status" role="status">
             <strong>Click the map to move the explorer. This does not send a fleet.</strong>
             {explorerError && <span>{explorerError}</span>}
             <button type="button" onClick={() => setRelocatingExplorer(false)}>Cancel explorer placement (Esc)</button>
           </div>}
-          <span className="map-ring ring-a" aria-hidden="true" />
-          <span className="map-ring ring-b" aria-hidden="true" />
           <span className="map-crosshair map-crosshair-x" aria-hidden="true" />
           <span className="map-crosshair map-crosshair-y" aria-hidden="true" />
-          {map.planets.map((planet) => (
+          {displayedPlanets.map(({ planet, detail, biome }) => (
             <button
               key={planet.objectId}
               type="button"
               className={`map-planet owner-${planet.owner} space-${planet.spaceType.toLowerCase()} ${planet.planetType === 'SpacetimeRip' ? 'type-spacetime-rip' : ''} ${selectedId === planet.objectId ? 'is-selected' : ''} ${targetId === planet.objectId ? 'is-targeted' : ''} ${planet.materialized ? '' : 'is-unmaterialized'}`}
-              style={{ ...position(planet), width: 22 + planet.level * 3, height: 22 + planet.level * 3 }}
+              data-detail={detail.simplified ? 'point' : detail.showResources ? 'resources' : 'body'}
+              style={{ ...position(planet), ...planetGlyphStyle(detail) }}
               onClick={() => {
                 setSelectedId(planet.objectId);
                 setTargetId(undefined);
                 setFocusedPanel('command');
                 setVisiblePanels((current) => current.includes('command') ? current : [...current, 'command']);
               }}
-              onDoubleClick={() => setCamera({ centerX: planet.x, centerY: planet.y, radius: MIN_RADIUS })}
+              onDoubleClick={() => setCamera({ centerX: planet.x, centerY: planet.y,
+                radius: Math.max(MIN_RADIUS, Math.min(camera.radius,
+                  Math.min(mapViewport.width, mapViewport.height) * 0.46 * planetWorldRadius(planet.level, map.planetRarity) / 24)) })}
               aria-label={`${planetName(planet)}, level ${planet.level}, ${planet.owner}, ${planet.materialized ? 'onchain' : 'not yet onchain'}`}
             ><MapPlanetGlyph name={planetName(planet)} level={planet.level} planetType={planet.planetType}
               energyFraction={planet.energyCapacity > 0n ? Number(planet.energy * 1000n / planet.energyCapacity) / 1000 : 0}
+              energy={planet.energy > 0n ? compact(planet.energy) : undefined}
+              silver={planet.silver > 0n ? compact(planet.silver) : undefined} owned={planet.owner !== 'neutral'}
+              showResources={detail.showResources || selectedId === planet.objectId || targetId === planet.objectId}
+              showFacility={detail.showFacility} simplified={detail.simplified}
+              fallbackColor={planetCosmetic(planet.locationId, biome, planet.level).fallbackColor}
               selected={selectedId === planet.objectId} targeted={targetId === planet.objectId} /></button>
           ))}
           <svg className="voyage-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -392,6 +415,11 @@ export function RankedUniverseConsole({
             </div>
           </div>
           {selected ? <RankedPlanetReadout label="SELECTED PLANET" planet={selected} /> : <p>Select a known Planet.</p>}
+          {selected && <button className="planet-focus" type="button" onClick={() => {
+            setCamera({ centerX: selected.x, centerY: selected.y, radius: Math.max(MIN_RADIUS,
+              Math.min(mapViewport.width, mapViewport.height) * 0.46 * planetWorldRadius(selected.level, map.planetRarity) / 24) });
+            setVisiblePanels([]);
+          }}>Focus planet</button>}
           {target && <RankedPlanetReadout label="TARGET" planet={target} />}
           <div className="ranked-command-lock">
             <strong>Ranked writes remain sealed</strong>

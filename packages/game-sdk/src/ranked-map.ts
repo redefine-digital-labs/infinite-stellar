@@ -130,6 +130,8 @@ export interface RankedMapVoyage {
 export interface RankedMapView {
   identity: RankedMapIdentity;
   worldRadius: number;
+  /** Approximate density for presentation only; derived from the committed hash threshold. */
+  planetRarity?: number;
   snapshotFingerprint: string;
   maxEventCheckpoint: string | null;
   planets: RankedMapPlanet[];
@@ -559,6 +561,7 @@ export function mergeRankedPrivateMap(
     exploredChunks: parsed.exploredChunks ?? [],
     explorationOrigin: parsed.explorationOrigin,
     worldRadius: Number(projection.manifest.worldRadius),
+    planetRarity: Number(ROUND5_FIELD_MODULUS) / Number(projection.manifest.planetHashThreshold),
     snapshotFingerprint: projection.snapshotFingerprint,
     maxEventCheckpoint: projection.maxEventCheckpoint,
     planets: planets.sort((left, right) => left.locationId.localeCompare(right.locationId)),

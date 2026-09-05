@@ -20,6 +20,17 @@ function setViewport(width: number, height: number) {
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: height });
 }
 
+// Low-level planets are deliberately absent at distant zoom; interaction tests
+// must zoom them into view just as a player does, not bypass visibility rules.
+function zoomToPlanet(name: RegExp): HTMLElement {
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const planet = screen.queryAllByRole('button', { name })[0];
+    if (planet) return planet;
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }));
+  }
+  return screen.getByRole('button', { name });
+}
+
 function InteractiveConsole(props: StrategyConsoleProps) {
   const [game, setGame] = useState(props.game);
   return <StrategyConsole {...props} game={game}
@@ -55,6 +66,20 @@ afterEach(() => {
 });
 
 describe('map-first floating strategy controls', () => {
+  it('culls distant low-level planets, reveals them after zoom and focuses a body on double click', () => {
+    setViewport(393, 720);
+    const props = strategyProps();
+    render(<StrategyConsole {...props} />);
+    const target = props.game.planets.find((planet) => planet.discovered && !planet.isHome)!;
+    expect(screen.queryByRole('button', { name: new RegExp(`${target.name}, level`) })).not.toBeInTheDocument();
+    const body = zoomToPlanet(new RegExp(`${target.name}, level`));
+    const before = parseFloat(body.style.getPropertyValue('--planet-diameter'));
+    fireEvent.doubleClick(body);
+    expect(parseFloat(body.style.getPropertyValue('--planet-diameter'))).toBeGreaterThan(before);
+    expect(body.style.left).toBe('50%');
+    expect(body.style.top).toBe('50%');
+    expect(props.onMoveIntent).not.toHaveBeenCalled();
+  });
   it('does not auto-fit or reset the explorer label on each completed scan batch', () => {
     const props = strategyProps();
     const { rerender } = render(<StrategyConsole {...props} mining={{ ...props.mining, status: 'mining', checked: 0, total: 1024 }} />);
@@ -164,7 +189,7 @@ describe('map-first floating strategy controls', () => {
     expect(screen.queryByRole('dialog', { name: 'Planet & fleet' })).not.toBeInTheDocument();
     expect(screen.getByLabelText(/star map camera/i)).toHaveFocus();
     expect(screen.getByRole('button', { name: 'Cancel aiming (Esc)' })).toBeVisible();
-    await user.click(screen.getByRole('button', { name: new RegExp(`${target.name}, level`, 'i') }));
+    await user.click(zoomToPlanet(new RegExp(`${target.name}, level`, 'i')));
     expect(props.onMoveIntent).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ energyPercentage: 75, targetId: target.id }));
     expect(screen.getByRole('dialog', { name: 'Planet & fleet' })).toBeVisible();
   });
@@ -194,7 +219,7 @@ describe('map-first floating strategy controls', () => {
     fireEvent.change(screen.getByLabelText('Fleet silver percentage'), { target: { value: '40' } });
     await user.selectOptions(screen.getByLabelText('Fleet cargo or ship'), 'relic');
     await user.click(screen.getByRole('button', { name: 'Send (Q)' }));
-    await user.click(screen.getByRole('button', { name: new RegExp(`${target.name}, level`, 'i') }));
+    await user.click(zoomToPlanet(new RegExp(`${target.name}, level`, 'i')));
     expect(props.onMoveIntent).toHaveBeenCalledExactlyOnceWith({ kind: 'fleet', artifactId: 'relic', sourceId: 'home',
       targetId: target.id, energyPercentage: 75, silverPercentage: 40 });
   });
@@ -211,7 +236,7 @@ describe('map-first floating strategy controls', () => {
     await user.selectOptions(screen.getByLabelText('Fleet cargo or ship'), ship.id);
     expect(screen.getByLabelText('Fleet energy percentage')).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Move ship (Q)' }));
-    await user.click(screen.getByRole('button', { name: new RegExp(`${target.name}, level`, 'i') }));
+    await user.click(zoomToPlanet(new RegExp(`${target.name}, level`, 'i')));
     expect(props.onMoveIntent).toHaveBeenCalledExactlyOnceWith({ kind: 'ship', artifactId: ship.id, sourceId: 'home',
       targetId: target.id, energyPercentage: 50, silverPercentage: 0 });
   });
@@ -245,7 +270,7 @@ describe('map-first floating strategy controls', () => {
     const energy = screen.getByLabelText('Fleet energy percentage');
     expect(energy).toHaveValue('50');
     fireEvent.change(energy, { target: { value: '75' } });
-    await user.click(screen.getByRole('button', { name: new RegExp(`${target.name}, level`, 'i') }));
+    await user.click(zoomToPlanet(new RegExp(`${target.name}, level`, 'i')));
     expect(props.onChoosePlanet).toHaveBeenLastCalledWith(target.id);
     expect(props.onSetTarget).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Send (Q)' })).toBeDisabled();
@@ -253,7 +278,7 @@ describe('map-first floating strategy controls', () => {
     expect(screen.getByLabelText('Fleet energy percentage')).toHaveValue('75');
     await user.click(screen.getByRole('button', { name: 'Send (Q)' }));
     expect(props.onMoveIntent).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: new RegExp(`${target.name}, level`, 'i') }));
+    await user.click(zoomToPlanet(new RegExp(`${target.name}, level`, 'i')));
     expect(props.onMoveIntent).toHaveBeenCalledExactlyOnceWith({ kind: 'fleet', artifactId: undefined, energyPercentage: 75, silverPercentage: 0, sourceId: 'home', targetId: target.id });
   });
 
@@ -288,7 +313,7 @@ describe('map-first floating strategy controls', () => {
     render(<InteractiveConsole {...props} />);
     const home = screen.getByRole('button', { name: /first-light, level/i });
     const targetPlanet = props.game.planets.find((planet) => planet.discovered && !planet.isHome)!;
-    const target = screen.getByRole('button', { name: new RegExp(`${targetPlanet.name}, level`, 'i') });
+    const target = zoomToPlanet(new RegExp(`${targetPlanet.name}, level`, 'i'));
     fireEvent.pointerDown(home, { pointerId: 11, button: 0, isPrimary: true, clientX: 300, clientY: 300 });
     fireEvent.pointerMove(target, { pointerId: 11, clientX: 500, clientY: 400 });
     fireEvent.pointerCancel(target, { pointerId: 11 });
@@ -308,7 +333,7 @@ describe('map-first floating strategy controls', () => {
     props.game = { ...props.game, planets: props.game.planets.map((planet) => planet.id === target.id ? { ...planet, x: 100_000, y: 100_000 } : planet) };
     render(<InteractiveConsole {...props} />);
     await user.click(screen.getByRole('button', { name: 'Send (Q)' }));
-    await user.click(screen.getByRole('button', { name: new RegExp(`${target.name}, level`, 'i') }));
+    await user.click(zoomToPlanet(new RegExp(`${target.name}, level`, 'i')));
     expect(screen.getByText(/not enough energy survives/i)).toBeInTheDocument();
     expect(props.onMoveIntent).not.toHaveBeenCalled();
     expect(screen.getByLabelText(/star map camera/i)).toHaveClass('is-aiming');
@@ -378,7 +403,7 @@ describe('map-first floating strategy controls', () => {
     render(<StrategyConsole {...strategyProps()} />);
 
     expect(screen.queryAllByRole('dialog')).toHaveLength(0);
-    await user.click(screen.getAllByRole('button', { name: /level 0 regular, neutral/i })[0]!);
+    await user.click(zoomToPlanet(/level 0 regular, neutral/i));
     expect(screen.getByRole('dialog', { name: 'Planet & fleet' })).toBeInTheDocument();
     expect(screen.getByLabelText(/move planet & fleet panel/i)).toHaveAttribute('tabindex', '0');
   });
@@ -489,7 +514,7 @@ describe('map-first floating strategy controls', () => {
     fireEvent.keyDown(map, { key: '+' });
     const route = container.querySelector('.map-route-preview')!;
     const origin = screen.getByRole('button', { name: /first-light, level/i });
-    const destination = screen.getByRole('button', { name: new RegExp(`${target.name}, level`, 'i') });
+    const destination = zoomToPlanet(new RegExp(`${target.name}, level`, 'i'));
     expect(Number(route.getAttribute('x1'))).toBeCloseTo(Number.parseFloat(origin.style.left));
     expect(Number(route.getAttribute('y2'))).toBeCloseTo(Number.parseFloat(destination.style.top));
     expect(destination.querySelector('.planet-map-label')).toHaveTextContent('TARGET');

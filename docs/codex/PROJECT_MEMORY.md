@@ -4,6 +4,7 @@ This file contains stable facts that should survive individual implementation ph
 
 ## Product invariants
 
+- The owner reconfirmed on September 5: preserve and combine Dark Forest's mature core gameplay, visual hierarchy, controls and entry flow. Concentrate product innovation on Soul integration and season operations, not invented replacements for DF foundations or extra onboarding ceremony. Soul/Seat authorization and production safety gates still apply.
 - Infinite Stellar is a Sui-native, zero-knowledge, fully onchain seasonal strategy game in pre-production. It has an experimental P0 Move foundation, a sealed Sui testnet interface canary, and a runnable local player vertical slice, but no playable ranked onchain release.
 - An address authorizes; a Soul is the persistent actor; Animacraft supplies accepted visual material; a Commander Projection freezes the seasonal Soul/visual/role/Seat binding; a fixed Season Seat controls a temporary Civilization and owns Planets through `owner_seat_id`.
 - One controller address may create at most one ranked Seat per league and season. Manifest-pinned registry parents and typed-key/shard vectors deterministically derive the Season Seat itself as the logical `ControllerLeagueSeasonSlot` and direct lookup. This is address-level fairness, not human-level Sybil resistance.
@@ -30,6 +31,7 @@ This file contains stable facts that should survive individual implementation ph
 - D-024 records the owner's authorization for GitHub updates and production-valid Sui mainnet engineering. It is not name clearance and does not waive proof, audit, client, operations, signer, or release gates. Custom domains, social/internet accounts, app-store listings, campaigns, events, commercial announcements, and promoted public releases remain blocked pending counsel and any required written consent; another rename may be required.
 - Public repository content and project operations use English.
 - Original repository content is MIT licensed; third-party assets and dependencies require their own provenance.
+- The owner explicitly allows GPL as well as MIT reuse and intends the product to remain fully open source. Preserve upstream attribution, license terms and corresponding-source obligations; do not present GPL-derived modules as MIT. The pinned DF renderer and procedural packages each have their own MIT license despite the root game's GPL license.
 
 ## Working-memory contract
 

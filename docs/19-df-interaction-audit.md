@@ -2,7 +2,8 @@
 
 ## Priority and evidence boundary
 
-Read the final **Foundation correction** section for the latest state. Earlier
+Read **Foundation correction** and **Original planet rendering and zoom detail**
+for the latest state. Earlier
 sections retain the defects and validation state at their recorded milestones;
 their words "unpublished" and "remaining" are historical, not current status.
 
@@ -23,9 +24,11 @@ the source audit as having played the owner's game.
 Source authority: official Round 5 snapshot
 [`d1e25ea`](https://github.com/darkforest-eth/darkforest-v0.6/tree/d1e25ead311697ecaa27ff648dac16a0d8cea15c).
 The separately published client at `009e6438` corroborates the key interactions.
-Read-only reference checkouts are outside the product repository. GPL source
-and assets are not copied into this MIT project; behavioral requirements and
-independent implementations are the deliverables.
+Read-only reference checkouts are outside the product repository. The initial
+behavioral audit used independent implementations. The owner subsequently
+authorized GPL and MIT reuse; the original renderer and procedural packages
+have individual MIT licenses and the planet-rendering adaptation below retains
+their notices. The root game's GPL code has not been imported by that adaptation.
 
 ## Confirmed source mismatches in the published baseline
 
@@ -327,3 +330,42 @@ validated private preimages, exact point-read existence, lifecycle/deadlines,
 source nonce, due arrivals and statement generation. This preparatory work is
 not wired to the client prover/signing journey and has not yet been validated
 end-to-end against actual Circom witnesses. It does not open ranked writes.
+
+## Original planet rendering and zoom detail
+
+The owner asked for the actual DF planet appearance, scale-dependent detail,
+and an entry flow closer to DF. The confirmed product direction is to preserve
+the mature DF experience and concentrate innovation on Soul integration and
+season operations. Both GPL and MIT reuse are approved with their obligations.
+
+`MapPlanetBodies` uses the original pinned MIT `PlanetProgram` fragment shader,
+required noise mixins, original biome palette and level-based cloud/terrain
+properties. This replaces the generic glossy CSS sphere for normal Planets.
+Source, modifications and full upstream licenses ship under `public/third-party`.
+Special facilities still have separate presentation; this is not the complete
+upstream renderer, nor a claim that every facility has been replaced.
+
+The shared camera now determines real screen radius using DF's level sizes
+and rarity scaling (ranked density comes from the manifest threshold). Subpixel
+low-level bodies are culled, smaller visible bodies fade, and resource text and
+facility markers appear at useful projected sizes. Home, owned, selected and
+in-flight endpoints remain navigable; keeping an owned anchor does not force
+all its resource text into the distant overview. Hidden nodes are removed from
+the hit-test DOM. Small visible nodes are painted above overlapping large ones.
+Zoom extends down to a close-up scale rather than stopping before low-level
+details can appear. Double-click focuses a body; compact panels also provide
+an explicit Focus planet action that clears the obstructing sheet.
+
+One WebGL2 canvas renders normal Planets, not one context per Planet. Camera
+changes repaint synchronously before DOM rings and labels; animation is bounded
+to 24 fps and pauses drawing in hidden tabs. Reduced motion freezes rotation.
+Unavailable/failed/lost GPU contexts leave the readable DOM fallback intact;
+unmount releases animation frames and GL objects. The local command log also
+avoids duplicate React keys from older repeated discovery entries.
+
+Actual browser checks cover mobile low-level close-up, visible land/ocean/clouds,
+Focus planet, distant overview and desktop resize/camera alignment. Unit tests
+cover radius/density, culling, level-dependent resources, selected anchors,
+same-paint camera updates, GL failure/loss/cleanup and click/drag command
+regressions at an appropriate zoom. New rendering does not modify simulation
+rules or ranked authority. Entry-flow simplification remains the next journey.

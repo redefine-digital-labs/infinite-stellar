@@ -5,6 +5,35 @@ Branch: `codex/dark-forest-parity`. No game-chain write was made.
 The sibling Soulidity handoff helper rejects this repository; this compact
 handoff uses the project skill's direct-file fallback.
 
+## Latest continuation: original renderer and DF product direction
+
+The foundation below was pushed as `5ef56b5` and deployed READY as
+`dpl_9K7HLDABHexGS4njbq2MmjXmaNV2`; evidence is
+`ops/deployments/vercel-production-2026-09-05-foundation-flight-fog.json`.
+
+The owner then requested DF-style zoom/detail, actual original planet visuals,
+and a simpler DF-like entry flow. They explicitly accept GPL and MIT reuse
+and want innovation focused on Soul integration and seasonal operations.
+These are standing facts in `PROJECT_MEMORY.md`, not optional design ideas.
+
+`MapPlanetBodies`, `planet-rendering` and `rendering/df-planet.frag.glsl` add
+the original MIT normal-planet shader and biome palette, one shared GPU canvas,
+level/density-based size, subpixel culling, faded resources and closer zoom.
+No shader context per Planet, no uploaded coordinates, no gameplay authority
+change. Public notices preserve the package-level licenses. Special facilities
+are not yet replaced by the original renderer. GPU fallback, context loss,
+cleanup and camera/DOM synchronization have regression coverage.
+
+Actual browser: mobile close-up shows original biome/cloud texture, Focus planet
+clears the obstructing sheet, desktop captured-pointer double-tap reaches 479%
+zoom, and 75% sending creates one moving 13.7K-energy Voyage. Temporary viewport
+overrides were reset. Final validation/release evidence belongs in CURRENT.md.
+
+Next: simplify the wallet/Soul/Seat/home entry journey against DF, including
+existing-Seat resume, before introducing new gameplay. Preserve required Sui
+authorization/finality and every production gate. Do not relabel demo shortcuts
+as a real ranked Season, or claim this partial renderer finishes full DF parity.
+
 ## Implemented and verified
 
 - New local games expose only Home. Verified Worker chunks reveal the rest.

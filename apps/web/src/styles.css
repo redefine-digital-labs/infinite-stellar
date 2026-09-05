@@ -1489,7 +1489,11 @@ code {
 /* Both simulation and chain maps share this presentation-only planet layer. */
 .planet-glyph {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 50%;
+  width: var(--planet-diameter, 22px);
+  height: var(--planet-diameter, 22px);
+  transform: translate(-50%, -50%);
   pointer-events: none;
   --surface-light: #a9d4dd;
   --surface-mid: #456481;
@@ -1505,21 +1509,35 @@ code {
 
 .planet-surface {
   position: absolute;
-  inset: 14%;
+  inset: 5%;
   border-radius: 50%;
   background:
     radial-gradient(ellipse at 30% 27%, #ffffffa6, transparent 24%),
     radial-gradient(ellipse at 65% 36%, #0b172450, transparent 35%),
     linear-gradient(135deg, var(--surface-light), var(--surface-mid) 45%, var(--surface-dark) 86%);
-  box-shadow: inset -3px -3px 5px #0009, 0 0 14px color-mix(in srgb, currentColor 35%, transparent);
-  border: 1px solid color-mix(in srgb, var(--surface-light) 45%, transparent);
+  opacity: var(--planet-opacity, 1);
+  box-shadow: inset -2px -2px 3px #0006;
 }
+
+.planet-bodies { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; }
+.has-planet-renderer .planet-glyph[data-kind="Regular"] .planet-surface { display: none; }
+.planet-glyph.is-simple .planet-surface { background: var(--surface-mid); box-shadow: none; }
+.planet-energy-value, .planet-silver-value {
+  position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap;
+  font: 500 11px/1.2 ui-monospace, monospace; font-variant-numeric: tabular-nums;
+  opacity: var(--planet-detail-opacity, 1); text-shadow: 0 1px 3px #000, 0 0 4px #000;
+}
+.planet-energy-value { top: calc(100% + 5px); color: #d5ded8; }
+.owner-neutral .planet-energy-value { color: #b7908e; }
+.planet-silver-value { bottom: calc(100% + 5px); color: #ebc361; }
+.planet-focus { margin-top: 10px; padding: 6px 10px; border: 1px solid #a3b7ac44; color: #c8d9d0;
+  background: transparent; font: 500 10px/1.2 ui-monospace, monospace; cursor: pointer; }
 
 .planet-energy-ring {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  opacity: 0.8;
+  opacity: var(--planet-detail-opacity, 0.8);
   background: conic-gradient(currentColor var(--energy-angle), #abcbe51a 0);
   mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
 }
@@ -1541,17 +1559,17 @@ code {
 
 .planet-map-label {
   position: absolute;
-  top: calc(100% + 14px);
+  top: calc(100% + 23px);
   left: 50%;
   display: grid;
-  gap: 4px;
+  gap: 3px;
   width: max-content;
   max-width: 190px;
-  padding: 6px 9px;
-  border: 1px solid #b5dce322;
-  border-radius: 4px;
+  padding: 3px 5px;
+  border: 0;
   color: #e3eef6;
-  background: #070d19eb;
+  background: transparent;
+  text-shadow: 0 1px 3px #000, 0 0 5px #000;
   text-align: center;
   transform: translateX(-50%);
   opacity: 0;
@@ -1586,7 +1604,9 @@ code {
 
 .map-planet.type-spacetime-rip::before {
   position: absolute;
-  inset: -5px;
+  left: 50%; top: 50%; width: var(--planet-diameter); height: var(--planet-diameter);
+  margin-left: calc(var(--planet-diameter) / -2); margin-top: calc(var(--planet-diameter) / -2);
+  opacity: var(--planet-opacity, 1);
   border: 1px solid rgba(137, 204, 255, 0.75);
   border-right-color: rgba(189, 117, 255, 0.9);
   border-left-color: rgba(107, 255, 211, 0.85);
@@ -1613,7 +1633,6 @@ code {
 .map-planet.is-targeted::after {
   border-color: var(--amber);
   border-style: dashed;
-  animation: orbit 5s linear infinite;
 }
 
 .voyage-layer {

@@ -593,6 +593,7 @@ export function GameShell({
         <footer className="footer">
           <span>MAINNET TARGET · RANKED WRITES FAIL-CLOSED</span>
           <span>BUILT ON SUI · POWERED BY SOULIDITY</span>
+          <a href="/third-party/df-renderer-LICENSE.txt" target="_blank" rel="noreferrer">DF RENDERER · MIT</a>
         </footer>
       )}
     </div>

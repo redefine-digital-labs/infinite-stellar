@@ -27,6 +27,8 @@ import { FloatingPanel, type FloatingPanelPosition } from './FloatingPanel';
 import { MapPlanetGlyph } from './MapPlanetGlyph';
 import { MapExplorationCoverage } from './MapExplorationCoverage';
 import { MapVoyages } from './MapVoyages';
+import { MapPlanetBodies } from './MapPlanetBodies';
+import { MIN_PLANET_CAMERA_RADIUS, planetDetail, planetGlyphStyle, planetCosmetic, planetWorldRadius } from './planet-rendering';
 import { mapPosition, mapToWorld, worldToMap, worldPixelScale, zoomAtMapPoint } from './map-camera';
 import { useMapViewport } from './use-map-viewport';
 import type { PlayerVaultState, StrategyMiningState } from './use-player-journey';
@@ -57,7 +59,7 @@ const DEFAULT_ORDER: PanelId[] = ['mission', 'artifacts', 'voyages', 'log', 'com
 const MOBILE_PANEL_BREAKPOINT = 560;
 const TOP_HUD_CLEARANCE = 140;
 const PANEL_LAYOUT_KEY = 'infinite-stellar:strategy-panels:v2';
-const MIN_CAMERA_RADIUS = 120;
+const MIN_CAMERA_RADIUS = MIN_PLANET_CAMERA_RADIUS;
 const HOME_CAMERA_RADIUS = 260;
 const CAMERA_ZOOM_FACTOR = 1.25;
 const PANEL_DIMENSIONS: Record<PanelId, { width: number; safeHeight: number }> = {
@@ -196,6 +198,7 @@ export function StrategyConsole({
   const [compactPanels, setCompactPanels] = useState(() => viewportSize().width <= MOBILE_PANEL_BREAKPOINT);
   const [isPanning, setIsPanning] = useState(false);
   const mapPan = useRef<MapPanGesture | undefined>(undefined);
+  const lastPlanetTap = useRef<{ id: string; at: number } | undefined>(undefined);
   const { ref: mapRef, viewport: mapViewport } = useMapViewport();
 
   const source = game.planets.find((planet) => planet.id === (aim?.sourceId ?? game.selectedPlanetId));
@@ -262,6 +265,18 @@ export function StrategyConsole({
   const projectionCamera = { ...camera, radius: cameraRadius };
   const project = (point: { x: number; y: number }) => worldToMap(point, projectionCamera, mapViewport);
   const mapScale = worldPixelScale(projectionCamera, mapViewport);
+  const [planetRendererReady, setPlanetRendererReady] = useState(false);
+  const voyageEndpoints = new Set(game.voyages.flatMap((voyage) => [voyage.fromPlanetId, voyage.toPlanetId]));
+  const displayedPlanets = game.planets.filter((planet) => planet.discovered).flatMap((planet) => {
+    const detail = planetDetail(planet.level, mapScale, planet.isHome || planet.owner === 'player' ||
+      planet.id === game.selectedPlanetId || planet.id === target?.id || voyageEndpoints.has(planet.id));
+    return detail.visible ? [{ planet, detail }] : [];
+  }).sort((a, b) => b.planet.level - a.planet.level);
+  const planetBodies = displayedPlanets.map(({ planet, detail }) => {
+    const point = project(planet);
+    return { id: planet.locationId, x: point.x / 100 * mapViewport.width, y: point.y / 100 * mapViewport.height,
+      radius: detail.radius, opacity: detail.bodyOpacity, biome: planet.biome, level: planet.level, planetType: planet.planetType };
+  });
   const cursorWorld = aimCursor && mapToWorld(aimCursor, projectionCamera, mapViewport);
   const freeSpace = source?.owner === 'player' && !source.destroyed && moveMode.kind !== 'ship' && aim?.mode.kind !== 'wormhole'
     ? previewStrategyFreeSpace(game, source.id, cursorWorld
@@ -382,7 +397,7 @@ export function StrategyConsole({
     </span>;
   };
 
-  const pointerPlanet = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const pointerPlanet = (event: Pick<ReactPointerEvent<HTMLDivElement>, 'clientX' | 'clientY' | 'target'>) => {
     // Pointer capture keeps drag events on the map, so hit-test the release
     // position rather than treating the capture element as the destination.
     const element = document.elementFromPoint?.(event.clientX, event.clientY) ?? event.target as Element;
@@ -468,7 +483,8 @@ export function StrategyConsole({
     setCamera((current) => ({
       centerX: planet.x,
       centerY: planet.y,
-      radius: Math.min(current.radius, HOME_CAMERA_RADIUS),
+      radius: Math.max(MIN_CAMERA_RADIUS, Math.min(current.radius,
+        Math.min(mapViewport.width, mapViewport.height) * 0.46 * planetWorldRadius(planet.level) / 24)),
       zoomReference: current.zoomReference,
       mode: 'manual',
       homeId: home?.id,
@@ -576,6 +592,16 @@ export function StrategyConsole({
     if (mapPan.current?.pointerId !== event.pointerId) return;
     const gesture = mapPan.current;
     if (Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY) <= 5) {
+      // Captured neutral-planet pointers may retarget native dblclick to the map.
+      // Track the two completed taps as well; compact sheets retain Focus planet.
+      const now = performance.now();
+      if (gesture.planetId && lastPlanetTap.current?.id === gesture.planetId && now - lastPlanetTap.current.at < 400) {
+        const planet = game.planets.find((candidate) => candidate.id === gesture.planetId);
+        if (planet) focusPlanet(planet);
+        lastPlanetTap.current = undefined;
+      } else {
+        lastPlanetTap.current = gesture.planetId ? { id: gesture.planetId, at: now } : undefined;
+      }
       onChoosePlanet(gesture.planetId);
       if (gesture.planetId) focusPanel('command');
     }
@@ -741,7 +767,7 @@ export function StrategyConsole({
 
         <div
           ref={mapRef}
-          className={`star-map ${isPanning ? 'is-panning' : ''} ${aim || relocatingExplorer ? 'is-aiming' : ''}`}
+          className={`star-map ${planetRendererReady ? 'has-planet-renderer' : ''} ${isPanning ? 'is-panning' : ''} ${aim || relocatingExplorer ? 'is-aiming' : ''}`}
           aria-label="Star map camera. Drag empty space or use arrow keys to pan; wheel or brackets zoom; H for home, F to fit. Q to send; numbers and minus/equal set energy, Shift sets silver; Escape cancels."
           tabIndex={0}
           onWheel={handleMapWheel}
@@ -750,6 +776,11 @@ export function StrategyConsole({
           onPointerDown={beginMapPan}
           onPointerMove={continueMapPan}
           onPointerUp={endMapPan}
+          onDoubleClick={(event) => {
+            if (aim || relocatingExplorer) return;
+            const planet = pointerPlanet(event);
+            if (planet) focusPlanet(planet);
+          }}
           onPointerCancel={(event) => {
             suppressClick.current = true;
             cancelAim();
@@ -760,8 +791,7 @@ export function StrategyConsole({
         >
           <MapExplorationCoverage chunks={game.exploredChunks ?? []} active={mining.chunks ?? []}
             origin={mining.origin ?? game.explorationOrigin} centerX={camera.centerX} centerY={camera.centerY} radius={cameraRadius} viewport={mapViewport} />
-          <span className="map-ring ring-a" aria-hidden="true" />
-          <span className="map-ring ring-b" aria-hidden="true" />
+          <MapPlanetBodies planets={planetBodies} viewport={mapViewport} onReady={setPlanetRendererReady} />
           <span className="map-crosshair map-crosshair-x" aria-hidden="true" />
           <span className="map-crosshair map-crosshair-y" aria-hidden="true" />
           {source && freeSpace && freeSpace.maxDistance > 0 && <span className="energy-reach-ring"
@@ -780,16 +810,16 @@ export function StrategyConsole({
               aria-hidden="true"
             />
           ))}
-          {game.planets.filter((planet) => planet.discovered).map((planet) => {
+          {displayedPlanets.map(({ planet, detail }) => {
             const selected = planet.id === game.selectedPlanetId;
             const targeted = planet.id === target?.id;
-            const size = 22 + planet.level * 3;
             return (
               <button
                 className={`map-planet owner-${planet.owner} space-${planet.spaceType.toLowerCase()} ${planet.planetType === 'SpacetimeRip' ? 'type-spacetime-rip' : ''} ${selected ? 'is-selected' : ''} ${targeted ? 'is-targeted' : ''}`}
                 key={planet.id}
                 data-planet-id={planet.id}
-                style={{ ...mapPosition(planet, projectionCamera, mapViewport), width: size, height: size }}
+                data-detail={detail.simplified ? 'point' : detail.showResources ? 'resources' : 'body'}
+                style={{ ...mapPosition(planet, projectionCamera, mapViewport), ...planetGlyphStyle(detail) }}
                 type="button"
                 onClick={() => {
                   if (suppressClick.current) { suppressClick.current = false; return; }
@@ -798,12 +828,15 @@ export function StrategyConsole({
                   else onChoosePlanet(planet.id);
                 }}
                 onPointerEnter={() => { if (aim) setHoveredId(planet.id); }}
-                onDoubleClick={() => focusPlanet(planet)}
                 aria-label={`${planet.name}, level ${planet.level} ${planetTypeLabel(planet)}, ${planet.owner}, energy ${Math.floor(planet.energy)}`}
                 aria-pressed={selected || targeted}
               >
                 <MapPlanetGlyph name={planet.name} level={planet.level} planetType={planet.planetType}
                   energyFraction={planet.energyCapacity > 0 ? planet.energy / planet.energyCapacity : 0}
+                  energy={planet.energy > 0 ? compact(planet.energy) : undefined}
+                  silver={planet.silver > 0 ? compact(planet.silver) : undefined} owned={planet.owner !== 'neutral'}
+                  showResources={detail.showResources || selected || targeted} showFacility={detail.showFacility} simplified={detail.simplified}
+                  fallbackColor={planetCosmetic(planet.locationId, planet.biome, planet.level).fallbackColor}
                   selected={selected} targeted={targeted} />
               </button>
             );
@@ -880,6 +913,9 @@ export function StrategyConsole({
           <div className="command-section">
             <span className="command-label">{aim ? 'ORIGIN' : 'SELECTED PLANET'}</span>
             {source ? <PlanetReadout planet={source} selected /> : <p>Select any planet to inspect it.</p>}
+            {source && !aim && <button className="planet-focus" type="button" onClick={() => {
+              focusPlanet(source); if (compactPanels) setVisiblePanels([]);
+            }}>Focus planet</button>}
           </div>
           <div className="command-section target-section">
             <span className="command-label">TARGET</span>
@@ -1024,7 +1060,7 @@ export function StrategyConsole({
 
       {panelFrame('log', 'FINALIZED LOCAL EVENTS', 'log-floating-panel', (
         <div className="command-log floating-command-log">
-          {game.log.slice(0, 8).map((entry) => <div className={`log-${entry.tone}`} key={entry.id}><time>{clock(entry.at)}</time><span>{entry.message}</span></div>)}
+          {game.log.slice(0, 8).map((entry, index) => <div className={`log-${entry.tone}`} key={`${entry.id}:${index}`}><time>{clock(entry.at)}</time><span>{entry.message}</span></div>)}
         </div>
       ))}
 

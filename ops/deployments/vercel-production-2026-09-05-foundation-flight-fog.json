@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "surface": "vercel",
+  "environment": "production",
+  "project": "infinite-stellar",
+  "createdAt": "2026-09-05T12:51:06.778Z",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "branch": "codex/dark-forest-parity",
+    "commit": "5ef56b5a199e3577955d90d5a1c8f4d67e2926fc"
+  },
+  "deployment": {
+    "id": "dpl_9K7HLDABHexGS4njbq2MmjXmaNV2",
+    "status": "READY",
+    "immutableUrl": "https://infinite-stellar-mnypd952h-soulidity-ai.vercel.app",
+    "productionAlias": "https://infinite-stellar.vercel.app"
+  },
+  "verification": {
+    "localNodeVersion": "26.8.1",
+    "vercelNodeVersion": "24.x",
+    "typecheck": "passed",
+    "lint": "passed",
+    "documentationLint": "passed",
+    "typescriptTests": { "web": 109, "gameSdk": 124, "prover": 38, "total": 271 },
+    "productionBuild": "passed",
+    "httpStatus": 200,
+    "securityHeaders": "passed",
+    "browserSmoke": [
+      "fresh localhost starts with Home only; actual Worker discovers 25 planets and 371712 square units without resetting zoom",
+      "264-second local fleet continues after refresh and naturally conquers with 11607 energy without manual resolve or advance",
+      "conquest persists through another refresh",
+      "production alias preserves legacy visited target and shows live countdown 256 to 248 to 240 seconds",
+      "production displays DF ROUND 5 RULESET and PROVER GATED NO MAINNET MANIFEST"
+    ],
+    "scopeNote": "Local simulation only. Ranked preparation has unit coverage but no new real Circom or two-wallet rehearsal. Repeated discovery log keys were found during localhost QA and corrected in the subsequent rendering increment."
+  },
+  "mainnetReleaseGate": { "productionProofVerifiersReady": false, "gameTransactionSubmitted": false, "decision": "blocked_fail_closed" },
+  "rollback": {
+    "deploymentId": "dpl_57v5xdB1v58ff6XdHcnQZDXuHiUP",
+    "sourceCommit": "8b5880c4431d29a7be62dc0b20d0b3068d3b323e",
+    "chainStateChanged": false,
+    "privateDataPolicy": "Preserve device vaults, portable backups and simulation storage."
+  }
+}
