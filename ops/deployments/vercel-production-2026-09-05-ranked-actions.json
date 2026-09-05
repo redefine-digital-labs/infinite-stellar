@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "surface": "vercel",
+  "environment": "production",
+  "project": "infinite-stellar",
+  "createdAt": "2026-09-05T14:35:37Z",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "branch": "codex/dark-forest-parity",
+    "commit": "b052e18901174993243effb1e33f65899fcb4135"
+  },
+  "deployment": {
+    "id": "dpl_5n6Atjg4u5RzK7E8LC5ygNXAn6Dj",
+    "status": "READY",
+    "immutableUrl": "https://infinite-stellar-lnwz6sb21-soulidity-ai.vercel.app",
+    "productionAlias": "https://infinite-stellar.vercel.app"
+  },
+  "capability": {
+    "rankedMapHomeAndFleetConsumerConnected": true,
+    "freshChainSeatSelectedPlanetClockReads": true,
+    "fourActionContextReadsWithFixedDeadline": true,
+    "explicitExactByteWalletSigning": true,
+    "publicOnlyDigestJournalBeforeTransmission": true,
+    "crossTabWebLocksRequired": true,
+    "indexedFinalityBeforeMapRefresh": true,
+    "digestRecoveryNeverResignsOrResends": true,
+    "productionProofArtifactsApproved": false,
+    "rankedMainnetWrites": false,
+    "chainTransactionsSignedOrSubmitted": 0
+  },
+  "verification": {
+    "node": "24.20.0",
+    "typecheck": "passed",
+    "lint": "passed",
+    "documentationLint": "passed",
+    "productionBuild": "passed",
+    "typescriptTests": { "web": 183, "gameSdk": 163, "prover": 38, "total": 384 },
+    "realCircuitIntegration": { "command": "npm run circuits:test:ranked", "testsPassed": 3, "setup": "development-only" },
+    "realReadOnlyMainnetCheck": {
+      "command": "npm run test:chain-read",
+      "testsPassed": 1,
+      "rpc": "https://fullnode.mainnet.sui.io:443",
+      "checks": ["Pinned chain identifier", "Canonical shared Clock identity, type and exact BCS", "Two nondecreasing observations close to wall time"],
+      "gameObjectsVerified": false
+    },
+    "lifecycleRegression": [
+      "All three action kinds simulate with checks enabled, persist digest before execution and reconcile exact indexed events/effects.",
+      "Nonce, owner, expiry, deployment and controller changes during wallet signing cannot transmit.",
+      "Wallet-altered bytes and failed journal persistence prevent transmission.",
+      "Response-loss remount recovery reads the same digest without signing or executing again.",
+      "Mismatched finality and unrelated failed transaction digests retain pending state.",
+      "Verified finality refreshes the map even when journal cleanup fails; retained journals block another send.",
+      "Cancellation and release gates stop proof/signature requests; no optimistic chain ownership update."
+    ],
+    "localBrowserUi": {
+      "harness": "apps/web/ranked-actions-development.html",
+      "publicFixtureOnly": true,
+      "walletRpcProofOrSubmission": false,
+      "source": "IS-5BF92",
+      "target": "IS-4A806",
+      "fixedEnergyCallback": "65% = 32500",
+      "homeCallback": "passed",
+      "desktopLayout": "passed after grid/full-width slider correction",
+      "mobile": "390x844; page width 390; scrollable action button reachable",
+      "browserErrors": 0
+    },
+    "developmentHarnessAndKeysExcludedFromBuild": true,
+    "httpStatus": 200,
+    "htmlAndCompiledWorkerCspVerified": true,
+    "securityPolicyUnchanged": true,
+    "browserSmoke": [
+      "New deployment resets local playtest entry without importing previous-build progress.",
+      "Mainnet readiness remains visibly fail-closed with game package, production artifacts, ceremony, audit, operations and multisig evidence pending.",
+      "Real local Worker mining establishes IS-3207A with 1024 searched units squared.",
+      "Same-build reload retains IS-3207A and coverage; energy increases from 51248 to 53740.",
+      "No production browser errors captured."
+    ]
+  },
+  "limits": [
+    "Hook signatures, transport responses and game object snapshots are synthetic test fixtures, not real wallet/game-chain settlement evidence.",
+    "Actual read-only mainnet Clock evidence does not validate undeployed game objects or two-wallet play.",
+    "Production ceremony, independent audits, approved real multisig/signers, game mainnet deployment, multiplayer rehearsal and operations remain incomplete.",
+    "Voyage settlement, special-action client adapters and original special-facility visuals remain unfinished."
+  ],
+  "rollback": {
+    "deploymentId": "dpl_HXtcLUYrTgGwMDCfgVJtWdpu2zgU",
+    "immutableUrl": "https://infinite-stellar-9a75e8moa-soulidity-ai.vercel.app",
+    "newBuildStartsFreshLocalPlaytest": true,
+    "chainRollbackRequired": false
+  }
+}

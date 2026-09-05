@@ -2,6 +2,9 @@
 
 Worktree: `/Users/naoer/Documents/Claude/Projects/infinite-stellar`.
 Branch: `codex/dark-forest-parity`. Full objective remains active.
+Source: `b052e18901174993243effb1e33f65899fcb4135`.
+Release: READY `dpl_5n6Atjg4u5RzK7E8LC5ygNXAn6Dj` at the production alias.
+Evidence: `ops/deployments/vercel-production-2026-09-05-ranked-actions.json`.
 
 ## Implemented
 

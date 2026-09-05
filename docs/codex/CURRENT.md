@@ -1,7 +1,7 @@
 # Infinite Stellar Current Phase
 
 - **Status:** In progress. The full multiplayer/mainnet objective is not complete.
-- **Phase:** Ranked map home/fleet lifecycle implemented and locally verified; publishing this increment. Production below still names the previous release until deployment verification finishes.
+- **Phase:** Ranked map home/fleet lifecycle implemented, verified and deployed as a gated client increment. This is not a playable ranked mainnet release.
 - **Worktree / branch:** `/Users/naoer/Documents/Claude/Projects/infinite-stellar`, `codex/dark-forest-parity`.
 - **Authorization:** GitHub/Vercel delivery and production-valid mainnet engineering are authorized. GPL/MIT reuse is allowed with attribution and source obligations. Ceremony, audit, custody, signer, legal and operations gates are not waived.
 - **Owner direction:** Preserve DF's mature gameplay, visuals, zoom hierarchy, controls and entry flow. Focus innovation on Soul integration and season continuity. Stable facts: `PROJECT_MEMORY.md`.
@@ -11,6 +11,6 @@
 - **Mainnet boundary:** No game transaction was signed or submitted. Production verifiers remain false and the ranked route stays sealed. Game deployment, ceremony, independent audits, approved multisig/signers, two-wallet settlement and operational clearance are unfinished.
 - **Other remaining work:** Ranked special actions, partially known Voyage feedback/settlement, original special-facility renderer, production indexing/sponsorship/monitoring/backup/recovery/performance and confirmed season operations.
 - **Next executable action:** Extend the same chain-authoritative ranked map to Voyage arrival/settlement and confirmed special actions, preserving live object checks and exact event/effect recovery; validate original facility visuals. Continue production release preparation without inventing approvals or enabling development keys.
-- **Latest verified release:** Source `f66c1f35c72ba5d26b95d1e980fc0746185234fc`, READY `dpl_HXtcLUYrTgGwMDCfgVJtWdpu2zgU`, `https://infinite-stellar.vercel.app`. Historical evidence: `ops/deployments/vercel-production-2026-09-05-ranked-proof-browser.json`.
+- **Latest verified release:** Source `b052e18901174993243effb1e33f65899fcb4135`, READY `dpl_5n6Atjg4u5RzK7E8LC5ygNXAn6Dj`, `https://infinite-stellar.vercel.app`. Evidence: `ops/deployments/vercel-production-2026-09-05-ranked-actions.json`. HTTP/CSP verified on HTML and prover Worker. Real local search creates IS-3207A with 1,024 searched units²; same-build reload retains it and energy grows from 51,248 to 53,740. No production browser errors.
 - **Rollback:** Previous deployment remains available. New rollback builds reset only local playtests under owner policy. No chain rollback is required.
 - **Current handoff:** `docs/codex/handoffs/2026-09-05-ranked-actions.md`.
