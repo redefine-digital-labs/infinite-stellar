@@ -1,8 +1,9 @@
+import type { MinedRound5Location } from './miner';
 import {
   createDemoSeat,
   createDemoSouls,
   demoDigest,
-  findDemoHomeCandidate,
+  createLocalHomeCandidate,
 } from './demo';
 import { createStrategyGame } from './strategy';
 import type { JourneyStage, PlayerSession } from './types';
@@ -138,7 +139,7 @@ export function openDemoUniverse(session: PlayerSession): PlayerSession {
       status: 'finalized',
       digest: demoDigest('open-universe', universeSeed),
     },
-    notice: 'The seed is public. Coordinate search and proof material stay on this device.',
+    notice: 'The public Round-5 world is ready. Home search and coordinates stay on this device.',
   };
 }
 
@@ -156,23 +157,19 @@ export function updateSearchProgress(
   };
 }
 
-export function completeSearch(session: PlayerSession): PlayerSession {
+export function completeSearch(session: PlayerSession, location: MinedRound5Location): PlayerSession {
   requireStage(session, 'searching');
   if (!session.runtime.universeSeed || !session.seat) {
     throw new JourneyTransitionError('The finalized universe seed and Seat are required.');
   }
   const attempt = session.search.attempt + 1;
-  const candidate = findDemoHomeCandidate(
-    session.runtime.universeSeed,
-    session.seat.soulId,
-    attempt,
-  );
+  const candidate = createLocalHomeCandidate(location);
   return {
     ...session,
     stage: 'claim-ready',
     lastStableStage: 'claim-ready',
     search: { attempt, progress: 100, candidate },
-    notice: 'Candidate and proof fixture prepared locally. Coordinates remain private.',
+    notice: 'Eligible home verified locally. Coordinates remain private; no proof has been submitted.',
   };
 }
 
@@ -217,7 +214,7 @@ export function finalizeHomeClaim(session: PlayerSession): PlayerSession {
     throw new JourneyTransitionError('Home claim must be submitted before finalization.');
   }
   const candidate = session.search.candidate;
-  if (!candidate || !session.seat) {
+  if (!candidate?.location || !session.seat) {
     throw new JourneyTransitionError('Candidate and Seat are required.');
   }
   const seat = {
@@ -229,6 +226,7 @@ export function finalizeHomeClaim(session: PlayerSession): PlayerSession {
     universeSeed: session.runtime.universeSeed ?? candidate.commitment,
     homeId: candidate.id,
     homeName: candidate.sectorCode,
+    homeLocation: candidate.location,
   });
   return {
     ...session,

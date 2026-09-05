@@ -1,10 +1,11 @@
+import { isRound5HomeLocation } from './home-search';
+import type { MinedRound5Location } from './miner';
 import type {
   HomeCandidate,
   PlayerSession,
   SeatSnapshot,
   SoulCandidate,
 } from './types';
-import { round5HomeStats } from './round5-rules';
 
 export const DEMO_CONTROLLER =
   '0xd3e0000000000000000000000000000000000000000000000000000000000001';
@@ -105,30 +106,18 @@ export function createDemoSeat(
   };
 }
 
-export function findDemoHomeCandidate(
-  universeSeed: string,
-  soulId: string,
-  attempt: number,
-): HomeCandidate {
-  const seed = fnv1a(`${universeSeed}:${soulId}:${attempt}`);
-  const x = (seed % 4096) - 2048;
-  const y = (Math.floor(seed / 4096) % 4096) - 2048;
-  const classes = ['Cinder', 'Pelagic', 'Garden'] as const;
-  const planetClass = classes[seed % classes.length] ?? 'Cinder';
-  const salt = hex32(`salt:${seed}:${attempt}`);
-  const commitment = hex32(`commitment:${x}:${y}:${salt}`);
+/** Verified local geometry, not a submitted claim or a SNARK proof. */
+export function createLocalHomeCandidate(location: MinedRound5Location): HomeCandidate {
+  if (!isRound5HomeLocation(location)) throw new Error('The mined location is not an eligible Round-5 home.');
   return {
-    id: hex32(`planet:${commitment}`),
-    sectorCode: `IS-${Math.abs(x).toString(36).toUpperCase().padStart(3, '0')}-${Math.abs(y)
-      .toString(36)
-      .toUpperCase()
-      .padStart(3, '0')}`,
-    planetClass,
-    resonance: 62 + (seed % 35),
-    energy: round5HomeStats().energy,
-    commitment,
-    proofDigest: hex32(`proof:${commitment}`),
-    privateMaterial: { x, y, salt },
+    id: location.locationId,
+    sectorCode: `IS-${location.locationId.slice(-5).toUpperCase()}`,
+    planetClass: location.biomebase < 14 ? 'Cinder' : location.biomebase < 17 ? 'Pelagic' : 'Garden',
+    energy: 50_000,
+    commitment: `0x${location.locationId}`,
+    privateMaterial: { x: location.x, y: location.y },
+    location: { x: location.x, y: location.y, locationId: location.locationId,
+      perlin: location.perlin, biomebase: location.biomebase },
   };
 }
 

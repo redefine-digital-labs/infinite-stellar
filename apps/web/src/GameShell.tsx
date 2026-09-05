@@ -372,11 +372,11 @@ export function GameShell({
                   );
                 })}
               </div>
-              <p className="fine-print">This preview uses a fixture home. No wallet approval or Sui transaction; exploration after entry runs locally.</p>
+              <p className="fine-print">Your browser searches the Round-5 universe for a valid home. Coordinates stay private. No wallet approval or Sui transaction.</p>
               <div className="action-dock">
                 <div>
                   <span>LOCAL FIRST LIGHT</span>
-                  <strong>Choose your Soul, then enter the star map.</strong>
+                  <strong>Choose your Soul, find a home, enter the star map.</strong>
                 </div>
                 <button
                   className="button button-primary"
@@ -384,7 +384,7 @@ export function GameShell({
                   disabled={!session.selectedSoulId || journey.vault.status === 'restoring' || journey.vault.status === 'error'}
                   onClick={journey.enterUniverse}
                 >
-                  Enter universe
+                  Find home and enter
                 </button>
               </div>
             </div>
@@ -394,14 +394,27 @@ export function GameShell({
         {session.mode === 'demo' &&
           ['enrolling', 'sealed-lobby', 'searching', 'claim-ready', 'claiming'].includes(session.stage) && (
           <section className="center-panel narrow-panel" aria-labelledby="resume-title">
-            <Eyebrow>LOCAL FIRST LIGHT · SAVED SESSION</Eyebrow>
-            <h1 id="resume-title">Continue into the universe.</h1>
-            <p>Your saved Soul and Season Seat are preserved. Finish local setup and open the star map.</p>
-            <p className="fine-print">Local fixtures only. No wallet approval, proof generation or Sui transaction.</p>
-            <button className="button button-primary" type="button" onClick={journey.enterUniverse}
-              disabled={journey.vault.status === 'restoring' || journey.vault.status === 'error'}>
-              Enter universe
-            </button>
+            <Eyebrow>LOCAL FIRST LIGHT · PRIVATE HOME SEARCH</Eyebrow>
+            <h1 id="resume-title">{journey.homeSearch.status === 'searching' ? 'Finding your home…' : 'Continue your home search.'}</h1>
+            <p>Searching for a level-0 planet in the Round-5 home region. Your Soul and Season Seat are preserved.</p>
+            <div className="transaction-facts">
+              <div><span>COORDINATES HASHED</span><strong>{Math.max(journey.homeSearch.checked, session.search.checked ?? 0).toLocaleString('en-US')}</strong></div>
+              <div><span>PLANETS FOUND</span><strong>{Math.max(journey.homeSearch.found, session.search.locations?.length ?? 0)}</strong></div>
+              <div><span>MODE</span><strong>Local Worker · no transaction</strong></div>
+            </div>
+            <p className="fine-print">Search time varies. You can pause or return later; completed search chunks are saved on this device.</p>
+            {journey.homeSearch.error && <p role="alert">{journey.homeSearch.error}</p>}
+            {journey.homeSearch.status === 'searching'
+              ? <button className="button button-secondary" type="button" onClick={journey.cancelHomeSearch}>Pause home search</button>
+              : <button className="button button-primary" type="button" onClick={journey.enterUniverse}
+                disabled={journey.vault.status === 'restoring' || journey.vault.status === 'error'}>
+                Resume home search
+              </button>}
+            {journey.homeSearch.status !== 'searching' &&
+              <button className="text-button" type="button" onClick={journey.relocateHomeSearch}
+                disabled={journey.vault.status === 'restoring' || journey.vault.status === 'error'}>
+                Search another region
+              </button>}
           </section>
         )}
 

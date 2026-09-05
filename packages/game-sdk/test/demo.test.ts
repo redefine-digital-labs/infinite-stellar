@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   createDemoSouls,
   DEMO_CONTROLLER,
-  findDemoHomeCandidate,
+  createLocalHomeCandidate,
+  round5WorldLocation,
 } from '../src';
 
 describe('local demo fixtures', () => {
@@ -15,11 +16,13 @@ describe('local demo fixtures', () => {
   });
 
   it('derives stable private candidate material without exposing it in the sector code', () => {
-    const a = findDemoHomeCandidate('seed', 'soul', 1);
-    const b = findDemoHomeCandidate('seed', 'soul', 1);
+    const a = createLocalHomeCandidate(round5WorldLocation({ x: 73, y: 6421 })!);
+    const b = createLocalHomeCandidate(round5WorldLocation({ x: 73, y: 6421 })!);
     expect(a).toEqual(b);
     expect(a.energy).toBe(50_000);
     expect(a.sectorCode).not.toContain(String(a.privateMaterial.x));
-    expect(a.sectorCode).not.toContain(a.privateMaterial.salt);
+    expect(a.proofDigest).toBeUndefined();
+    expect(a.privateMaterial).toEqual({ x: 73, y: 6421 });
+    expect(() => JSON.stringify(a)).not.toThrow();
   });
 });

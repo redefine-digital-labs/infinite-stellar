@@ -57,17 +57,19 @@ export interface RuntimeSnapshot {
 export interface PrivateHomeMaterial {
   x: number;
   y: number;
-  salt: string;
+  salt?: string;
 }
 
 export interface HomeCandidate {
   id: string;
   sectorCode: string;
   planetClass: 'Cinder' | 'Pelagic' | 'Garden';
-  resonance: number;
+  resonance?: number;
   energy: number;
   commitment: string;
-  proofDigest: string;
+  /** Legacy fixture only. Mined local homes do not pretend to contain a proof. */
+  proofDigest?: string;
+  location?: MinedRound5Location;
   privateMaterial: PrivateHomeMaterial;
 }
 
@@ -82,6 +84,11 @@ export interface SearchSnapshot {
   attempt: number;
   progress: number;
   candidate?: HomeCandidate;
+  origin?: Round5Coordinates;
+  cursor?: number;
+  checked?: number;
+  chunks?: ExploredChunk[];
+  locations?: MinedRound5Location[];
 }
 
 export interface PlayerSession {
@@ -111,3 +118,6 @@ export type PlayerRoute =
   | 'select-soul'
   | 'integration-unavailable'
   | 'no-eligible-soul';
+import type { MinedRound5Location } from './miner';
+import type { Round5Coordinates } from './round5-universe';
+import type { ExploredChunk } from './exploration';

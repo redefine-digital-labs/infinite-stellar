@@ -1,6 +1,7 @@
+import { createStrategyGame } from './strategy-fixture';
 import { describe, expect, it } from 'vitest';
 import {
-  createStrategyGame, claimStrategyStartingShips, executeStrategyMoveIntent,
+  claimStrategyStartingShips, executeStrategyMoveIntent,
   previewStrategyMoveIntent, strategyAbilityStatus, executeStrategyAbility, routeDistanceBound,
   previewStrategyFreeSpace,
   scanStrategyUniverse,

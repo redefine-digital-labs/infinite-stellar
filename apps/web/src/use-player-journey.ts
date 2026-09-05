@@ -43,7 +43,8 @@ import {
   type StrategyMoveIntent,
   type StrategyAbility,
 } from '@infinite-stellar/game-sdk';
-import { enterLocalUniverse } from './demo-entry';
+import { startLocalHomeSearch, type HomeSearchOperation, type HomeSearchProgress } from './home-search-client';
+import { enterLocalUniverse, prepareLocalUniverse } from './demo-entry';
 import { startRound5Miner, type MinerOperation } from './miner-client';
 import { browserSessionVault, type SessionVaultProtection } from './session-vault';
 
@@ -70,6 +71,9 @@ export interface PlayerJourneyController {
   enterOnchain: () => void;
   selectSoul: (soulId: string) => void;
   enterUniverse: () => void;
+  relocateHomeSearch: () => void;
+  cancelHomeSearch: () => void;
+  homeSearch: HomeSearchProgress & { status: 'idle' | 'searching' | 'paused' | 'error'; error?: string };
   hasSavedDemo: boolean;
   chooseStrategyPlanet: (planetId?: string) => void;
   setStrategyTarget: (planetId?: string) => void;
@@ -117,6 +121,9 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
     total: 0,
     found: 0,
   });
+  const homeOperation = useRef<HomeSearchOperation | undefined>(undefined);
+  const homeEpoch = useRef(0);
+  const [homeSearch, setHomeSearch] = useState<PlayerJourneyController['homeSearch']>({ status: 'idle', checked: 0, found: 0 });
   const savedDemos = useRef(new Map<string, PlayerSession>());
   const restoredAddresses = useRef(new Set<string>());
   const readyAddresses = useRef(new Set<string>());
@@ -213,6 +220,9 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
   }, [persistenceAddress, session, vault, vaultState.status]);
 
   useEffect(() => () => {
+    homeEpoch.current += 1;
+    homeOperation.current?.cancel();
+    homeOperation.current = undefined;
     explorerEpoch.current += 1;
     explorerRunning.current = false;
     miningOperation.current?.cancel();
@@ -242,7 +252,7 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
         const game = currentStrategy.current;
         if (!game || game.settled || game.universeSeed !== initial.universeSeed) break;
         coverage = mergeExploredChunks(coverage, game.exploredChunks ?? []);
-        const next = nextExplorationBatch(origin, game.worldRadius, coverage, cursor, home);
+        const next = nextExplorationBatch(origin, game.worldRadius, coverage, cursor);
         cursor = next.cursor;
         const chunks = next.chunks;
         if (!chunks.length) {
@@ -279,6 +289,65 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
     });
   }, [mutateStrategy]);
 
+  const cancelHomeSearch = useCallback(() => {
+    homeEpoch.current += 1;
+    homeOperation.current?.cancel();
+    homeOperation.current = undefined;
+    setHomeSearch(current => ({ ...current, status: 'paused' }));
+  }, []);
+
+  const beginHomeSearch = useCallback((newRegion: boolean) => {
+    if (vaultState.status === 'restoring' || vaultState.status === 'error' || homeOperation.current) return;
+    let prepared: PlayerSession;
+    try { prepared = prepareLocalUniverse(session); }
+    catch (error) {
+      setSession(current => failJourney(current, error instanceof Error ? error.message : 'Local setup failed.'));
+      return;
+    }
+    if (prepared.stage === 'active') return;
+    if (newRegion) prepared = { ...prepared,
+      search: { ...prepared.search, origin: undefined, cursor: 0 } };
+    const epoch = ++homeEpoch.current;
+    setSession(prepared);
+    setHomeSearch({ status: 'searching', checked: prepared.search.checked ?? 0, found: prepared.search.locations?.length ?? 0 });
+    const operation = startLocalHomeSearch(prepared.search,
+      progress => { if (homeEpoch.current === epoch) setHomeSearch({ ...progress, status: 'searching' }); },
+      search => {
+        if (homeEpoch.current !== epoch) return;
+        setSession(current => ({ ...current, search }));
+      });
+    homeOperation.current = operation;
+    void operation.result.then(({ home, search }) => {
+      if (homeEpoch.current !== epoch) return;
+      homeOperation.current = undefined;
+      setSession(current => {
+        try {
+          const activated = enterLocalUniverse({ ...current, search }, home);
+          let strategy = activated.strategy!;
+          // Merge bounded footprints per location, then retain compact completed coverage.
+          // A long home search may exceed the miner's per-request chunk/work bound.
+          for (const location of search.locations ?? []) {
+            strategy = mergeMinedStrategyLocations(strategy, [location], [{
+              index: 0, x: Math.floor(location.x / 16) * 16,
+              y: Math.floor(location.y / 16) * 16, side: 16,
+            }]);
+          }
+          strategy = { ...strategy, exploredChunks: mergeExploredChunks(search.chunks ?? []) };
+          // Search knowledge is now in the active map; avoid duplicating the same data in every save.
+          return { ...activated, strategy, search: { ...activated.search, chunks: undefined, locations: undefined } };
+        } catch (error) {
+          return failJourney(current, error instanceof Error ? error.message : 'The mined home was rejected.');
+        }
+      });
+      setHomeSearch(current => ({ ...current, status: 'idle' }));
+    }).catch(error => {
+      if (homeEpoch.current !== epoch) return;
+      homeOperation.current = undefined;
+      setHomeSearch(current => ({ ...current, status: 'error',
+        error: error instanceof Error ? error.message : 'Home search failed. Your saved Seat is preserved.' }));
+    });
+  }, [session, vaultState.status]);
+
   return useMemo(
     () => ({
       session,
@@ -290,13 +359,10 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
       },
       enterOnchain: () => mutate((current) => enterOnchainUnavailable(current, walletAddress)),
       selectSoul: (soulId: string) => mutate((current) => selectSoul(current, soulId)),
-      enterUniverse: () => {
-        if (vaultState.status === 'restoring' || vaultState.status === 'error') return;
-        mutate((current) => {
-          try { return enterLocalUniverse(current); }
-          catch (error) { return failJourney(current, error instanceof Error ? error.message : 'Local entry failed.'); }
-        });
-      },
+      enterUniverse: () => beginHomeSearch(false),
+      relocateHomeSearch: () => beginHomeSearch(true),
+      cancelHomeSearch,
+      homeSearch,
       chooseStrategyPlanet: (planetId?: string) => mutateStrategy((game) => selectStrategyPlanet(game, planetId)),
       executeMoveIntent: (intent: StrategyMoveIntent) => mutateStrategy((game) => executeStrategyMoveIntent(game, intent)),
       executeAbility: (sourceId: string, ability: StrategyAbility) => mutateStrategy((game) => executeStrategyAbility(game, sourceId, ability)),
@@ -335,6 +401,7 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
       simulateFailure: () => mutate((current) => failJourney(current, 'The simulated wallet rejected this request.')),
       retry: () => mutate(retryJourney),
       restart: () => {
+        cancelHomeSearch();
         explorerEpoch.current += 1;
         explorerRunning.current = false;
         miningOperation.current?.cancel();
@@ -349,6 +416,9 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
     }),
     [
       cancelStrategyScan,
+      cancelHomeSearch,
+      beginHomeSearch,
+      homeSearch,
       mining,
       mutate,
       mutateStrategy,

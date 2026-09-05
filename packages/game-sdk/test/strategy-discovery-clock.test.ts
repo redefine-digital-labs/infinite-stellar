@@ -1,6 +1,7 @@
+import { createStrategyGame } from './strategy-fixture';
 import { describe, expect, it } from 'vitest';
 import {
-  createStrategyGame, normalizeStrategyDiscovery, synchronizeStrategyClock, scanStrategyUniverse,
+  normalizeStrategyDiscovery, synchronizeStrategyClock, scanStrategyUniverse,
   mergeMinedStrategyLocations, dispatchStrategyVoyage, setStrategyTarget, advanceStrategyTime,
   round5WorldLocation,
 } from '../src';

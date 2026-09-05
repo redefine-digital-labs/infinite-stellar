@@ -1,5 +1,6 @@
 export * from './demo';
 export * from './journey';
+export * from './home-search';
 export * from './miner';
 export * from './exploration';
 export * from './persistence';

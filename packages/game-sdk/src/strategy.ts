@@ -6,7 +6,6 @@ import {
   round5ArtifactTypeAndBonus,
   round5CaptureEnergyEligible,
   round5CaptureScore,
-  round5HomeStats,
   round5PlanetLevel,
   round5PlanetStats,
   round5PlanetType,
@@ -19,6 +18,7 @@ import {
   type Round5PlanetStats,
   type Round5UpgradeBranch,
 } from './round5-rules';
+import { isRound5HomeLocation, LOCAL_WORLD_RADIUS } from './home-search';
 import { round5WorldLocation } from './round5-universe';
 import {
   round5MinerTotal,
@@ -209,20 +209,6 @@ const SHIP_TYPES: readonly StrategyShipType[] = [
   'Gear',
   'Titan',
 ];
-
-// A compact, audited local slice of the canonical Round-5 universe. Every
-// coordinate passes MiMC rarity 12,000; the first point also satisfies the
-// home Perlin band. Runtime recomputation guards this fixture against drift.
-const ROUND5_LOCAL_COORDINATES = [
-  [73, 6421], [269, 6442], [-12, 6384], [-94, 6581], [-46, 6238], [0, 6236],
-  [202, 6221], [-111, 6630], [-75, 6640], [173, 6641], [-147, 6418], [310, 6660],
-  [68, 6662], [-75, 6670], [271, 6166], [-118, 6165], [334, 6481], [-136, 6682],
-  [-71, 6155], [-32, 6142], [-40, 6133], [367, 6690], [-228, 6232], [377, 6272],
-  [73, 6728], [89, 6734], [298, 6106], [-48, 6097], [83, 6097], [-76, 6749],
-  [-261, 6351], [260, 6085], [282, 6082], [417, 6495], [391, 6779], [-69, 6779],
-  [70, 6782], [5, 6784], [257, 6785], [-292, 6727], [442, 6335], [444, 6214],
-  [445, 6575], [448, 6238], [201, 6043], [-311, 6779], [-313, 6071], [-315, 6246],
-] as const;
 
 const ARTIFACT_SCORE = [0, 100_000, 200_000, 500_000, 20_000_000, 50_000_000] as const;
 const PHOTOID_ACTIVATION_DELAY = 10_800;
@@ -451,7 +437,7 @@ function generatePlanet(
   discovered?: boolean,
 ): StrategyPlanet {
   const world = round5WorldLocation({ x: coordinates[0], y: coordinates[1] });
-  if (!world) throw new StrategyRuleError('The pinned local universe fixture contains a non-planet coordinate.');
+  if (!world) throw new StrategyRuleError('The coordinates do not identify a Round-5 planet.');
   const locationBytes = Array.from({ length: 32 }, (_, byteIndex) =>
     Number.parseInt(world.locationId.slice(byteIndex * 2, byteIndex * 2 + 2), 16));
   const spaceType = round5SpaceType(world.perlin);
@@ -503,66 +489,28 @@ function generatePlanet(
   };
 }
 
-/**
- * The compact 48-coordinate slice contains no naturally selected type-3
- * planet. Retype one real, non-home coordinate so the non-ranked local client
- * can exercise the Spacetime Rip UX. Ranked and Move initialization continue
- * to derive every planet type from the canonical location byte.
- */
-function applyLocalRiftShowcase(planets: StrategyPlanet[]): StrategyPlanet[] {
-  const candidate = [...planets]
-    .filter((planet) => planet.planetType === 'Regular' && planet.level >= 2)
-    .sort((left, right) => right.level - left.level || left.id.localeCompare(right.id))[0];
-  if (!candidate) throw new StrategyRuleError('The local universe has no valid Spacetime Rip showcase candidate.');
-  return planets.map((planet) => planet.id === candidate.id
-    ? {
-      ...copyPlanet(planet),
-      planetType: 'SpacetimeRip',
-      defense: Math.floor(planet.defense / 2),
-      silverCapacity: planet.silverCapacity * 2,
-    }
-    : planet);
-}
-
 export function createStrategyGame(input: {
   universeSeed: string;
   homeId: string;
   homeName: string;
+  homeLocation: MinedRound5Location;
 }): StrategyGame {
-  const homeCoordinates = ROUND5_LOCAL_COORDINATES[0];
-  const homeLocation = round5WorldLocation({ x: homeCoordinates[0], y: homeCoordinates[1] });
-  if (!homeLocation || homeLocation.perlin !== 13) {
-    throw new StrategyRuleError('The pinned local home no longer satisfies the Round-5 proof predicates.');
+  if (!isRound5HomeLocation(input.homeLocation)) {
+    throw new StrategyRuleError('Home must be a verified level-0 Regular planet in the Round-5 home band.');
   }
-  const homeStats = round5HomeStats();
+  const coordinates = [input.homeLocation.x, input.homeLocation.y] as const;
   const home: StrategyPlanet = {
-    ...homeStats,
+    ...generatePlanet(coordinates, 0, coordinates, true),
     id: input.homeId,
-    locationId: homeLocation.locationId,
     name: input.homeName,
-    x: homeLocation.x,
-    y: homeLocation.y,
-    biome: 2,
-    biomebase: homeLocation.biomebase,
     owner: 'player',
     isHome: true,
-    discovered: true,
-    destroyed: false,
-    lastUpdatedAt: 0,
-    upgrades: { defense: 0, range: 0, speed: 0 },
-    artifactIds: [],
-    artifactFound: false,
-    revealed: false,
-    captured: false,
-    titanCount: 0,
+    energy: 50_000,
+    spaceJunk: 0,
     defaultEnergy: 0,
     defaultSpaceJunk: 0,
   };
-  const planets = [
-    home,
-    ...applyLocalRiftShowcase(ROUND5_LOCAL_COORDINATES.slice(1).map((coordinates) =>
-      generatePlanet(coordinates, 0, homeCoordinates, false))),
-  ];
+  const planets = [home];
   const captureEpoch = 0;
   return {
     schemaVersion: 5,
@@ -571,14 +519,14 @@ export function createStrategyGame(input: {
     universeSeed: input.universeSeed,
     now: 0,
     checkpoint: 0,
-    worldRadius: 12_000,
+    worldRadius: LOCAL_WORLD_RADIUS,
     scanRadius: 220,
     selectedPlanetId: home.id,
     planets,
     voyages: [],
     artifacts: [],
     shipsClaimed: false,
-    captureZones: captureZonesFor(input.universeSeed, captureEpoch, 12_000),
+    captureZones: captureZonesFor(input.universeSeed, captureEpoch, LOCAL_WORLD_RADIUS),
     captureEpoch,
     score: 0,
     spaceJunk: 0,
@@ -658,7 +606,7 @@ export function nextStrategyMinerBatch(game: StrategyGame): Round5MinerChunk[] {
   const home = game.planets.find((planet) => planet.isHome);
   if (!home) throw new StrategyRuleError('The local universe has no founding planet.');
   return nextExplorationBatch(game.explorationOrigin ?? home, game.worldRadius,
-    game.exploredChunks ?? [], 0, home).chunks;
+    game.exploredChunks ?? [], 0).chunks;
 }
 
 /**
@@ -686,7 +634,7 @@ export function mergeMinedStrategyLocations(
       world.locationId !== candidate.locationId ||
       world.perlin !== candidate.perlin ||
       world.biomebase !== candidate.biomebase ||
-      Math.hypot(candidate.x - home.x, candidate.y - home.y) > game.worldRadius
+      Math.hypot(candidate.x, candidate.y) >= game.worldRadius
     ) {
       continue;
     }

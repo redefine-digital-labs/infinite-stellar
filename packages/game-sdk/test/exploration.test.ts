@@ -1,6 +1,7 @@
+import { createStrategyGame } from './strategy-fixture';
 import { describe, expect, it } from 'vitest';
 import { mergeExploredChunks, nextExplorationBatch, exploredChunkArea, locationInChunks,
-  createInitialSession, createStrategyGame, parsePlayerSession } from '../src';
+  createInitialSession, parsePlayerSession } from '../src';
 
 describe('private completed search coverage', () => {
   it('restores validated local coverage while accepting older sessions with no coverage field', () => {

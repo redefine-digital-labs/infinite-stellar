@@ -503,8 +503,8 @@ export function StrategyConsole({
   const panCamera = (deltaX: number, deltaY: number) => {
     setCamera((current) => ({
       ...current,
-      centerX: Math.max(centerX - game.worldRadius, Math.min(centerX + game.worldRadius, current.centerX + deltaX)),
-      centerY: Math.max(centerY - game.worldRadius, Math.min(centerY + game.worldRadius, current.centerY + deltaY)),
+      centerX: Math.max(-game.worldRadius, Math.min(game.worldRadius, current.centerX + deltaX)),
+      centerY: Math.max(-game.worldRadius, Math.min(game.worldRadius, current.centerY + deltaY)),
       mode: 'manual',
     }));
   };
@@ -565,12 +565,12 @@ export function StrategyConsole({
     setCamera((current) => ({
       ...current,
       centerX: Math.max(
-        centerX - game.worldRadius,
-        Math.min(centerX + game.worldRadius, gesture.centerX - (event.clientX - gesture.startX) * worldPerPixel),
+        -game.worldRadius,
+        Math.min(game.worldRadius, gesture.centerX - (event.clientX - gesture.startX) * worldPerPixel),
       ),
       centerY: Math.max(
-        centerY - game.worldRadius,
-        Math.min(centerY + game.worldRadius, gesture.centerY - (event.clientY - gesture.startY) * worldPerPixel),
+        -game.worldRadius,
+        Math.min(game.worldRadius, gesture.centerY - (event.clientY - gesture.startY) * worldPerPixel),
       ),
       mode: 'manual',
     }));
@@ -647,7 +647,7 @@ export function StrategyConsole({
     const point = mapToWorld({ x: (event.clientX - bounds.left) / (bounds.width || mapViewport.width) * 100,
       y: (event.clientY - bounds.top) / (bounds.height || mapViewport.height) * 100 }, projectionCamera, mapViewport);
     const origin = { x: Math.round(point.x), y: Math.round(point.y) };
-    if (Math.hypot(origin.x - centerX, origin.y - centerY) >= game.worldRadius) {
+    if (Math.hypot(origin.x, origin.y) >= game.worldRadius) {
       setExplorerError('Choose an explorer origin inside this finite world.');
       return;
     }
@@ -728,7 +728,7 @@ export function StrategyConsole({
               <button className="miner-cancel" type="button" onClick={onCancelScan}>Pause explorer</button>
             )}
             <button className="miner-cancel explore-camera-origin" type="button" disabled={mining.status === 'mining' || game.settled ||
-              Math.hypot(camera.centerX - centerX, camera.centerY - centerY) >= game.worldRadius}
+              Math.hypot(camera.centerX, camera.centerY) >= game.worldRadius}
               onClick={() => onScan({ x: Math.round(camera.centerX), y: Math.round(camera.centerY) })}
               title="Start a continuous search at the current camera center. Completed chunks are skipped.">Explore here</button>
             <button className="miner-cancel" type="button" disabled={game.settled} aria-pressed={relocatingExplorer}

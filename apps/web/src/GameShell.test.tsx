@@ -1,7 +1,9 @@
+import { createStrategyGame } from '../../../packages/game-sdk/test/strategy-fixture';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
-import { createStrategyGame, locationInChunks, round5WorldLocation } from '@infinite-stellar/game-sdk';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { locationInChunks, round5WorldLocation } from '@infinite-stellar/game-sdk';
+import { startLocalHomeSearch } from './home-search-client';
 import { startRound5Miner } from './miner-client';
 import type {
   CanonicalSoul,
@@ -11,6 +13,13 @@ import type {
 } from '@infinite-stellar/game-sdk';
 import { GameShell } from './GameShell';
 import { worldToMap } from './map-camera';
+
+vi.mock('./home-search-client', () => ({ startLocalHomeSearch: vi.fn() }));
+
+beforeEach(() => {
+  vi.mocked(startLocalHomeSearch).mockImplementation(search => ({ cancel: vi.fn(),
+    result: Promise.resolve({ home: round5WorldLocation({x:73,y:6421})!, search }) }));
+});
 
 vi.mock('./miner-client', () => ({ startRound5Miner: vi.fn() }));
 
@@ -51,7 +60,7 @@ describe('Infinite Stellar player shell', () => {
     expect(screen.getByRole('heading', { name: /who crosses/i })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /lyra-9/i }));
-    await user.click(screen.getByRole('button', { name: /enter universe/i }));
+    await user.click(screen.getByRole('button', { name: /find home and enter/i }));
     expect(screen.queryByRole('button', { name: /approve simulated/i })).not.toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: /command the/i })).toBeInTheDocument();
     expect(screen.getByText(/df round 5 ruleset/i)).toBeInTheDocument();
@@ -156,9 +165,9 @@ describe('Infinite Stellar player shell', () => {
     const user = userEvent.setup();
     render(<GameShell />);
     await user.click(await screen.findByRole('button', { name: /explore local demo/i }));
-    expect(screen.getByRole('button', { name: /enter universe/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /find home and enter/i })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: /lyra-9/i }));
-    await user.click(screen.getByRole('button', { name: /enter universe/i }));
+    await user.click(screen.getByRole('button', { name: /find home and enter/i }));
     expect(await screen.findByRole('heading', { name: /command the/i })).toBeInTheDocument();
     const homeLabel = screen.getByRole('button', { name: /level 0 regular, player/i }).getAttribute('aria-label');
     await user.click(screen.getByRole('button', { name: /return to infinite stellar home/i }));
@@ -167,7 +176,10 @@ describe('Infinite Stellar player shell', () => {
     await user.click(screen.getByRole('button', { name: 'Back' }));
     await user.click(screen.getByRole('button', { name: /continue local game/i }));
     expect(screen.getByRole('heading', { name: /command the/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /level 0 regular, player/i })).toHaveAttribute('aria-label', homeLabel);
+    const resumedLabel = screen.getByRole('button', { name: /level 0 regular, player/i }).getAttribute('aria-label')!;
+    expect(resumedLabel.split(', energy ')[0]).toBe(homeLabel!.split(', energy ')[0]);
+    // Navigation can take real seconds on a busy host; energy must continue, not freeze or reset.
+    expect(Number(resumedLabel.split(', energy ')[1])).toBeGreaterThanOrEqual(Number(homeLabel!.split(', energy ')[1]));
     expect(screen.getByText('1 discovered')).toBeInTheDocument();
   });
 

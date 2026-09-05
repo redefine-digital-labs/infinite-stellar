@@ -370,7 +370,7 @@ same-paint camera updates, GL failure/loss/cleanup and click/drag command
 regressions at an appropriate zoom. New rendering does not modify simulation
 rules or ranked authority.
 
-### Entry correction: September 5
+### Initial entry correction: September 5 (superseded by natural search below)
 
 The upstream `GameLandingPage.tsx` combines home search/join after user intent
 and validates existing-player coordinates before entry. Our local preview now
@@ -389,3 +389,33 @@ restore ranked authority. Browser smoke verifies new entry, navigation through
 mainnet readiness, continuation and refresh with the same Home and growing
 energy. Tests cover every legacy entry boundary, absent Soul, onchain shortcut
 rejection, restoration races and storage authentication failure.
+
+### Natural home search: September 5
+
+The owner continued the DF-foundation work. `GameManager.findRandomHomePlanet`
+and pinned `eth/darkforest.toml` supply the reference behavior: sample a public
+home region, search chunks, require the home Perlin band, level-0 Regular type,
+valid location hash and universe-origin radius. Local entry now performs this
+actual Worker work, reports coordinates hashed rather than fabricated progress,
+and saves completed chunks for pause/reload/resume. Another-region search keeps
+already completed knowledge. A valid home and its hash-derived bonuses/biome
+are recomputed before activation; no pretend proof digest is manufactured.
+
+The runtime no longer contains a fixed Home, FNV candidate coordinates, a
+48-coordinate hidden bootstrap or the retyped Spacetime Rip. Controlled
+survey/ability data is test-only. New games start with the verified Home plus
+only genuinely mined knowledge. Active old saves are untouched; unclaimed
+legacy candidates are searched again without replacing the finalized Seat.
+Explorer and camera boundary guards use the universe origin, not the Home.
+
+Real-browser evidence: three independent new sessions found BA7DE, 5BF92 and
+33073, with 16,384, 16,384 and 4,096 searched units² respectively. The third
+paused and resumed before completion. Further exploration around BA7DE found
+four natural neighbors; refresh retained five Planets, 67,584 searched units²
+and continued energy growth. No private coordinates are included in evidence.
+Full release validation passes 300 tests, types, lint and build.
+
+This closes fixture geography and actual local home-search gaps, not ranked
+proofs or multiplayer. Public Round-5 keys/local radius, demo Souls/Seat and
+local simulation authority are still explicit. Required Sui signatures,
+production proofs, independent audits and release gates remain unchanged.

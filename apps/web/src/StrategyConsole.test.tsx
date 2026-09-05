@@ -1,9 +1,9 @@
+import { createStrategyGame } from '../../../packages/game-sdk/test/strategy-fixture';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  createStrategyGame,
   claimStrategyStartingShips,
   dispatchStrategyVoyage,
   selectStrategyPlanet,

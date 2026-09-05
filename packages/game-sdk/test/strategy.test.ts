@@ -1,3 +1,4 @@
+import { createStrategyGame as createUnexploredGame } from './strategy-fixture';
 import { describe, expect, it } from 'vitest';
 import {
   advanceStrategyToNextArrival,
@@ -7,7 +8,6 @@ import {
   activateStrategyCrescent,
   captureStrategyPlanet,
   claimStrategyStartingShips,
-  createStrategyGame as createUnexploredGame,
   dispatchStrategyShip,
   dispatchStrategyArtifact,
   dispatchStrategyVoyage,

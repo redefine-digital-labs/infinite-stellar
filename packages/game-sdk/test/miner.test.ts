@@ -1,6 +1,6 @@
+import { createStrategyGame } from './strategy-fixture';
 import { describe, expect, it } from 'vitest';
 import {
-  createStrategyGame,
   mergeMinedStrategyLocations,
   mineRound5Chunks,
   nextStrategyMinerBatch,

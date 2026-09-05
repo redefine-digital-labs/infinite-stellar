@@ -1,6 +1,7 @@
+import { createStrategyGame } from '../../../packages/game-sdk/test/strategy-fixture';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createInitialSession, createStrategyGame, DEMO_CONTROLLER, dispatchStrategyVoyage, scanStrategyUniverse,
+import { createInitialSession, DEMO_CONTROLLER, dispatchStrategyVoyage, scanStrategyUniverse,
   setStrategyTarget, type PlayerSession } from '@infinite-stellar/game-sdk';
 import { usePlayerJourney } from './use-player-journey';
 

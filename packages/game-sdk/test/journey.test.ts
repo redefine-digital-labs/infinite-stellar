@@ -14,7 +14,10 @@ import {
   submitEnrollment,
   submitHomeClaim,
   updateSearchProgress,
+  round5WorldLocation,
 } from '../src';
+
+const home = round5WorldLocation({ x: 73, y: 6421 })!;
 
 function selectedDemoSession() {
   const entered = enterDemo(createInitialSession(), DEMO_CONTROLLER);
@@ -45,7 +48,7 @@ describe('player journey', () => {
 
     const scanned = updateSearchProgress(opened, 67);
     expect(scanned.search.progress).toBe(67);
-    const ready = completeSearch(scanned);
+    const ready = completeSearch(scanned, home);
     expect(ready.stage).toBe('claim-ready');
     expect(ready.search.candidate?.commitment).toMatch(/^0x[0-9a-f]{64}$/);
 
@@ -59,7 +62,7 @@ describe('player journey', () => {
 
   it('can discard a candidate without creating a transaction', () => {
     const ready = completeSearch(
-      openDemoUniverse(enrolledDemoSession()),
+      openDemoUniverse(enrolledDemoSession()), home,
     );
     const searching = rejectCandidate(ready);
     expect(searching.stage).toBe('searching');
