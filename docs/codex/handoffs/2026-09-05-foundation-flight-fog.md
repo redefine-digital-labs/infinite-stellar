@@ -29,6 +29,13 @@ clears the obstructing sheet, desktop captured-pointer double-tap reaches 479%
 zoom, and 75% sending creates one moving 13.7K-energy Voyage. Temporary viewport
 overrides were reset. Final validation/release evidence belongs in CURRENT.md.
 
+Rendering source `3884a50` is pushed and READY as deployment
+`dpl_7xK5S61dxCwvKJy6w97kzmwvTR73` at the production alias. Final Node 24.20.0
+validation passes all 283 tests, types, lint and build; docs/diff checks pass.
+Production Home close-up shows the original shader and the upstream license
+is publicly served. Exact evidence is
+`ops/deployments/vercel-production-2026-09-05-df-planet-renderer.json`.
+
 Next: simplify the wallet/Soul/Seat/home entry journey against DF, including
 existing-Seat resume, before introducing new gameplay. Preserve required Sui
 authorization/finality and every production gate. Do not relabel demo shortcuts

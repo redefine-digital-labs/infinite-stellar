@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "surface": "vercel",
+  "environment": "production",
+  "project": "infinite-stellar",
+  "createdAt": "2026-09-05T13:07:46.364Z",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "branch": "codex/dark-forest-parity",
+    "commit": "3884a501a0d1c70608f065de98cb86d19b8fb256"
+  },
+  "deployment": {
+    "id": "dpl_7xK5S61dxCwvKJy6w97kzmwvTR73",
+    "status": "READY",
+    "immutableUrl": "https://infinite-stellar-qn4i9bbji-soulidity-ai.vercel.app",
+    "productionAlias": "https://infinite-stellar.vercel.app"
+  },
+  "capability": {
+    "originalDfNormalPlanetShader": true,
+    "scaleDependentPlanetDetail": true,
+    "committedRankedDensityForPresentation": true,
+    "specialFacilitiesUsingOriginalRenderer": false,
+    "entryFlowSimplified": false,
+    "rankedMainnetWrites": false
+  },
+  "provenance": {
+    "upstreamCommit": "d1e25ead311697ecaa27ff648dac16a0d8cea15c",
+    "packages": [
+      "@darkforest_eth/renderer",
+      "@darkforest_eth/procedural"
+    ],
+    "packageLicense": "MIT",
+    "rootGameLicense": "GPL-3.0",
+    "sourceNotices": "apps/web/public/third-party/NOTICE.md"
+  },
+  "verification": {
+    "localNodeVersion": "24.20.0",
+    "vercelNodeVersion": "24.x",
+    "typecheck": "passed",
+    "lint": "passed",
+    "documentationLint": "passed",
+    "typescriptTests": {
+      "web": 121,
+      "gameSdk": 124,
+      "prover": 38,
+      "total": 283
+    },
+    "productionBuild": "passed",
+    "httpStatus": 200,
+    "securityHeaders": "passed",
+    "upstreamLicenseServed": "passed",
+    "browserSmoke": [
+      "localhost shows original biome land/ocean/cloud texture on normal planets",
+      "mobile Focus planet clears the obstructing sheet and reveals low-level body detail",
+      "desktop captured-pointer double-tap focuses to 479-percent zoom",
+      "GPU body, ring and labels remain aligned after camera/viewport updates",
+      "75-percent localhost dispatch creates exactly one moving 13.7K-energy fleet under the new GPU layer",
+      "production alias restores existing simulation and shows the original Home shader after Focus planet at 3905-percent zoom",
+      "no new production browser errors or warnings captured during the smoke check",
+      "temporary viewport overrides reset"
+    ],
+    "scopeNote": "Actual GPU rendering is browser-tested; unit tests separately cover LOD, resource visibility, context failure/loss/cleanup and immediate camera repaint. Gameplay remains local simulation. Entry-flow changes, original special facilities and full ranked integration are not claimed."
+  },
+  "mainnetReleaseGate": {
+    "productionProofVerifiersReady": false,
+    "gameTransactionSubmitted": false,
+    "decision": "blocked_fail_closed"
+  },
+  "rollback": {
+    "deploymentId": "dpl_9K7HLDABHexGS4njbq2MmjXmaNV2",
+    "sourceCommit": "5ef56b5a199e3577955d90d5a1c8f4d67e2926fc",
+    "chainStateChanged": false,
+    "privateDataPolicy": "Preserve device vaults, portable backups and simulation storage."
+  }
+}
