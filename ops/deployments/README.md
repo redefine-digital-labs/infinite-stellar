@@ -23,9 +23,10 @@ npm run verify:deployment
 ```
 
 The current Vercel web-canary record is
-`vercel-production-2026-09-02-ranked-private-map.json`. It records the immutable
+`vercel-production-2026-09-05-ranked-exploration.json`. It records the immutable
 deployment URL, source commit, browser smoke path, canonical Soulidity,
 authenticated private-map vault, deterministic Planet/Voyage point reads,
-chain-authoritative merge, security-header check, and the independently blocked
+chain-authoritative merge, manifest-bound private exploration, tactical visuals,
+security-header check, and the independently blocked
 mainnet release state. It is not an onchain deployment record. Earlier Vercel
 records remain immutable deployment history.

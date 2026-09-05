@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "surface": "vercel",
+  "environment": "production",
+  "project": "infinite-stellar",
+  "createdAt": "2026-09-05T11:25:30Z",
+  "source": {
+    "repository": "https://github.com/redefine-digital-labs/infinite-stellar",
+    "branch": "codex/dark-forest-parity",
+    "commit": "8439b2a9b5232795befff8690b5c5091dda5f57c"
+  },
+  "deployment": {
+    "id": "dpl_46KUx7ZEKdD8U4NWaqNMZzXA8t5u",
+    "status": "READY",
+    "immutableUrl": "https://infinite-stellar-hx0pe00r7-soulidity-ai.vercel.app",
+    "productionAlias": "https://infinite-stellar.vercel.app"
+  },
+  "capability": {
+    "localRound5Simulation": true,
+    "canonicalSoulidityMainnetRead": true,
+    "deterministicSeatFirstRoute": true,
+    "manifestCommittedRankedMining": true,
+    "boundedCancellableMiningWorker": true,
+    "crossTabEncryptedDiscoveryUnion": true,
+    "chainAuthoritativePrivateMapMerge": true,
+    "tacticalPlanetGlyphsAndRoutePreview": true,
+    "portableMapBackup": false,
+    "publicCheckpointIndexer": false,
+    "rankedMainnetWrites": false,
+    "liveTwoWalletSeasonVerified": false,
+    "suiTransactionOrSoulHistoryFromDemo": false
+  },
+  "verification": {
+    "nodeVersion": "24.x",
+    "typecheck": "passed",
+    "lint": "passed",
+    "documentationLint": "passed",
+    "typescriptTests": 164,
+    "productionBuild": "passed",
+    "deploymentInstallVulnerabilities": 0,
+    "httpStatus": 200,
+    "securityHeaders": "passed",
+    "browserSmoke": [
+      "production alias loads with canonical mainnet fail-closed readiness",
+      "no production enrollment or game signing exposed",
+      "local demonstration Seat, universe opening and home-search flow works",
+      "simulated founding-planet finality enters the updated full-screen tactical map on the production alias",
+      "local browser Worker completes a frontier scan without blocking controls"
+    ],
+    "scopeNote": "Worker scan was exercised on localhost using the same source; this is not a live ranked Season test. Move tests and production circuits were not rerun for this client/SDK increment."
+  },
+  "mainnetReleaseGate": {
+    "productionProofVerifiersReady": false,
+    "independentAuditComplete": false,
+    "multisigPolicyPinned": false,
+    "gameTransactionSubmitted": false,
+    "decision": "blocked_fail_closed"
+  },
+  "rollback": {
+    "deploymentId": "dpl_3AaZeR4b5pSiKVsvSPXtQBG6hxxa",
+    "sourceCommit": "e57b78fb61e7154b6ea204cf497613c0567b1194",
+    "chainStateChanged": false
+  }
+}

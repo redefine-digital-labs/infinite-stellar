@@ -45,7 +45,9 @@ production gates. Complete portable encrypted backup/import before real player
 onboarding. Continue public indexing, two-wallet shared-state rehearsal,
 operations, independent audit remediation and approved multisig release.
 
-The September 2 Vercel evidence is historical until a September 5 deployment
-record verifies the new source. No onchain rollback is required: this increment
+Source `8439b2a9b5232795befff8690b5c5091dda5f57c` is pushed and deployed as
+`dpl_46KUx7ZEKdD8U4NWaqNMZzXA8t5u` on the production alias. See
+`ops/deployments/vercel-production-2026-09-05-ranked-exploration.json`.
+No onchain rollback is required: this increment
 changes no chain state. The prior web source is `e57b78f`; vault ciphertext
 format is unchanged and forward merges only add discoveries.
