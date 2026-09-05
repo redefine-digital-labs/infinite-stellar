@@ -1,7 +1,12 @@
 import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vitest/config';
+import { randomUUID } from 'node:crypto';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // Every production build is a fresh local playtest. Refreshes of that build retain progress.
+  define: {
+    __LOCAL_DEMO_RELEASE__: JSON.stringify(command === 'build' ? `playtest-${randomUUID()}` : 'development'),
+  },
   plugins: [react()],
   optimizeDeps: {
     exclude: ['@infinite-stellar/game-sdk', '@infinite-stellar/prover'],
@@ -30,4 +35,4 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     css: true,
   },
-});
+}));

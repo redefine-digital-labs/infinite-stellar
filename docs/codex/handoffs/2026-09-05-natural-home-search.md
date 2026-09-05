@@ -44,5 +44,18 @@ games use fully natural bootstrap. Special facilities still need the
 original renderer. Next: real witness/proof integration and guarded ranked
 home/move/move-new pending/finality, then remaining actions/operations.
 
-Rollback: source `e24662f`, deployment `dpl_AnUCr63FyzusegXHg58wAi8GnPcz`.
-Preserve vaults/backups/local game data. No chain rollback is needed.
+The owner subsequently authorized fresh local initialization on every
+deployment. Each production Vite build embeds a new playtest namespace;
+`scopeLocalDemoVault` ignores older-build/address-only demo saves. Within a
+build, navigation and refresh retain search/game progress. Wallets, canonical
+Souls, ranked map vaults and chain state are outside this reset. Old demo
+records are left inactive, not deleted through a broad storage operation.
+This supersedes the earlier cross-deployment demo-continuity policy.
+
+Natural-search source `31d4459` reached READY deployment
+`dpl_9T54gNMKPfovhkxq2E3gAECB1M34` before the reset-policy addition. Final
+combined release evidence belongs in CURRENT.md.
+
+Rollback: previous entry deployment `dpl_AnUCr63FyzusegXHg58wAi8GnPcz`.
+A newly built rollback also initializes a fresh local playtest under the
+owner's policy. Never reset wallet/Soul/ranked/chain data.

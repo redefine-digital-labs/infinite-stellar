@@ -149,6 +149,7 @@ export function GameShell({
               {journey.vault.status === 'error' && <p role="alert">Could not restore the local save. Reload to retry; existing data has not been cleared.</p>}
               <p className="truth-note">
                 The demo is local and creates no Sui transaction or Soul history.
+                {' '}Each deployment starts a fresh playtest; refreshes within this version keep your progress.
               </p>
             </div>
             <div className="observatory-card" aria-label="First Light season preview">

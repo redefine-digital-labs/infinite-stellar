@@ -5,7 +5,7 @@ import {
   savePlayerSession,
   type KeyValueStorage,
 } from '@infinite-stellar/game-sdk';
-import { EncryptedSessionVault, MemorySessionVaultStore } from './session-vault';
+import { EncryptedSessionVault, MemorySessionVaultStore, scopeLocalDemoVault } from './session-vault';
 
 class MemoryStorage implements KeyValueStorage {
   private readonly values = new Map<string, string>();
@@ -15,6 +15,36 @@ class MemoryStorage implements KeyValueStorage {
 }
 
 describe('encrypted controller session vault', () => {
+  it('starts fresh on a new deployment while same-release reloads resume', async () => {
+    const raw = new EncryptedSessionVault(new MemorySessionVaultStore(), globalThis.crypto, 'memory-aes-gcm');
+    const first = scopeLocalDemoVault(raw, 'release-one');
+    const second = scopeLocalDemoVault(raw, 'release-two');
+    const session = { ...createInitialSession(), notice: 'existing local game' };
+    await first.save('0xabc', session);
+    expect(await scopeLocalDemoVault(raw, 'release-one').restore('0xABC')).toEqual(session);
+    expect(await second.restore('0xabc')).toBeNull();
+    const newGame = { ...session, notice: 'new local game' };
+    await second.save('0xabc', newGame);
+    expect(await second.restore('0xabc')).toEqual(newGame);
+    expect(await first.restore('0xabc')).toEqual(session);
+  });
+
+  it('does not migrate old address-only saves or delete unrelated data', async () => {
+    const store = new MemorySessionVaultStore();
+    const raw = new EncryptedSessionVault(store, globalThis.crypto, 'memory-aes-gcm');
+    const session = createInitialSession();
+    const legacy = new MemoryStorage();
+    await raw.save('0xabc', session);
+    savePlayerSession(legacy, '0xabc', session);
+    const current = scopeLocalDemoVault(raw, 'current');
+    expect(await current.restore('0xabc', legacy)).toBeNull();
+    await current.save('0xabc', session);
+    await current.clear('0xabc', legacy);
+    expect(await current.restore('0xabc')).toBeNull();
+    expect(await raw.restore('0xabc')).toEqual(session);
+    expect(loadPlayerSession(legacy, '0xabc')).toEqual(session);
+  });
+
   it('round-trips authenticated ciphertext without storing session JSON', async () => {
     const store = new MemorySessionVaultStore();
     const vault = new EncryptedSessionVault(store, globalThis.crypto, 'memory-aes-gcm');

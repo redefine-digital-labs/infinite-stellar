@@ -419,3 +419,11 @@ This closes fixture geography and actual local home-search gaps, not ranked
 proofs or multiplayer. Public Round-5 keys/local radius, demo Souls/Seat and
 local simulation authority are still explicit. Required Sui signatures,
 production proofs, independent audits and release gates remain unchanged.
+
+The owner then requested fresh initialization on every deployment. Production
+builds now isolate local playtest saves by a new build identifier, so old
+progress is not imported; same-build navigation/reload still resume. This
+supersedes cross-deployment preservation of local demo progress. Wallets,
+canonical Souls, ranked map storage and chain data are unaffected. Expanded
+release checks pass 302 tests, including same-build resume, fresh-build
+isolation and ignoring legacy saves without broad storage deletion.

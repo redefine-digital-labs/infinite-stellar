@@ -5,6 +5,7 @@ import {
   type KeyValueStorage,
   type PlayerSession,
 } from '@infinite-stellar/game-sdk';
+import { LOCAL_DEMO_RELEASE } from './local-demo-release';
 
 const VAULT_DATABASE = 'infinite-stellar-private-vault';
 const VAULT_DATABASE_VERSION = 1;
@@ -245,23 +246,36 @@ class UnavailableSessionVault implements SessionVault {
 
 let defaultVault: SessionVault | undefined;
 
+/** A deployment starts a fresh playtest without touching wallet, Soul, or ranked map storage. */
+export function scopeLocalDemoVault(vault: SessionVault, release: string): SessionVault {
+  if (!/^[a-zA-Z0-9-]{1,80}$/.test(release)) throw new Error('Invalid local playtest release identifier.');
+  const key = (controller: string) => `local-demo:${release}:${controller}`;
+  return {
+    protection: vault.protection,
+    // Do not import old address-only or previous-release saves into a new deployment.
+    restore: controller => vault.restore(key(controller)),
+    save: (controller, session) => vault.save(key(controller), session),
+    clear: controller => vault.clear(key(controller)),
+  };
+}
+
 export function browserSessionVault(): SessionVault {
   if (defaultVault) return defaultVault;
   const webCrypto = globalThis.crypto;
   if (!webCrypto?.subtle) {
     return new UnavailableSessionVault();
   } else if (globalThis.indexedDB) {
-    defaultVault = new EncryptedSessionVault(
+    defaultVault = scopeLocalDemoVault(new EncryptedSessionVault(
       new IndexedDbSessionVaultStore(globalThis.indexedDB),
       webCrypto,
       'indexeddb-aes-gcm',
-    );
+    ), LOCAL_DEMO_RELEASE);
     return defaultVault;
   } else {
-    return new EncryptedSessionVault(
+    return scopeLocalDemoVault(new EncryptedSessionVault(
       new MemorySessionVaultStore(),
       webCrypto,
       'memory-aes-gcm',
-    );
+    ), LOCAL_DEMO_RELEASE);
   }
 }
