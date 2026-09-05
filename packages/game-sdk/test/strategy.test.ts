@@ -7,7 +7,7 @@ import {
   activateStrategyCrescent,
   captureStrategyPlanet,
   claimStrategyStartingShips,
-  createStrategyGame,
+  createStrategyGame as createUnexploredGame,
   dispatchStrategyShip,
   dispatchStrategyArtifact,
   dispatchStrategyVoyage,
@@ -24,6 +24,9 @@ import {
   withdrawStrategySilver,
   type StrategyArtifact,
 } from '../src/strategy';
+
+// Combat fixtures explicitly survey their neighborhood; real games begin with only home.
+const createStrategyGame = (input: Parameters<typeof createUnexploredGame>[0]) => scanStrategyUniverse(createUnexploredGame(input));
 
 function fixtureArtifact(
   id: string,
@@ -75,8 +78,8 @@ describe('local Round 5 strategy universe', () => {
     }
   });
   it('is deterministic and expands private discovery', () => {
-    const left = createStrategyGame({ universeSeed: 'seed', homeId: 'home', homeName: 'FIRST-LIGHT' });
-    const right = createStrategyGame({ universeSeed: 'seed', homeId: 'home', homeName: 'FIRST-LIGHT' });
+    const left = createUnexploredGame({ universeSeed: 'seed', homeId: 'home', homeName: 'FIRST-LIGHT' });
+    const right = createUnexploredGame({ universeSeed: 'seed', homeId: 'home', homeName: 'FIRST-LIGHT' });
     expect(left.planets).toEqual(right.planets);
     expect(left.planets.filter((planet) => planet.planetType === 'SpacetimeRip')).toHaveLength(1);
     const discoveredBefore = left.planets.filter((planet) => planet.discovered).length;

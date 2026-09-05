@@ -3,11 +3,12 @@ import {
   createStrategyGame, claimStrategyStartingShips, executeStrategyMoveIntent,
   previewStrategyMoveIntent, strategyAbilityStatus, executeStrategyAbility, routeDistanceBound,
   previewStrategyFreeSpace,
+  scanStrategyUniverse,
   type StrategyArtifact, type StrategyGame, type StrategyMoveIntent,
 } from '../src';
 
 function fixture() {
-  const base = createStrategyGame({ universeSeed: 'command', homeId: 'home', homeName: 'HOME' });
+  const base = scanStrategyUniverse(createStrategyGame({ universeSeed: 'command', homeId: 'home', homeName: 'HOME' }));
   const target = base.planets.find((planet) => planet.discovered && !planet.isHome)!;
   const artifact: StrategyArtifact = { id: 'cargo', type: 'Pyramid', rarity: 1, planetId: 'home',
     activations: 0, active: false, biome: 0, mintedAt: 0, burned: false };

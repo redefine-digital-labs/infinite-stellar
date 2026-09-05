@@ -1,6 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { createStrategyGame, locationInChunks, round5WorldLocation } from '@infinite-stellar/game-sdk';
+import { startRound5Miner } from './miner-client';
 import type {
   CanonicalSoul,
   PlayerSeatBundle,
@@ -8,6 +10,9 @@ import type {
   RankedUniverseProjection,
 } from '@infinite-stellar/game-sdk';
 import { GameShell } from './GameShell';
+import { worldToMap } from './map-camera';
+
+vi.mock('./miner-client', () => ({ startRound5Miner: vi.fn() }));
 
 const id = (suffix: string) => `0x${suffix.padStart(64, '0')}`;
 const canonicalSoul: CanonicalSoul = {
@@ -32,6 +37,14 @@ const canonicalSoul: CanonicalSoul = {
 describe('Infinite Stellar player shell', () => {
   it('runs the complete local First Light journey', async () => {
     const user = userEvent.setup();
+    const worlds = createStrategyGame({ universeSeed: 'test', homeId: 'home', homeName: 'HOME' }).planets
+      .map((planet) => round5WorldLocation(planet)!);
+    vi.mocked(startRound5Miner).mockImplementation((chunks) => {
+      const locations = worlds.filter((planet) => locationInChunks(planet, chunks));
+      const total = chunks.reduce((sum, chunk) => sum + chunk.side ** 2, 0);
+      return { requestId: 'test-mining', cancel: vi.fn(), result: Promise.resolve({ locations, total, checked: total, found: locations.length,
+        elapsedMs: 1 }) };
+    });
     render(<GameShell />);
 
     await user.click(screen.getByRole('button', { name: /explore local demo/i }));
@@ -51,14 +64,25 @@ describe('Infinite Stellar player shell', () => {
 
     await user.click(screen.getByRole('button', { name: /run local search/i }));
     expect(screen.getByRole('heading', { name: /a place to begin/i })).toBeInTheDocument();
+    expect(screen.getByText('50,000')).toBeInTheDocument();
+    expect(screen.queryByText('RESONANCE')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /claim founding planet/i }));
     await user.click(screen.getByRole('button', { name: /approve simulated claim/i }));
     expect(screen.getByRole('button', { name: /waiting for simulated finality/i })).toBeDisabled();
     expect(await screen.findByRole('heading', { name: /command the/i })).toBeInTheDocument();
-    expect(screen.getByText(/round 5 parity rules/i)).toBeInTheDocument();
+    expect(screen.getByText(/df round 5 ruleset/i)).toBeInTheDocument();
 
-    const neutral = screen.getAllByRole('button', { name: /level 0 regular, neutral/i })[0];
+    expect(screen.queryAllByRole('button', { name: /neutral, energy/i })).toHaveLength(0);
+    expect(screen.getByText('1 discovered')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Move explorer' }));
+    const point = worldToMap({ x: 269, y: 6442 }, { centerX: 73, centerY: 6421, radius: 253 },
+      { width: window.innerWidth, height: window.innerHeight });
+    fireEvent.click(screen.getByLabelText(/star map camera/i), {
+      clientX: point.x / 100 * window.innerWidth, clientY: point.y / 100 * window.innerHeight,
+    });
+    const neutral = (await screen.findAllByRole('button', { name: /level 0 regular, neutral/i }, { timeout: 3000 }))[0];
+    await user.click(screen.getByRole('button', { name: 'Pause explorer' }));
     expect(neutral).toBeDefined();
     await user.click(neutral!);
     expect(screen.getByRole('button', { name: 'Send (Q)' })).toBeDisabled();

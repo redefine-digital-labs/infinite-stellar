@@ -8,6 +8,7 @@ import {
   dispatchStrategyVoyage,
   selectStrategyPlanet,
   setStrategyTarget,
+  scanStrategyUniverse,
 } from '@infinite-stellar/game-sdk';
 import { StrategyConsole, type StrategyConsoleProps } from './StrategyConsole';
 
@@ -28,11 +29,11 @@ function InteractiveConsole(props: StrategyConsoleProps) {
 
 function strategyProps(): StrategyConsoleProps {
   return {
-    game: createStrategyGame({
+    game: scanStrategyUniverse(createStrategyGame({
       universeSeed: 'floating-panel-test',
       homeId: 'home',
       homeName: 'FIRST-LIGHT',
-    }),
+    })),
     commanderName: 'Lyra-9',
     onChoosePlanet: vi.fn(),
     onSetTarget: vi.fn(),
@@ -54,6 +55,20 @@ afterEach(() => {
 });
 
 describe('map-first floating strategy controls', () => {
+  it('does not auto-fit or reset the explorer label on each completed scan batch', () => {
+    const props = strategyProps();
+    const { rerender } = render(<StrategyConsole {...props} mining={{ ...props.mining, status: 'mining', checked: 0, total: 1024 }} />);
+    const home = screen.getByRole('button', { name: /first-light, level/i });
+    const style = home.getAttribute('style');
+    const zoom = screen.getByLabelText('Map zoom').textContent;
+    const button = screen.getByRole('button', { name: 'Exploring' });
+    rerender(<StrategyConsole {...props} game={{ ...props.game, scanRadius: 5000 }}
+      mining={{ ...props.mining, status: 'mining', checked: 1024, total: 1024 }} />);
+    expect(home.getAttribute('style')).toBe(style);
+    expect(screen.getByLabelText('Map zoom')).toHaveTextContent(zoom!);
+    expect(button).toHaveTextContent('Exploring');
+    expect(screen.queryByText(/Mining \d+%/)).not.toBeInTheDocument();
+  });
   it('does not change manual zoom or planet position when newly explored space expands', async () => {
     const user = userEvent.setup();
     const props = strategyProps();
@@ -460,7 +475,8 @@ describe('map-first floating strategy controls', () => {
     expect(Number(route.getAttribute('y1'))).toBeCloseTo(Number.parseFloat(sourceNode.style.top));
     expect(Number(route.getAttribute('x2'))).toBeCloseTo(Number.parseFloat(targetNode.style.left));
     expect(Number(route.getAttribute('y2'))).toBeCloseTo(Number.parseFloat(targetNode.style.top));
-    expect(route).toHaveAttribute('marker-end', 'url(#voyage-arrow)');
+    expect(screen.getByTestId(`voyage-fleet-${voyage.id}`)).toBeInTheDocument();
+    expect(route).not.toHaveAttribute('marker-end');
   });
 
   it('keeps the proposed route attached while panning without dispatching a fleet', () => {

@@ -26,6 +26,7 @@ import { Eyebrow, StatusPill } from './components';
 import { FloatingPanel, type FloatingPanelPosition } from './FloatingPanel';
 import { MapPlanetGlyph } from './MapPlanetGlyph';
 import { MapExplorationCoverage } from './MapExplorationCoverage';
+import { MapVoyages } from './MapVoyages';
 import { mapPosition, mapToWorld, worldToMap, worldPixelScale, zoomAtMapPoint } from './map-camera';
 import { useMapViewport } from './use-map-viewport';
 import type { PlayerVaultState, StrategyMiningState } from './use-player-journey';
@@ -244,10 +245,7 @@ export function StrategyConsole({
     220,
     Math.min(game.worldRadius, Math.ceil(Math.max(game.scanRadius, farthestDiscovered) * 1.15)),
   );
-  const maximumCameraRadius = Math.min(
-    game.worldRadius,
-    Math.max(1_000, viewportRadius * 2),
-  );
+  const maximumCameraRadius = game.worldRadius;
   const [camera, setCamera] = useState<MapCamera>(() => ({
     centerX,
     centerY,
@@ -273,9 +271,6 @@ export function StrategyConsole({
     () => [...panelOrder].reverse().find((panelId) => visiblePanels.includes(panelId)) ?? 'command',
     [panelOrder, visiblePanels],
   );
-  const miningPercent = mining.total > 0
-    ? Math.min(100, Math.floor((mining.checked / mining.total) * 100))
-    : 0;
   const vaultLabel = vault.status === 'sealed'
     ? 'AES-GCM · INDEXEDDB'
     : vault.status === 'ephemeral'
@@ -293,7 +288,7 @@ export function StrategyConsole({
 
   useEffect(() => {
     setCamera((current) => {
-      if (current.homeId !== home?.id || current.mode === 'fit') {
+      if (current.homeId !== home?.id) {
         return {
           centerX,
           centerY,
@@ -685,7 +680,7 @@ export function StrategyConsole({
         <div className="map-toolbar floating-map-toolbar">
           <div>
             <span className="map-mode-label">LOCAL SIMULATION</span>
-            <strong>{game.planets.filter((planet) => planet.discovered).length} / {game.planets.length} resolved</strong>
+            <strong>{game.planets.filter((planet) => planet.discovered).length} discovered</strong>
           </div>
           <div className="map-legend" aria-label="Map legend">
             <span><i className="legend-player" /> Yours</span>
@@ -700,7 +695,7 @@ export function StrategyConsole({
               onClick={() => onScan()}
             >
               {mining.status === 'mining'
-                ? `Mining ${miningPercent}%`
+                ? 'Exploring'
                 : mining.status === 'cancelling' ? 'Pausing…' : game.exploredChunks?.length ? 'Resume explorer' : 'Start explorer'}
             </button>
             {(mining.status === 'mining' || mining.status === 'cancelling') && (
@@ -814,21 +809,6 @@ export function StrategyConsole({
             );
           })}
           <svg className="voyage-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <marker
-                id="voyage-arrow"
-                markerWidth="6"
-                markerHeight="6"
-                refX="5"
-                refY="3"
-                orient="auto"
-                markerUnits="strokeWidth"
-                viewBox="0 0 6 6"
-                preserveAspectRatio="xMidYMid meet"
-              >
-                <path d="M 0 0 L 6 3 L 0 6 z" />
-              </marker>
-            </defs>
             {source && ((target && source.id !== target.id) || (aim && aimCursor)) && (
               <line className="map-route-preview" x1={project(source).x}
                 y1={project(source).y}
@@ -836,27 +816,16 @@ export function StrategyConsole({
                 y2={target ? project(target).y : aimCursor!.y}
                 vectorEffect="non-scaling-stroke" />
             )}
-            {game.voyages.map((voyage) => {
-              const from = game.planets.find((planet) => planet.id === voyage.fromPlanetId);
-              const to = game.planets.find((planet) => planet.id === voyage.toPlanetId);
-              if (!from || !to) return null;
-              const { x: x1, y: y1 } = project(from);
-              const { x: x2, y: y2 } = project(to);
-              return (
-                <line
-                  className="voyage-route"
-                  data-testid={`voyage-route-${voyage.id}`}
-                  key={voyage.id}
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  vectorEffect="non-scaling-stroke"
-                  markerEnd="url(#voyage-arrow)"
-                />
-              );
-            })}
           </svg>
+          <MapVoyages viewport={mapViewport} clock={{ seconds: game.now, observedAtMs: game.wallClockAtMs }}
+            voyages={game.voyages.flatMap((voyage) => {
+              const from = game.planets.find((planet) => planet.id === voyage.fromPlanetId && planet.discovered);
+              const to = game.planets.find((planet) => planet.id === voyage.toPlanetId && planet.discovered);
+              return from && to ? [{ id: voyage.id, from: project(from), to: project(to),
+                departureAt: voyage.departureAt, arrivalAt: voyage.arrivalAt, energy: compact(voyage.energyArriving),
+                silver: voyage.silverMoved > 0 ? compact(voyage.silverMoved) : undefined,
+                owner: voyage.player, kind: voyage.kind, artifact: Boolean(voyage.carriedArtifactId) }] : [];
+            })} />
           {relocatingExplorer && <div className="aim-status" role="status">
             <strong>Click the map to move the explorer. This does not send a fleet.</strong>
             {explorerError && <span>{explorerError}</span>}
@@ -891,7 +860,7 @@ export function StrategyConsole({
 
       {panelFrame('mission', 'SOUL · SEASON · STATUS', 'mission-panel', (
         <div className="mission-window">
-          <StatusPill tone="live">ROUND 5 PARITY RULES</StatusPill>
+          <StatusPill tone="live">DF ROUND 5 RULESET</StatusPill>
           <p className={`proof-readiness proof-${proofReadiness.status}`}>{proofReadiness.label}</p>
           <Eyebrow>PRIVATE EXPANSION · ONCHAIN OUTCOMES</Eyebrow>
           <div className="mission-title">Command the<br />unknown sky.</div>

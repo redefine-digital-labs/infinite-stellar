@@ -1,5 +1,6 @@
 import type { PlayerSession } from './types';
 import { mergeExploredChunks, validateExplorationOrigin } from './exploration';
+import { normalizeStrategyDiscovery } from './strategy';
 
 export const SESSION_STORAGE_PREFIX = 'infinite-stellar:session:v1';
 
@@ -41,6 +42,8 @@ export function parsePlayerSession(raw: string): PlayerSession | null {
       return null;
     }
     const session = parsed as PlayerSession;
+    if (session.strategy?.wallClockAtMs !== undefined &&
+      (!Number.isSafeInteger(session.strategy.wallClockAtMs) || session.strategy.wallClockAtMs < 0)) return null;
     if (session.strategy?.exploredChunks !== undefined) {
       if (!Array.isArray(session.strategy.exploredChunks)) return null;
       session.strategy.exploredChunks = mergeExploredChunks(session.strategy.exploredChunks);
@@ -48,6 +51,7 @@ export function parsePlayerSession(raw: string): PlayerSession | null {
     if (session.strategy?.explorationOrigin !== undefined) {
       session.strategy.explorationOrigin = validateExplorationOrigin(session.strategy.explorationOrigin);
     }
+    if (session.mode === 'demo' && session.strategy) session.strategy = normalizeStrategyDiscovery(session.strategy);
     return session;
   } catch {
     return null;

@@ -136,6 +136,7 @@ export type PlayerActionExpectation =
       kind: 'claim_home';
       seasonId: string;
       seatId: string;
+      planetId?: string;
       requiredChangedObjectIds?: string[];
     }
   | {
@@ -408,7 +409,8 @@ function assertExpectedEvent(
     const decoded = FoundingPlanetClaimedEventBcs.parse(event.bcs);
     if (
       normalized(decoded.season_id) !== expectedSeasonId ||
-      normalized(decoded.seat_id) !== normalized(expectation.seatId)
+      normalized(decoded.seat_id) !== normalized(expectation.seatId) ||
+      (expectation.planetId !== undefined && normalized(decoded.planet_id) !== normalized(expectation.planetId))
     ) {
       throw new Error('FoundingPlanetClaimed event fields do not match the submitted claim.');
     }

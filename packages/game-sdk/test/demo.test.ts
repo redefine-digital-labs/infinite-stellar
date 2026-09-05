@@ -18,6 +18,7 @@ describe('local demo fixtures', () => {
     const a = findDemoHomeCandidate('seed', 'soul', 1);
     const b = findDemoHomeCandidate('seed', 'soul', 1);
     expect(a).toEqual(b);
+    expect(a.energy).toBe(50_000);
     expect(a.sectorCode).not.toContain(String(a.privateMaterial.x));
     expect(a.sectorCode).not.toContain(a.privateMaterial.salt);
   });

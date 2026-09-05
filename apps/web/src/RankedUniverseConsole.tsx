@@ -14,6 +14,7 @@ import { FloatingPanel, type FloatingPanelPosition } from './FloatingPanel';
 import { StatusPill } from './components';
 import { MapPlanetGlyph } from './MapPlanetGlyph';
 import { MapExplorationCoverage } from './MapExplorationCoverage';
+import { MapVoyages } from './MapVoyages';
 import { mapPosition, mapToWorld, worldPixelScale, zoomAtMapPoint } from './map-camera';
 import { useMapViewport } from './use-map-viewport';
 import type { RankedMiningSnapshot, RankedBackupSnapshot, RankedBackupDownload } from './use-ranked-map';
@@ -308,22 +309,25 @@ export function RankedUniverseConsole({
               selected={selectedId === planet.objectId} targeted={targetId === planet.objectId} /></button>
           ))}
           <svg className="voyage-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <defs><marker id="ranked-voyage-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth" viewBox="0 0 6 6"><path d="M 0 0 L 6 3 L 0 6 z" /></marker></defs>
             {selected && target && selected.objectId !== target.objectId && (
               <line className="map-route-preview" x1={Number.parseFloat(position(selected).left)}
                 y1={Number.parseFloat(position(selected).top)}
                 x2={Number.parseFloat(position(target).left)} y2={Number.parseFloat(position(target).top)}
                 vectorEffect="non-scaling-stroke" />
             )}
-            {map.voyages.map((voyage) => {
-              const from = map.planets.find((planet) => planet.objectId === voyage.fromPlanetId);
-              const to = map.planets.find((planet) => planet.objectId === voyage.toPlanetId);
-              if (!from || !to) return null;
-              const start = position(from);
-              const end = position(to);
-              return <line key={voyage.id} className="voyage-route" x1={Number.parseFloat(start.left)} y1={Number.parseFloat(start.top)} x2={Number.parseFloat(end.left)} y2={Number.parseFloat(end.top)} vectorEffect="non-scaling-stroke" markerEnd="url(#ranked-voyage-arrow)" />;
-            })}
           </svg>
+          <MapVoyages viewport={mapViewport} ranked voyages={map.voyages.flatMap((voyage) => {
+            const from = map.planets.find((planet) => planet.objectId === voyage.fromPlanetId);
+            const to = map.planets.find((planet) => planet.objectId === voyage.toPlanetId);
+            if (!from || !to) return [];
+            const start = position(from);
+            const end = position(to);
+            return [{ id: voyage.id, from: { x: parseFloat(start.left), y: parseFloat(start.top) },
+              to: { x: parseFloat(end.left), y: parseFloat(end.top) },
+              departureAt: Number(voyage.departureAtSeconds), arrivalAt: Number(voyage.arrivalAtSeconds),
+              energy: compact(voyage.energyArriving), silver: voyage.silverMoved > 0n ? compact(voyage.silverMoved) : undefined,
+              owner: voyage.owner, kind: voyage.kind, artifact: Boolean(voyage.carriedArtifactId) }];
+          })} />
           {map.planets.length === 0 && (
             <div className="ranked-map-empty">
               <strong>{hasPrivateRecord ? 'No coordinates have been discovered yet.' : 'This device has no private map for the Seat.'}</strong>

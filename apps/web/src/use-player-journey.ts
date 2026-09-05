@@ -23,6 +23,7 @@ import {
   dispatchStrategyArtifact,
   advanceStrategyToNextArrival,
   advanceStrategyTime,
+  synchronizeStrategyClock,
   submitEnrollment,
   submitHomeClaim,
   upgradeStrategyPlanet,
@@ -146,7 +147,8 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
     setSession((current) => {
       if (!current.strategy) return { ...current, notice: 'The local universe is not initialized.' };
       try {
-        const strategy = transition(current.strategy);
+        const strategy = transition(current.mode === 'demo'
+          ? synchronizeStrategyClock(current.strategy, Date.now()) : current.strategy);
         return { ...current, strategy, notice: strategy.log[0]?.message ?? current.notice };
       } catch (error) {
         return {
@@ -156,6 +158,30 @@ export function usePlayerJourney(walletAddress?: string): PlayerJourneyControlle
       }
     });
   }, []);
+
+  const clockActive = session.mode === 'demo' && session.stage === 'active' && Boolean(session.strategy && !session.strategy.settled);
+  useEffect(() => {
+    if (!clockActive) return;
+    const tick = () => setSession((current) => {
+      if (current.mode !== 'demo' || current.stage !== 'active' || !current.strategy || current.strategy.settled) return current;
+      try {
+        const strategy = synchronizeStrategyClock(current.strategy, Date.now());
+        if (strategy === current.strategy) return current;
+        return { ...current, strategy, notice: strategy.log[0]?.message ?? current.notice };
+      } catch (error) {
+        return { ...current, notice: error instanceof Error ? error.message : 'The local clock could not advance.' };
+      }
+    });
+    tick();
+    const timer = window.setInterval(tick, 250);
+    window.addEventListener('focus', tick);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', tick);
+      document.removeEventListener('visibilitychange', tick);
+    };
+  }, [clockActive, persistenceAddress]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

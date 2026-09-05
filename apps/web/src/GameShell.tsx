@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import type { InfiniteStellarDeployment } from '@infinite-stellar/game-sdk';
+import { round5HomeStats } from '@infinite-stellar/game-sdk';
 import { usePlayerJourney } from './use-player-journey';
 import {
   MAINNET_DEPLOYMENT,
@@ -508,9 +509,9 @@ export function GameShell({
                 coordinates remain sealed in your local vault.
               </p>
               <div className="candidate-stats">
-                <div><span>CLASS</span><strong>{candidate.planetClass}</strong></div>
-                <div><span>RESONANCE</span><strong>{candidate.resonance}%</strong></div>
-                <div><span>INITIAL ENERGY</span><strong>{candidate.energy}</strong></div>
+                <div><span>TYPE</span><strong>Regular</strong></div>
+                <div><span>LEVEL</span><strong>0</strong></div>
+                <div><span>INITIAL ENERGY</span><strong>{round5HomeStats().energy.toLocaleString('en-US')}</strong></div>
               </div>
               <div className="privacy-callout">
                 <span aria-hidden="true">⌁</span>

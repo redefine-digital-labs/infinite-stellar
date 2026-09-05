@@ -2,6 +2,10 @@
 
 ## Priority and evidence boundary
 
+Read the final **Foundation correction** section for the latest state. Earlier
+sections retain the defects and validation state at their recorded milestones;
+their words "unpublished" and "remaining" are historical, not current status.
+
 On September 5 the owner identified substantial interaction mismatches,
 especially exploration and choosing energy before attacking. Interaction
 fidelity now takes priority over the in-progress portable-backup increment.
@@ -272,3 +276,54 @@ partially known arrival routes, full ranked intent/pending-state integration,
 and an authorized in-game reference-fork comparison. These do not disappear
 because the local control tests pass. No real two-wallet Season or game-chain
 write has been performed by this client increment.
+
+## Foundation correction
+
+The owner explicitly prioritized the basic Dark Forest loop before invented
+mechanics, and supplied a recording of map jitter and missing visible flights.
+The previous "parity rules" badge overstated completeness. It now identifies
+the DF Round 5 ruleset without claiming a finished 1:1 implementation.
+
+The pinned `VoyageRenderer` computes a confirmed fleet's position from elapsed
+departure-to-arrival time, draws a moving energy marker and shows its remaining
+time and cargo. Our prior dashed-path animation did not implement that behavior.
+Worse, local game time was frozen unless the player pressed a manual advance
+button. The correction adds a shared camera-projected fleet overlay and a
+persisted demo wall-clock anchor. Normal play advances growth and arrival
+resolution automatically; focus and refresh catch up exactly once. Explicit
+demo fast-forward remains available but is no longer necessary for movement.
+Ranked visuals use time only for presentation: a reached endpoint reads
+"Awaiting settlement" until chain reads actually establish the result.
+
+New local games expose only Home. Other cached coordinates stay undiscovered
+until real Worker chunk completion reveals them. The counter no longer leaks
+the size of the hidden fixture. Existing saves preserve owned, visited,
+artifact-bearing and explicitly explored locations; migration hides untouched
+pre-revealed bootstrap neighbors without deleting Planet data. Completed empty
+chunks still persist but no longer flood the command log. Initial candidate
+stats now show Regular, level 0 and the actual 50,000 starting energy, instead
+of cosmetic class/resonance values and inconsistent energy.
+
+Exploration no longer auto-fits the camera after each batch. Manual Fit remains
+explicit, the zoom baseline uses fixed world bounds, and the explorer button
+keeps a stable label and width across 0/100-percent batch transitions. The
+recording's changing camera and toolbar wrapping were separate causes.
+
+### Evidence and remaining baseline
+
+| Basic behavior | Current implementation and acceptance |
+| --- | --- |
+| Unknown space | New-game regression: only Home visible, unknown target rejected, valid mined chunks reveal locations |
+| Continuous search | Existing Worker/chunk validation plus regression for unchanged camera and stable exploring label |
+| Fleet in transit | Shared `MapVoyages` overlay, fractional movement, energy/cargo and ETA; render tests cover RAF cleanup and ranked settlement boundary |
+| Time and arrival | SDK and hook tests cover real elapsed time, resource growth, refresh/focus catch-up, exact-once arrival and unchanged ranked authority |
+| Reference gameplay | Official pinned source reviewed; the supplied fork still needs an authorized entered session |
+| Remaining local fidelity | Fixed demo Home/seed and a deliberately retyped Spacetime Rip showcase still differ from hash-native generation; replace with verified natural candidates before claiming 1:1 |
+| Remaining ranked gameplay | Partially known voyage indication, proof Worker/UI composition, pending-spend reservations, special-action adapters and two-wallet finality remain incomplete |
+
+The SDK additionally contains guarded `prepareRankedAction` for claim-home,
+move and move-new, with 28 unit tests for deployment/Seat/config bindings,
+validated private preimages, exact point-read existence, lifecycle/deadlines,
+source nonce, due arrivals and statement generation. This preparatory work is
+not wired to the client prover/signing journey and has not yet been validated
+end-to-end against actual Circom witnesses. It does not open ranked writes.

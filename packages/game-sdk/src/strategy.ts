@@ -123,6 +123,8 @@ export interface StrategyGame {
   rulesetVersion: typeof ROUND5_RULESET_VERSION;
   universeSeed: string;
   now: number;
+  /** Local-demo wall-clock anchor; never used by ranked chain projections. */
+  wallClockAtMs?: number;
   checkpoint: number;
   worldRadius: number;
   scanRadius: number;
@@ -140,6 +142,7 @@ export interface StrategyGame {
   spaceJunkLimit: number;
   scans: number;
   exploredChunks?: ExploredChunk[];
+  discoveryModel?: 'mined-chunks-v1';
   explorationOrigin?: { x: number; y: number };
   settled: boolean;
   settledAt?: number;
@@ -558,7 +561,7 @@ export function createStrategyGame(input: {
   const planets = [
     home,
     ...applyLocalRiftShowcase(ROUND5_LOCAL_COORDINATES.slice(1).map((coordinates) =>
-      generatePlanet(coordinates, 0, homeCoordinates))),
+      generatePlanet(coordinates, 0, homeCoordinates, false))),
   ];
   const captureEpoch = 0;
   return {
@@ -580,15 +583,16 @@ export function createStrategyGame(input: {
     score: 0,
     spaceJunk: 0,
     spaceJunkLimit: 2_000,
-    scans: 1,
+    scans: 0,
     exploredChunks: [],
+    discoveryModel: 'mined-chunks-v1',
     explorationOrigin: { x: home.x, y: home.y },
     settled: false,
     log: [{
       id: 'genesis',
       at: 0,
       tone: 'success',
-      message: `${input.homeName} established. Nearby space resolved locally.`,
+      message: `${input.homeName} established. Start the explorer to uncover the surrounding fog.`,
     }],
   };
 }
@@ -598,6 +602,25 @@ export function selectStrategyPlanet(game: StrategyGame, planetId?: string): Str
   const planet = requirePlanet(game, planetId);
   if (!planet.discovered) throw new StrategyRuleError('That location is still unknown.');
   return { ...game, selectedPlanetId: planetId, targetPlanetId: undefined };
+}
+
+/** Hide legacy pre-revealed bootstrap neighbors without deleting any Planet data.
+ * Preserve explored/visited locations and old explicit radial-demo scan results.
+ */
+export function normalizeStrategyDiscovery(game: StrategyGame): StrategyGame {
+  if (game.discoveryModel === 'mined-chunks-v1') return game;
+  const chunks = game.exploredChunks ?? [];
+  const legacyRadialScan = chunks.length === 0 && game.scans > 1;
+  const visited = new Set(game.voyages.flatMap((voyage) => [voyage.fromPlanetId, voyage.toPlanetId]));
+  const planets = game.planets.map((planet) => ({ ...planet, discovered: planet.discovered && (
+    planet.isHome || planet.owner !== 'neutral' || planet.revealed || planet.captured ||
+    planet.artifactIds.length > 0 || visited.has(planet.id) || legacyRadialScan || locationInChunks(planet, chunks) ||
+    game.log.some((entry) => entry.id !== 'genesis' && entry.message.includes(planet.name))
+  ) }));
+  const known = new Set(planets.filter((planet) => planet.discovered).map((planet) => planet.id));
+  return { ...game, planets, discoveryModel: 'mined-chunks-v1',
+    selectedPlanetId: game.selectedPlanetId && known.has(game.selectedPlanetId) ? game.selectedPlanetId : undefined,
+    targetPlanetId: game.targetPlanetId && known.has(game.targetPlanetId) ? game.targetPlanetId : undefined };
 }
 
 export function setStrategyTarget(game: StrategyGame, planetId?: string): StrategyGame {
@@ -702,12 +725,11 @@ export function mergeMinedStrategyLocations(
     scans: game.scans + 1,
     exploredChunks,
   };
+  if (discovered === 0) return next;
   return addLog(
     next,
-    discovered > 0 ? 'success' : 'info',
-    discovered > 0
-      ? `Worker mining resolved ${discovered} planets${added > 0 ? ` (${added} beyond the bootstrap cache)` : ''}.`
-      : 'Worker mining completed this frontier batch without a new planet.',
+    'success',
+    `Explorer discovered ${discovered} planet${discovered === 1 ? '' : 's'}${added > 0 ? ` (${added} new locations)` : ''}.`,
   );
 }
 
@@ -975,6 +997,22 @@ export function advanceStrategyTime(game: StrategyGame, seconds: number): Strate
     checkpoint: next.checkpoint + checkpointDelta,
     planets: next.planets.map((planet) => refreshPlanet(planet, targetTime)),
   });
+}
+
+/** Advance the local simulation by elapsed real seconds, including time away.
+ * Existing saves start their clock now; they are not interpreted as Unix time.
+ */
+export function synchronizeStrategyClock(game: StrategyGame, observedAtMs: number): StrategyGame {
+  if (!Number.isSafeInteger(observedAtMs) || observedAtMs < 0) throw new StrategyRuleError('Invalid local clock observation.');
+  if (game.settled) return game;
+  if (game.wallClockAtMs === undefined) return { ...game, wallClockAtMs: observedAtMs };
+  if (!Number.isSafeInteger(game.wallClockAtMs) || game.wallClockAtMs < 0) throw new StrategyRuleError('Invalid saved local clock.');
+  const seconds = Math.floor((observedAtMs - game.wallClockAtMs) / 1000);
+  if (seconds <= 0) return game;
+  if (!Number.isSafeInteger(game.now + seconds) || !Number.isSafeInteger(game.checkpoint + seconds)) {
+    throw new StrategyRuleError('Local clock exceeds the exact simulation range.');
+  }
+  return { ...advanceStrategyTime(game, seconds), wallClockAtMs: game.wallClockAtMs + seconds * 1000 };
 }
 
 export function upgradeStrategyPlanet(

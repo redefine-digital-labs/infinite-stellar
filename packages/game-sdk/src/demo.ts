@@ -4,6 +4,7 @@ import type {
   SeatSnapshot,
   SoulCandidate,
 } from './types';
+import { round5HomeStats } from './round5-rules';
 
 export const DEMO_CONTROLLER =
   '0xd3e0000000000000000000000000000000000000000000000000000000000001';
@@ -124,7 +125,7 @@ export function findDemoHomeCandidate(
       .padStart(3, '0')}`,
     planetClass,
     resonance: 62 + (seed % 35),
-    energy: 420 + (seed % 180),
+    energy: round5HomeStats().energy,
     commitment,
     proofDigest: hex32(`proof:${commitment}`),
     privateMaterial: { x, y, salt },

@@ -1423,8 +1423,8 @@ code {
   height: 100%;
   pointer-events: none;
 }
-.unsearched-space { fill: #020610; opacity: 0.55; }
-.active-search-chunk { fill: #b9f8ca22; stroke: #b9f8ca88; stroke-width: 1px; }
+.unsearched-space { fill: #02050b; opacity: 0.88; }
+.active-search-chunk { fill: #b9f8ca09; stroke: #b9f8ca25; stroke-width: 0.75px; }
 .explorer-origin { fill: none; stroke: #f6cf7e; stroke-width: 1.5px; }
 .energy-reach-ring {
   position: absolute;
@@ -1628,17 +1628,30 @@ code {
 
 .voyage-route {
   stroke: var(--green);
-  stroke-width: 1.4;
+  stroke-width: 1;
   stroke-linecap: round;
-  stroke-dasharray: 5 3;
-  filter: drop-shadow(0 0 4px rgba(141, 255, 187, 0.75));
-  animation: voyage-flow 1.1s linear infinite;
+  opacity: 0.26;
 }
-
-.voyage-layer marker path {
-  fill: var(--amber);
-  filter: drop-shadow(0 0 3px rgba(255, 199, 120, 0.8));
-}
+.voyage-route.owner-rival { stroke: var(--danger); }
+.fleet-layer { z-index: 6; }
+.voyage-paths { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.map-fleet { position: absolute; width: 0; height: 0; color: var(--green); pointer-events: none; }
+.map-fleet.owner-rival { color: var(--danger); }
+.map-fleet.kind-ship { color: #bbacff; }
+.fleet-heading { position: absolute; width: 0; height: 0; }
+.fleet-core { position: absolute; width: 7px; height: 7px; left: -3.5px; top: -3.5px;
+  border-radius: 50%; background: #eafff2; box-shadow: 0 0 4px currentColor, 0 0 10px currentColor; }
+.kind-ship .fleet-core { border-radius: 1px; transform: rotate(45deg); }
+.fleet-tail { position: absolute; width: 22px; height: 3px; right: 2px; top: -1.5px;
+  background: linear-gradient(90deg, transparent, currentColor); opacity: 0.7; }
+.is-arrived .fleet-tail { display: none; }
+.fleet-cargo, .fleet-eta { position: absolute; left: 0; transform: translateX(-50%); white-space: nowrap;
+  font: 600 11px/1.2 ui-monospace, monospace; font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px #000, 0 0 5px #000, 1px 0 2px #000, -1px 0 2px #000; }
+.fleet-cargo { bottom: 10px; color: #edfff5; }
+.fleet-eta { top: 10px; color: #b1c7be; font-size: 10px; }
+.fleet-silver { color: #f2cb7e; font-style: normal; }
+.fleet-artifact { color: #c6b4ff; font-style: normal; }
 
 .scan-readout {
   position: absolute;
@@ -1907,10 +1920,6 @@ code {
   font-family: ui-monospace, monospace;
   font-size: 0.48rem;
   line-height: 1.4;
-}
-
-@keyframes voyage-flow {
-  to { stroke-dashoffset: -8; }
 }
 
 @keyframes rift-spin {
@@ -2402,6 +2411,9 @@ code {
 .floating-map-toolbar .compact-button {
   min-height: 2.2rem;
 }
+.floating-map-toolbar strong { font-variant-numeric: tabular-nums; }
+.floating-map-toolbar .miner-toolbar-actions { flex-wrap: nowrap; }
+.floating-map-toolbar .miner-toolbar-actions button { white-space: nowrap; }
 
 .map-camera-controls {
   position: absolute;
