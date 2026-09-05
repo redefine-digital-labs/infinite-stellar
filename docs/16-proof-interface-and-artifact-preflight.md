@@ -219,19 +219,69 @@ is limited to local development hosts.
 
 ## Worker lifecycle
 
-The browser creates one persistent Prover Worker. Preflight:
+Readiness preflight owns a Prover Worker; ranked action preparation owns a
+separate short-lived Worker per action. Preflight:
 
 1. verifies the pinned manifest before parsing it;
 2. checks the active mainnet/rules/circuit selection and setup provenance;
 3. rejects duplicate/missing roles and a set above the declared memory budget;
 4. fetches each role in the Worker and verifies media type, size, and SHA-256;
 5. reports bounded progress and keeps successful bytes in Worker memory;
-6. cancels the previous request when a new selection starts;
+6. terminates the previous Worker when an in-flight request is cancelled or
+   replaced (including non-cooperative Groth16 computation);
 7. ignores messages for stale request IDs; and
 8. exposes `ready` only after every check passes.
 
 The Worker never receives a wallet signer. A ready preflight means only “the
 bytes match the selected hashes”; it does not mean the circuit or setup is safe.
+
+Cached artifacts are reusable only for an identical complete selection,
+including production/development mode, circuit identity, origin policy and
+byte budget. A new selection invalidates the old cache until it passes. Proof
+generation snapshots its artifact set so concurrent preflight cannot swap keys.
+
+`proveRankedAction` now prepares the SDK witness, runs local proving and reads
+the authoritative context again before returning an unsigned transaction. The
+original deadline and fleet amounts are retained. Changed ownership, source
+nonce, destination existence, deployment pins or release gates reject the
+result. The returned value contains no private coordinates or witness. The web
+adapter selects the exact action-specific production manifest and disposes its
+Worker on success, failure or cancellation. UI signing/pending/finality wiring
+is still unfinished; this helper never requests a signature or sends a write.
+
+Production CSP permits `wasm-unsafe-eval` for proof WASM compilation and
+`worker-src 'self' blob:` for the proving library's isolated child Workers.
+Ordinary JavaScript `unsafe-eval` and inline script remain disallowed; existing
+connection origins, object/frame/form restrictions are unchanged. The old
+`script-src 'self'` policy was reproduced rejecting `WebAssembly.compile` in
+a real local browser using the same response policy on Worker scripts.
+
+## Reproduce SDK-to-circuit integration
+
+After building the disposable development artifacts described in
+`circuits/README.md`, run from the repository root:
+
+```sh
+npm run circuits:test:ranked
+INFINITE_STELLAR_PROOF_CSP_QA=1 npm run dev
+```
+
+The explicit integration suite loads the real hash-pinned WASM/zkeys, proves
+all three SDK-prepared witnesses, verifies public signals and Sui byte lengths,
+constructs unsigned transactions, rejects coordinate/statement tampering, and
+checks that production mode refuses development manifests. It fails if the
+artifacts are absent; it is not a silently skipped standard unit test.
+
+For browser QA open `/proof-development.html` on the local development server.
+Set its directory to `/@fs/ABSOLUTE_REPOSITORY/circuits/build/dev/` and run the
+three Worker proofs. Only public test vectors are used. The opt-in environment
+variable copies the exact Vercel CSP into the local response headers. Vite's
+development middleware supplies the required zkey media type without widening
+filesystem access. This HTML is not a production entry point; the fixture,
+development keys and harness are absent from `apps/web/dist`.
+
+Browser timings are single-device development observations, not production
+p95, a setup ceremony, an independent audit or chain settlement evidence.
 
 ## Mainnet release gates
 

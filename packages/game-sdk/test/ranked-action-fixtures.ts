@@ -43,7 +43,8 @@ export function rankedActionFixture(mode: 'home' | 'move' | 'move_new' = 'home')
   const planet = (index: number): PlanetProjection => ({
     ...version(planetIds[index]!), seasonId: id('11'), ownerSeatId: index === 0 ? seatId : id('bb'),
     locationHash: BigInt(`0x${locations[index]!.locationId}`),
-    locationCommitment: Uint8Array.from(Buffer.from(locations[index]!.locationId, 'hex')),
+    locationCommitment: Uint8Array.from({ length: 32 }, (_, byte) =>
+      Number.parseInt(locations[index]!.locationId.slice(byte * 2, byte * 2 + 2), 16)),
     publicInputDigest: new Uint8Array(32), proofNonce: 7n, isFoundingPlanet: index === 0,
     rulesetVersion: 1n, level: 0, planetType: 0, spaceType: 0,
     energy: 50_000n, energyCapacity: 100_000n, energyGrowth: 417n, range: 99n, speed: 75n, defense: 400n,

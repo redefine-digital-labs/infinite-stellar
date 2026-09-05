@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8"><title>Development proof integration</title></head>
+  <body>
+    <h1>Development proof integration</h1>
+    <p>Local QA only. Public test coordinates, disposable development keys, no wallet, no RPC, no submission.</p>
+    <p>This page is not a ranked release and is not a production build entry point.</p>
+    <label>Local Vite artifact directory <input id="directory" size="95" placeholder="/@fs/absolute/repository/circuits/build/dev/"></label>
+    <button id="run">Run three real Worker proofs</button>
+    <button id="cancel" disabled>Cancel</button>
+    <pre id="results" role="status">Ready. Requires circuits:build:dev artifacts.</pre>
+    <script type="module" src="/test/proof-development.ts"></script>
+  </body>
+</html>

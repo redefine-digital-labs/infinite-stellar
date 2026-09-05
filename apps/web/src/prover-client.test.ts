@@ -89,17 +89,21 @@ describe('ProverWorkerClient', () => {
 
   it('cancels an older request before starting a replacement', async () => {
     const worker = new FakeWorker();
-    const client = new ProverWorkerClient(() => worker);
+    const replacement = new FakeWorker();
+    const factory = vi.fn().mockReturnValueOnce(worker).mockReturnValue(replacement);
+    const client = new ProverWorkerClient(factory);
     const first = client.preflight(selection);
     const second = client.preflight(selection);
 
-    expect(worker.posted.map((message) => message.type)).toEqual(['preflight', 'cancel', 'preflight']);
+    expect(worker.posted.map((message) => message.type)).toEqual(['preflight']);
+    expect(worker.terminate).toHaveBeenCalledOnce();
+    expect(replacement.posted.map((message) => message.type)).toEqual(['preflight']);
     worker.emit({
       type: 'cancelled',
       version: PROOF_ARTIFACT_WORKER_VERSION,
       requestId: first.requestId,
     });
-    worker.emit({
+    replacement.emit({
       type: 'ready',
       version: PROOF_ARTIFACT_WORKER_VERSION,
       requestId: second.requestId,
@@ -112,6 +116,18 @@ describe('ProverWorkerClient', () => {
 
     await expect(first.result).rejects.toMatchObject({ name: 'AbortError' });
     await expect(second.result).resolves.toMatchObject({ circuitId: 'round5-move' });
+  });
+
+  it('immediately rejects cancellation even if the old Worker reports proof success', async () => {
+    const worker = new FakeWorker();
+    const client = new ProverWorkerClient(() => worker);
+    const operation = client.prove(selection.manifestSha256, {}, []);
+    operation.cancel();
+    worker.emit({ type: 'failed', version: PROOF_ARTIFACT_WORKER_VERSION,
+      requestId: operation.requestId, code: 'LATE', message: 'Late result' });
+    await expect(operation.result).rejects.toMatchObject({ name: 'AbortError' });
+    expect(worker.terminate).toHaveBeenCalledOnce();
+    client.destroy();
   });
 
   it('rejects every pending operation when destroyed', async () => {

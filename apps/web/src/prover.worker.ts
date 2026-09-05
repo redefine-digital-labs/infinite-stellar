@@ -17,13 +17,16 @@ const scope = self as unknown as DedicatedWorkerGlobalScope;
 const controllers = new Map<string, AbortController>();
 let activeRequestId: string | undefined;
 let loadedCache: LoadedProofArtifacts | undefined;
+let loadedSelectionKey: string | undefined;
 
 function emit(message: ProofArtifactWorkerMessage): void {
   scope.postMessage(message);
 }
 
 async function prove(request: ProofGenerateRequest): Promise<void> {
-  if (!loadedCache || loadedCache.manifestSha256 !== request.manifestSha256) {
+  // Snapshot the artifacts: another preflight must not swap the key mid-proof.
+  const loaded = loadedCache;
+  if (!loaded || loaded.manifestSha256 !== request.manifestSha256) {
     emit({
       type: 'failed',
       version: PROOF_ARTIFACT_WORKER_VERSION,
@@ -34,9 +37,9 @@ async function prove(request: ProofGenerateRequest): Promise<void> {
     return;
   }
   try {
-    const generated = await generateAndVerifyGroth16Proof(loadedCache, request.witness);
+    const generated = await generateAndVerifyGroth16Proof(loaded, request.witness);
     const submission = await prepareSuiProofSubmission(
-      loadedCache,
+      loaded,
       generated,
       request.expectedPublicSignals,
     );
@@ -72,11 +75,17 @@ function ready(request: ProofArtifactPreflightRequest, loaded: LoadedProofArtifa
 }
 
 async function preflight(request: ProofArtifactPreflightRequest): Promise<void> {
-  if (loadedCache?.manifestSha256 === request.selection.manifestSha256) {
+  if (activeRequestId) controllers.get(activeRequestId)?.abort();
+  activeRequestId = undefined;
+  const selectionKey = JSON.stringify(request.selection);
+  // A digest alone is insufficient: cached development artifacts must not pass a
+  // subsequent production-mode preflight, nor bypass identity/origin/budget checks.
+  if (loadedCache && loadedSelectionKey === selectionKey) {
     ready(request, loadedCache);
     return;
   }
-  if (activeRequestId) controllers.get(activeRequestId)?.abort();
+  loadedCache = undefined;
+  loadedSelectionKey = undefined;
   const controller = new AbortController();
   activeRequestId = request.requestId;
   controllers.set(request.requestId, controller);
@@ -95,6 +104,7 @@ async function preflight(request: ProofArtifactPreflightRequest): Promise<void> 
     );
     if (activeRequestId !== request.requestId) return;
     loadedCache = loaded;
+    loadedSelectionKey = selectionKey;
     ready(request, loaded);
   } catch (error) {
     if (controller.signal.aborted || (error instanceof DOMException && error.name === 'AbortError')) {

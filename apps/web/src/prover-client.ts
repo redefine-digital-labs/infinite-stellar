@@ -55,7 +55,6 @@ interface PendingOperation {
   resolve: (result: ProofPreflightResult | GeneratedProofResult) => void;
   reject: (reason: unknown) => void;
   onProgress: (progress: ProofArtifactProgress) => void;
-  cancelTimer?: number;
 }
 
 function nextRequestId(): string {
@@ -83,12 +82,20 @@ export class ProverWorkerClient {
   private activeRequestId?: string;
   private destroyed = false;
 
-  constructor(workerFactory: () => ProofWorkerLike = defaultWorkerFactory) {
-    this.worker = workerFactory();
-    this.worker.addEventListener('message', (event) => this.handleMessage(event.data));
-    this.worker.addEventListener('error', (event) => {
+  constructor(private readonly workerFactory: () => ProofWorkerLike = defaultWorkerFactory) {
+    this.worker = this.createWorker();
+  }
+
+  private createWorker(): ProofWorkerLike {
+    const worker = this.workerFactory();
+    worker.addEventListener('message', (event) => {
+      if (this.worker === worker && !this.destroyed) this.handleMessage(event.data);
+    });
+    worker.addEventListener('error', (event) => {
+      if (this.worker !== worker || this.destroyed) return;
       this.failAll(new ProofPreflightError('WORKER_CRASHED', event.message || 'The Prover Worker crashed.'));
     });
+    return worker;
   }
 
   preflight(
@@ -160,16 +167,12 @@ export class ProverWorkerClient {
   }
 
   private cancel(requestId: string): void {
-    const pending = this.pending.get(requestId);
-    if (!pending) return;
-    this.worker.postMessage({
-      type: 'cancel',
-      version: PROOF_ARTIFACT_WORKER_VERSION,
-      requestId,
-    });
-    pending.cancelTimer = window.setTimeout(() => {
-      this.settle(requestId, (entry) => entry.reject(new DOMException('Proof preflight cancelled.', 'AbortError')));
-    }, 2_000);
+    if (!this.pending.has(requestId)) return;
+    // snarkjs cannot cooperatively interrupt fullProve. Terminate the isolated
+    // Worker immediately; a late proved/ready message must never win cancellation.
+    this.worker.terminate();
+    this.settle(requestId, (entry) => entry.reject(new DOMException('Proof operation cancelled.', 'AbortError')));
+    this.worker = this.createWorker();
   }
 
   private handleMessage(message: ProofArtifactWorkerMessage): void {
@@ -226,7 +229,6 @@ export class ProverWorkerClient {
   private settle(requestId: string, settle: (pending: PendingOperation) => void): void {
     const pending = this.pending.get(requestId);
     if (!pending) return;
-    if (pending.cancelTimer !== undefined) window.clearTimeout(pending.cancelTimer);
     this.pending.delete(requestId);
     if (this.activeRequestId === requestId) this.activeRequestId = undefined;
     settle(pending);
